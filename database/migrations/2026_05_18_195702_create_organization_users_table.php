@@ -11,14 +11,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('organization_users', function (Blueprint $table) {
+        Schema::create('organization_user', function (Blueprint $table) {
+
             $table->id();
-            $table->foreignId('organization_id')->constrained()->onDelete('cascade');
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+
+            $table->foreignId('organization_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('role')->default('member');
+            $table->string('status')->default('active');
             $table->timestamp('joined_at')->nullable();
-            $table->string('invited_by')->nullable();
-            
+            $table->foreignId('invited_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamps();
+            $table->unique([
+                'organization_id',
+                'user_id'
+            ]);
         });
     }
 

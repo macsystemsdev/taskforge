@@ -4,6 +4,7 @@ use App\Http\Middleware\EnsureTeamMembership;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
+
 Route::view('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('home');
@@ -16,6 +17,10 @@ Route::prefix('{current_team}')
 
 Route::middleware(['auth'])->group(function () {
     Route::livewire('invitations/{invitation}/accept', 'pages::teams.accept-invitation')->name('invitations.accept');
+
+    Route::view('/organizations/create', 'components.organizations.create-organization')->middleware('auth')->name('organizations.create');
+    Route::view('/organizations/{organization}', 'components.organizations.show-organization')->middleware('auth')->name('organizations.show');
 });
 
-require __DIR__.'/settings.php';
+
+require __DIR__ . '/settings.php';

@@ -13,11 +13,12 @@ return new class extends Migration
     {
         Schema::create('organizations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('owner_id')->constrained()->onDelete('cascade');
+            $table->foreignId('owner_id')->constrained('users')->cascadeOnDelete();
             $table->string('name');
-            $table->string('slug');
-            $table->date('subscription_plan')->nullable();
-            $table->string('subscription_status')->nullable();
+            $table->string('slug')->unique();
+            $table->string('subscription_plan')->default('free');
+            $table->string('subscription_status')->default('active');
+            $table->timestamps();
         });
     }
 

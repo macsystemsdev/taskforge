@@ -13,7 +13,7 @@ class Workspace extends Model
 {
     
 
-public function organization(): BelongsTo
+public function organization_workspace(): BelongsTo
     {
         return $this->belongsTo(Organization::class, 'organization_id', 'id');
     }
