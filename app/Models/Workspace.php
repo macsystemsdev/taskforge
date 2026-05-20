@@ -15,6 +15,6 @@ class Workspace extends Model
 
 public function organization_workspace(): BelongsTo
     {
-        return $this->belongsTo(Organization::class, 'organization_id', 'id');
+        return $this->belongsTo(Organization::class);
     }
 }

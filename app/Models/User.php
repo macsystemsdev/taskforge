@@ -59,6 +59,9 @@ class User extends Authenticatable
             ->using(OrganizationUser::class)
             ->withPivot([
                 'role',
+                'token',
+                'email',
+                'status',
                 'joined_at',
                 'invited_by',
             ])

@@ -2,19 +2,20 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\Pivot;
 
-class OrganizationUser extends Model
+#[Table('organization_users')]
+class OrganizationUser extends Pivot
 {
-
-    protected $table = 'organization_users';
 
     protected $fillable = [
         'organization_id',
         'user_id',
         'role',
+        'token',
+        'email',
         'status',
         'joined_at',
         'invited_by',

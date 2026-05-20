@@ -26,6 +26,9 @@ class Organization extends Model
             ->using(OrganizationUser::class)
             ->withPivot([
                 'role',
+                'status',
+                'token',
+                'email',
                 'joined_at',
                 'invited_by',
             ])
@@ -35,6 +38,6 @@ class Organization extends Model
 
     public function workspaces(): HasMany
     {
-        return $this->hasMany(Workspace::class, 'workspace_id', 'id');
+        return $this->hasMany(Workspace::class);
     }
 }

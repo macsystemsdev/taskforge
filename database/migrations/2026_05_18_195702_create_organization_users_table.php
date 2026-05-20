@@ -11,12 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('organization_user', function (Blueprint $table) {
+        Schema::create('organization_users', function (Blueprint $table) {
 
             $table->id();
 
             $table->foreignId('organization_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->string('email');
+            $table->string('token')->unique();
             $table->string('role')->default('member');
             $table->string('status')->default('active');
             $table->timestamp('joined_at')->nullable();
@@ -24,7 +26,8 @@ return new class extends Migration
             $table->timestamps();
             $table->unique([
                 'organization_id',
-                'user_id'
+                'user_id',
+                'email',
             ]);
         });
     }
