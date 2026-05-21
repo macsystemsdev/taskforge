@@ -2,6 +2,7 @@
 
 use App\Models\Organization;
 use Livewire\Component;
+use App\Actions\Organizations\InviteMemberAction;
 
 new class extends Component {
     public Organization $organization;
@@ -9,6 +10,32 @@ new class extends Component {
     public function mount(Organization $organization): void
     {
         $this->organization = $organization->load(['workspaces', 'members']);
+    }
+
+    public string $inviteEmail = '';
+
+    public string $inviteRole = 'member';
+
+    public function inviteMember(InviteMemberAction $inviteMemberAction): void
+    {
+        $validated = $this->validate([
+            'inviteEmail' => ['required', 'email'],
+
+            'inviteRole' => ['required', 'string'],
+        ]);
+
+        $inviteMemberAction->handle(
+            organization: $this->organization,
+            inviter: auth()->user(),
+            data: [
+                'email' => $validated['inviteEmail'],
+                'role' => $validated['inviteRole'],
+            ],
+        );
+
+        Flux::toast(variant: 'success', text: 'Invitation sent.');
+
+        $this->reset(['inviteEmail', 'inviteRole']);
     }
 };
 
@@ -146,6 +173,53 @@ new class extends Component {
 
         </div>
 
+        <div>
+            <flux:card class="space-y-6">
+
+                <div>
+
+                    <flux:heading size="lg">
+                        Invite Member
+                    </flux:heading>
+
+                    <flux:subheading>
+                        Invite collaborators into this organization.
+                    </flux:subheading>
+
+                </div>
+
+                <form wire:submit="inviteMember" class="space-y-4">
+
+                    <flux:input wire:model="inviteEmail" label="Email" type="email" required />
+
+                    <flux:select wire:model="inviteRole" label="Role">
+
+                        <option value="member">
+                            Member
+                        </option>
+
+                        <option value="manager">
+                            Manager
+                        </option>
+
+                        <option value="manager">
+                            Viewer
+                        </option>
+
+                    </flux:select>
+
+                    <flux:button variant="primary" type="submit">
+                        Send Invitation
+                    </flux:button>
+
+                </form>
+
+            </flux:card>
+        </div>
+
     </div>
+
+
+
 
 </div>

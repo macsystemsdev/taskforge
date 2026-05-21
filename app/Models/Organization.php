@@ -27,8 +27,6 @@ class Organization extends Model
             ->withPivot([
                 'role',
                 'status',
-                'token',
-                'email',
                 'joined_at',
                 'invited_by',
             ])

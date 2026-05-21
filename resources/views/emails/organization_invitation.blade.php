@@ -1,12 +1,16 @@
-@component('mail::message')
-# Invitation
+<h1>
+    Organization Invitation
+</h1>
 
-You’ve been invited to join **{{ $invitation->organization->name }}**
+<p>
+    You were invited to join
+    {{ $invitation->organization->name }}
+</p>
 
-@component('mail::button', ['url' => url('/invitations/'.$invitation->token)])
-Accept Invitation
-@endcomponent
+<a href="{{ route('invitations.accept', $invitation->token) }}">
+    Accept Invitation
+</a>
 
-Thanks,<br>
-{{ config('app.name') }}
-@endcomponent
+<a href="{{ route('invitations.reject', $invitation->token) }}">
+    Accept Invitation
+</a>

@@ -14,8 +14,6 @@ class OrganizationUser extends Pivot
         'organization_id',
         'user_id',
         'role',
-        'token',
-        'email',
         'status',
         'joined_at',
         'invited_by',

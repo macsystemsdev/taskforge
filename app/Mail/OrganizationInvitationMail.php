@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Models\Invitation;
 use App\Models\OrganizationUser;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -12,40 +13,25 @@ use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class OrganizationInvitationMail extends Mailable
+class OrganizationInvitationMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(
-        protected OrganizationUser $invitation,
-        )
-    {}
+      public function __construct(
+        public Invitation $invitation
+    ) {}
 
-    /**
-     * Get the message envelope.
-     */
-    // public function envelope(): Envelope
-    // {
-    //     return new Envelope(
-    //         from: new Address($this->$invitation->email, 'TaskForge Team'),
-    //         subject: 'Organization Invitation Mail',
-    //     );
-    // }
 
     /**
      * Get the message content definition.
      */
-    public function content(): Content
+     public function build()
     {
-        return new Content(
-            view: 'emails.organization_invitation',
-            with: [
-                'invitation' => $this->invitation,
-            ],
-        );
+        return $this->subject('Organization Invitation')
+            ->view('emails.organization_invitation');
     }
 
     /**

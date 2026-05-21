@@ -2,33 +2,50 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\OrganizationUser;
-use Illuminate\Http\Request;
+use App\Models\Invitation;
+
 
 class AcceptInvitationController extends Controller
 {
-    public function __invoke(string $token)
+    public function InvitationAccept(string $token)
     {
-        $invitation = OrganizationUser::where('token', $token)
-            ->whereNull('accepted_at')
-            ->firstOrFail();
+        dd($token);
+        $invitation = Invitation::where(
+            'token',
+            $token
+        )->firstOrFail();
 
-        $user = auth()->user();
+        abort_if(
+            $invitation->expires_at->isPast(),
+            403,
+            'Invitation expired.'
+        );
 
-        if (!$user) {
-            abort(401);
-        }
+        abort_if(
+            $invitation->accepted_at,
+            403,
+            'Invitation already accepted.'
+        );
 
-        if ($user->email !== $invitation->email) {
-            abort(403);
-        }
+        $invitation->organization->members()->attach(
+            auth()->user()->email === $invitation->email
+                ? auth()->user()->id
+                : null,
+            [
+                'role' => $invitation->role,
+                'joined_at' => now(),
+                'status' => 'active',
+                'invited_by' => $invitation->invited_by,
+            ]
+        );
 
-        $invitation->update(['joined_at' => now()]);
-
-        $invitation->organization->users()->attach($user->id, [
-            'role' => $invitation->role,
+        $invitation->update([
+            'accepted_at' => now(),
         ]);
 
-        return redirect('/dashboard');
+        return redirect()->route(
+            'organizations.show',
+            $invitation->organization
+        );
     }
 }
