@@ -1,17 +1,25 @@
 <?php
 
 use App\Models\Organization;
+use App\Models\Invitation;
 use Livewire\Component;
 use App\Actions\Organizations\InviteMemberAction;
 
 new class extends Component {
     public Organization $organization;
 
+    public function getInvitationsProperty()
+    {
+        return $this->organization->invitations()->latest()->get();
+    }
+
+    // load organization workspaces and memebers
     public function mount(Organization $organization): void
     {
         $this->organization = $organization->load(['workspaces', 'members']);
     }
 
+    // Handle organization memeber invitation
     public string $inviteEmail = '';
 
     public string $inviteRole = 'member';
@@ -24,6 +32,7 @@ new class extends Component {
             'inviteRole' => ['required', 'string'],
         ]);
 
+        // Call to handle function in Organization InviteMemberAction to send inviation email
         $inviteMemberAction->handle(
             organization: $this->organization,
             inviter: auth()->user(),
@@ -33,9 +42,26 @@ new class extends Component {
             ],
         );
 
+        // success message
         Flux::toast(variant: 'success', text: 'Invitation sent.');
 
         $this->reset(['inviteEmail', 'inviteRole']);
+    }
+
+    // Cancel invitation
+    public function cancelInvitation(string $invitationId): void
+    {
+        $invitation = Invitation::findOrFail($invitationId);
+
+        abort_if($invitation->status !== 'pending', 403, 'Only pending invitations can be cancelled.');
+
+        abort_if($invitation->expires_at->isPast(), 403, 'Expired invitations cannot be cancelled.');
+
+        $invitation->update([
+            'status' => 'cancelled',
+        ]);
+
+        Flux::toast(variant: 'success', text: 'Invitation cancelled.');
     }
 };
 
@@ -63,67 +89,128 @@ new class extends Component {
 
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    {{-- Workspaces --}}
+    <div class="lg:col-span-2">
 
-        {{-- Workspaces --}}
-        <div class="lg:col-span-2">
+        <flux:card class="space-y-6">
 
-            <flux:card class="space-y-6">
+            <div class="flex items-center justify-between">
 
-                <div class="flex items-center justify-between">
+                <div>
 
-                    <div>
+                    <flux:heading size="lg">
+                        Workspaces
+                    </flux:heading>
 
-                        <flux:heading size="lg">
-                            Workspaces
-                        </flux:heading>
-
-                        <flux:subheading>
-                            Operational spaces inside the organization.
-                        </flux:subheading>
-
-                    </div>
-
-                    <flux:button variant="primary">
-                        New Workspace
-                    </flux:button>
+                    <flux:subheading>
+                        Operational spaces inside the organization.
+                    </flux:subheading>
 
                 </div>
 
-                <div class="space-y-4">
+                <flux:button variant="primary">
+                    New Workspace
+                </flux:button>
 
-                    @forelse ($organization->workspaces as $workspace)
-                        <div class="border rounded-xl p-4">
+            </div>
 
-                            <div class="flex items-center justify-between">
+            <div class="space-y-4">
 
-                                <div>
+                @forelse ($organization->workspaces as $workspace)
+                    <div class="border rounded-xl p-4">
 
-                                    <h3 class="font-semibold text-lg">
-                                        {{ $workspace->name }}
-                                    </h3>
+                        <div class="flex items-center justify-between">
 
-                                    <p class="text-sm text-zinc-500 mt-1">
-                                        {{ $workspace->description }}
-                                    </p>
+                            <div>
 
-                                </div>
+                                <h3 class="font-semibold text-lg">
+                                    {{ $workspace->name }}
+                                </h3>
+
+                                <p class="text-sm text-zinc-500 mt-1">
+                                    {{ $workspace->description }}
+                                </p>
 
                             </div>
 
                         </div>
 
-                    @empty
+                    </div>
 
-                        <div class="text-sm text-zinc-500">
-                            No workspaces created yet.
-                        </div>
-                    @endforelse
+                @empty
+
+                    <div class="text-sm text-zinc-500">
+                        No workspaces created yet.
+                    </div>
+                @endforelse
+
+            </div>
+
+        </flux:card>
+
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        {{-- Invitation Form --}}
+        <div>
+            <flux:card class="space-y-6">
+
+                <div>
+
+                    <flux:heading size="lg">
+                        Invite Member
+                    </flux:heading>
+
+                    <flux:subheading>
+                        Invite collaborators into this organization.
+                    </flux:subheading>
 
                 </div>
 
-            </flux:card>
+                <form wire:submit="inviteMember" class="space-y-4">
 
+                    <flux:input wire:model="inviteEmail" label="Email" type="email" required />
+
+                    @error('email')
+                        <p class="text-sm text-red-500 mt-1">
+                            {{ $message }}
+                        </p>
+                    @enderror
+                    
+                    @error('inviteEmail')
+                        <div class="text-red-600 text-sm mt-1">{{ $message }}</div>
+                    @enderror
+
+                    <flux:select wire:model="inviteRole" label="Role">
+
+                        <option value="member">
+                            Member
+                        </option>
+
+                        <option value="manager">
+                            Manager
+                        </option>
+
+                        <option value="manager">
+                            Viewer
+                        </option>
+
+                    </flux:select>
+
+                    @error('inviteRole')
+                        <p class="text-sm text-red-500 mt-1">
+                            {{ $message }}
+                        </p>
+                    @enderror
+
+                    <flux:button variant="primary" type="submit">
+                        Send Invitation
+                    </flux:button>
+
+                </form>
+
+            </flux:card>
         </div>
 
         {{-- Members --}}
@@ -173,50 +260,112 @@ new class extends Component {
 
         </div>
 
-        <div>
-            <flux:card class="space-y-6">
 
-                <div>
+    </div>
 
-                    <flux:heading size="lg">
-                        Invite Member
-                    </flux:heading>
+    {{-- Invitations Table --}}
+    <div>
+        <flux:card class="mt-8">
 
-                    <flux:subheading>
-                        Invite collaborators into this organization.
-                    </flux:subheading>
+            <div class="mb-6">
 
-                </div>
+                <flux:heading size="lg">
+                    Invitations
+                </flux:heading>
 
-                <form wire:submit="inviteMember" class="space-y-4">
+                <flux:subheading>
+                    Track invitation states.
+                </flux:subheading>
 
-                    <flux:input wire:model="inviteEmail" label="Email" type="email" required />
+            </div>
 
-                    <flux:select wire:model="inviteRole" label="Role">
+            <div class="overflow-x-auto">
 
-                        <option value="member">
-                            Member
-                        </option>
+                <table class="w-full text-sm">
 
-                        <option value="manager">
-                            Manager
-                        </option>
+                    <thead>
+                        <tr class="border-b">
+                            <th class="text-left py-3">
+                                Email
+                            </th>
 
-                        <option value="manager">
-                            Viewer
-                        </option>
+                            <th class="text-left py-3">
+                                Role
+                            </th>
 
-                    </flux:select>
+                            <th class="text-left py-3">
+                                Status
+                            </th>
 
-                    <flux:button variant="primary" type="submit">
-                        Send Invitation
-                    </flux:button>
+                            <th class="text-left py-3">
+                                Invited
+                            </th>
 
-                </form>
+                            <th class="text-left py-3">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
 
-            </flux:card>
-        </div>
+                    <tbody>
 
+                        @foreach ($this->invitations as $invitation)
+                            <tr class="border-b">
+
+                                <td class="py-4">
+                                    {{ $invitation->email }}
+                                </td>
+
+                                <td class="py-4">
+                                    {{ ucfirst($invitation->role) }}
+                                </td>
+
+                                <td class="py-4">
+
+                                    <flux:badge color="{{ $invitation->status_color }}">
+                                        {{ ucfirst($invitation->computed_status) }}
+                                    </flux:badge>
+
+                                    @if ($invitation->rejection_reason)
+                                        <p class="text-xs text-zinc-500 mt-1">
+
+                                            Reason:
+                                            {{ $invitation->rejection_reason }}
+
+                                        </p>
+                                    @endif
+
+                                </td>
+
+                                <td class="py-4">
+                                    {{ $invitation->created_at->diffForHumans() }}
+                                </td>
+
+                                <td class="py-4">
+
+                                    @if ($invitation->isPending())
+                                        <flux:button size="sm" variant="danger"
+                                            wire:click="
+                                        cancelInvitation(
+                                            {{ $invitation->id }}
+                                        )
+                                    ">
+                                            Cancel
+                                        </flux:button>
+                                    @endif
+
+                                </td>
+
+                            </tr>
+                        @endforeach
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </flux:card>
     </div>
 
 

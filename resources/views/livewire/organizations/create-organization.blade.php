@@ -13,7 +13,9 @@ new class extends Component {
             'name' => ['required', 'string', 'max:255'],
         ]);
 
-        $organization = $organizationService->create(data: $validated, owner: auth()->user());
+        $organizationData = new CreateOrganizationData(name: $this->name, owner_id: auth()->id());
+
+        $organizationService->create($organizationData);
 
         Flux::toast(variant: 'success', text: __('Organization created successfully.'));
 

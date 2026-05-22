@@ -38,4 +38,9 @@ class Organization extends Model
     {
         return $this->hasMany(Workspace::class);
     }
+
+    public function invitations()
+    {
+        return $this->hasMany(Invitation::class);
+    }
 }
