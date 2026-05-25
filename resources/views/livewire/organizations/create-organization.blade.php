@@ -3,6 +3,7 @@
 use App\Services\OrganizationService;
 use Flux\Flux;
 use Livewire\Component;
+use App\Data\Organizations\CreateOrganizationData;
 
 new class extends Component {
     public string $name = '';
@@ -15,11 +16,11 @@ new class extends Component {
 
         $organizationData = new CreateOrganizationData(name: $this->name, owner_id: auth()->id());
 
-        $organizationService->create($organizationData);
+        $organization = $organizationService->create($organizationData);
 
         Flux::toast(variant: 'success', text: __('Organization created successfully.'));
 
-        $this->redirectRoute('organizations.show', ['organization' => $organization->id], navigate: true);
+        $this->redirectRoute('organizations.show', ['organization' => $organization], navigate: true);
     }
 };
 

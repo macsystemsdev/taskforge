@@ -43,4 +43,9 @@ class Organization extends Model
     {
         return $this->hasMany(Invitation::class);
     }
+
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
 }

@@ -4,6 +4,7 @@ use App\Models\Organization;
 use App\Models\Invitation;
 use Livewire\Component;
 use App\Actions\Organizations\InviteMemberAction;
+use App\Data\Invitations\InviteMemberData;
 
 new class extends Component {
     public Organization $organization;
@@ -33,14 +34,9 @@ new class extends Component {
         ]);
 
         // Call to handle function in Organization InviteMemberAction to send inviation email
-        $inviteMemberAction->handle(
-            organization: $this->organization,
-            inviter: auth()->user(),
-            data: [
-                'email' => $validated['inviteEmail'],
-                'role' => $validated['inviteRole'],
-            ],
-        );
+        $inviteData = new InviteMemberData(organization_id: $this->organization->id, organization: $this->organization, email: $validated['inviteEmail'], role: $validated['inviteRole'], invited_by: auth()->id());
+
+        $inviteMemberAction->handle($inviteData);
 
         // success message
         Flux::toast(variant: 'success', text: 'Invitation sent.');
@@ -134,8 +130,13 @@ new class extends Component {
                             </div>
 
                         </div>
+                        <a href="{{ route('projects.create', $workspace) }}"
+                            class="px-4 py-2 rounded-xl bg-black text-white text-sm">
+                            Create Project
 
                     </div>
+
+                    </a>
 
                 @empty
 
@@ -145,6 +146,8 @@ new class extends Component {
                 @endforelse
 
             </div>
+
+
 
         </flux:card>
 
@@ -177,7 +180,7 @@ new class extends Component {
                             {{ $message }}
                         </p>
                     @enderror
-                    
+
                     @error('inviteEmail')
                         <div class="text-red-600 text-sm mt-1">{{ $message }}</div>
                     @enderror

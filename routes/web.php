@@ -5,12 +5,14 @@ use App\Http\Middleware\EnsureTeamMembership;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 use App\Models\Organization;
-
+use App\Models\Project;
 
 Route::get('/invitations/{token}/accept', [OrganizationInvitationController::class, 'accept'])
     ->name('invitations.accept')->middleware('auth');
+
 Route::get('/invitations/{token}/reject', [OrganizationInvitationController::class, 'reject'])
     ->name('invitations.reject')->middleware('auth');
+    
 Route::get('/invitations/{token}/reject', [OrganizationInvitationController::class, 'showRejectForm'])->name('invitations.reject.form')->middleware('auth');
 
 Route::view('/', 'welcome', [
@@ -39,10 +41,18 @@ Route::middleware(['auth'])->group(function () {
         }
     )->name('organizations.show');
 
-    // Send and reject organization invitations
+    Route::get(
+        '/workspaces/{workspace}/projects/create',
+        fn() => view('pages.projects.create')
+    )->name('projects.create');
 
-    
-    });
+    Route::get(
+        '/projects/{project}',
+        function (Project $project) {
+            return view('pages.projects.show', compact('project'));
+        }
+    )->name('projects.show');
+});
 
 
 require __DIR__ . '/settings.php';

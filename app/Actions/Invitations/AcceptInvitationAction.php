@@ -3,6 +3,7 @@
 namespace App\Actions\Invitations;
 
 use App\Models\Invitation;
+use App\Models\Organization;
 use App\Models\User;
 
 class AcceptInvitationAction
@@ -10,7 +11,7 @@ class AcceptInvitationAction
     public function handle(
         string $token,
         User $user,
-    ): void {
+    ): Organization {
 
         $invitation = Invitation::query()
             ->where('token', $token)
@@ -49,5 +50,7 @@ class AcceptInvitationAction
             'status' => 'accepted',
             'accepted_at' => now(),
         ]);
+
+        return $invitation->  organization;
     }
 }

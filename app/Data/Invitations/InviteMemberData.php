@@ -2,6 +2,7 @@
 
 namespace App\Data\Invitations;
 
+use App\Models\Organization;
 use Spatie\LaravelData\Data;
 
 class InviteMemberData extends Data
@@ -11,5 +12,6 @@ class InviteMemberData extends Data
         public string $email,
         public string $role,
         public int $invited_by,
+        public Organization $organization,
     ) {}
 }
