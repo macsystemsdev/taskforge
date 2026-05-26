@@ -21,17 +21,20 @@ new class extends Component {
 
         <div>
             <h1 class="text-3xl font-bold">
-                {{ $project->name }}
+                <?php echo e($project->name); ?>
+
             </h1>
 
             <p class="text-zinc-500 mt-2">
-                {{ $project->description }}
+                <?php echo e($project->description); ?>
+
             </p>
         </div>
 
         <div class="text-sm text-zinc-500">
             Workspace:
-            {{ $project->workspace->name }}
+            <?php echo e($project->workspace->name); ?>
+
         </div>
 
     </div>
@@ -44,7 +47,8 @@ new class extends Component {
             </p>
 
             <p class="mt-2 font-semibold">
-                {{ ucfirst($project->status) }}
+                <?php echo e(ucfirst($project->status)); ?>
+
             </p>
         </div>
 
@@ -54,7 +58,8 @@ new class extends Component {
             </p>
 
             <p class="mt-2 font-semibold">
-                {{ $project->owner->name }}
+                <?php echo e($project->owner->name); ?>
+
             </p>
         </div>
 
@@ -64,7 +69,8 @@ new class extends Component {
             </p>
 
             <p class="mt-2 font-semibold">
-                {{ $project->due_date ?? 'No due date' }}
+                <?php echo e($project->due_date ?? 'No due date'); ?>
+
             </p>
         </div>
 
@@ -75,17 +81,45 @@ new class extends Component {
         <div class="rounded-2xl border bg-white p-6">
 
             <h1 class="text-3xl font-bold">
-                {{ $project->name }}
+                <?php echo e($project->name); ?>
+
             </h1>
 
             <p class="mt-3 text-zinc-600">
-                {{ $project->description }}
+                <?php echo e($project->description); ?>
+
             </p>
 
         </div>
 
-        @livewire('tasks.create-task', ['project' => $project])
+        <?php
+$__split = function ($name, $params = []) {
+    return [$name, $params];
+};
+[$__name, $__params] = $__split('tasks.create-task', ['project' => $project]);
+
+$__keyOuter = $__key ?? null;
+
+$__key = null;
+$__componentSlots = [];
+
+$__key ??= \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::generateKey('lw-1579313436-0', $__key);
+
+$__html = app('livewire')->mount($__name, $__params, $__key, $__componentSlots);
+
+echo $__html;
+
+unset($__html);
+unset($__key);
+$__key = $__keyOuter;
+unset($__keyOuter);
+unset($__name);
+unset($__params);
+unset($__componentSlots);
+unset($__split);
+?>
 
     </div>
 
 </div>
+<?php /**PATH D:\Code\taskforge\resources\views/livewire/projects/show-project.blade.php ENDPATH**/ ?>

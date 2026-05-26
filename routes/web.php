@@ -62,6 +62,17 @@ Route::middleware(['auth'])->group(function () {
             );
         }
     )->name('projects.show');
+
+    // create task
+    Route::get(
+        '/projects/{project}/tasks/create',
+        function (Project $project) {
+            return view(
+                'pages.tasks.create',
+                compact('project')
+            );
+        }
+    )->name('tasks.create');
 });
 
 

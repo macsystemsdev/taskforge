@@ -2,7 +2,9 @@
 
 namespace App\Data\Projects;
 
-class CreateProjectData
+use Spatie\LaravelData\Data;
+
+class CreateProjectData extends Data
 {
     public function __construct(
         public int $owner_id,
