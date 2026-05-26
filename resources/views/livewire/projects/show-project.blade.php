@@ -14,9 +14,11 @@ new class extends Component
             'owner',
         ]);
 
-        return view('pages.projects.show');
+        return view(
+            'livewire.projects.show-project'
+        );
     }
-}
+};
 ?>
 
  <div class="max-w-5xl mx-auto py-10">
@@ -42,7 +44,7 @@ new class extends Component
 
         <div class="grid grid-cols-3 gap-6">
 
-            <div class="p-6 rounded-2xl border bg-white">
+            <div class="p-6 rounded-2xl border bg-red">
                 <p class="text-sm text-zinc-500">
                     Status
                 </p>
@@ -52,7 +54,7 @@ new class extends Component
                 </p>
             </div>
 
-            <div class="p-6 rounded-2xl border bg-white">
+            <div class="p-6 rounded-2xl border bg-red">
                 <p class="text-sm text-zinc-500">
                     Owner
                 </p>
@@ -62,7 +64,7 @@ new class extends Component
                 </p>
             </div>
 
-            <div class="p-6 rounded-2xl border bg-white">
+            <div class="p-6 rounded-2xl border bg-red">
                 <p class="text-sm text-zinc-500">
                     Due Date
                 </p>

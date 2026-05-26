@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Table('workspaces')]
-#[Fillable(['name', 'description', 'organization_id'])]
+#[Fillable(['name', 'description', 'organization_id', 'slug'])]
 class Workspace extends Model
 {
 
@@ -22,5 +22,10 @@ class Workspace extends Model
     public function projects(): HasMany
     {
         return $this->hasMany(Project::class);
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
     }
 }

@@ -6,13 +6,15 @@ use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 use App\Models\Organization;
 use App\Models\Project;
+use App\Models\Workspace;
+use Livewire\Volt\Volt;
 
 Route::get('/invitations/{token}/accept', [OrganizationInvitationController::class, 'accept'])
     ->name('invitations.accept')->middleware('auth');
 
 Route::get('/invitations/{token}/reject', [OrganizationInvitationController::class, 'reject'])
     ->name('invitations.reject')->middleware('auth');
-    
+
 Route::get('/invitations/{token}/reject', [OrganizationInvitationController::class, 'showRejectForm'])->name('invitations.reject.form')->middleware('auth');
 
 Route::view('/', 'welcome', [
@@ -43,13 +45,21 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get(
         '/workspaces/{workspace}/projects/create',
-        fn() => view('pages.projects.create')
+        function (Workspace $workspace) {
+            return view(
+                'pages.projects.create',
+                compact('workspace')
+            );
+        }
     )->name('projects.create');
 
     Route::get(
         '/projects/{project}',
         function (Project $project) {
-            return view('pages.projects.show', compact('project'));
+            return view(
+                'pages.projects.show',
+                compact('project')
+            );
         }
     )->name('projects.show');
 });

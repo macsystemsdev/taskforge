@@ -130,12 +130,13 @@ new class extends Component {
                             </div>
 
                         </div>
-                        <a href="{{ route('projects.create', $workspace) }}"
-                            class="px-4 py-2 rounded-xl bg-black text-white text-sm">
-                            Create Project
+                       
 
                     </div>
-
+                    
+                     <a href="{{ route('projects.create', $workspace) }}"
+                            class="px-4 py-2 rounded-xl bg-black text-white text-sm">
+                            Create Project
                     </a>
 
                 @empty

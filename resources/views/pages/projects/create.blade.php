@@ -1,3 +1,3 @@
 <x-layouts::app>
-    @livewire('projects.create-project')
+    @livewire('projects.create-project', ['workspace' => $workspace])
 </x-layouts::app>

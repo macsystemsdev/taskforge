@@ -1,13 +1,11 @@
 <?php
 
-
 use App\Actions\Projects\CreateProjectAction;
 use App\Data\Projects\CreateProjectData;
 use App\Models\Workspace;
 use Livewire\Component;
 
-new class extends Component
-{
+new class extends Component {
     public Workspace $workspace;
 
     public string $name = '';
@@ -24,18 +22,25 @@ new class extends Component
             'due_date' => ['nullable', 'date'],
         ]);
 
+        // pass data into Project DTO for binding into action
         $data = new CreateProjectData(owner_id: auth()->id(), name: $validated['name'], description: $validated['description'], due_date: $validated['due_date']);
 
+        // handle function call in CreateprojectAction to create project with DTO data
         $project = $action->handle(workspace: $this->workspace, data: $data);
 
         return redirect()->route('projects.show', $project);
     }
 
-   
-}
-?>
+    // render this page which will pick up layout from the pages/projects
+    public function render()
+    {
+        return view('livewire.projects.create-project');
+    }
+};
 
-<div class="max-w-3xl mx-auto py-10">
+?>
+<div>
+    <div class="max-w-3xl mx-auto py-10">
 
         <div class="mb-8">
             <h1 class="text-3xl font-bold">
@@ -87,3 +92,4 @@ new class extends Component
 
         </form>
     </div>
+</div>
