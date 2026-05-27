@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 use App\Models\Organization;
 use App\Models\Project;
+use App\Models\Task;
 use App\Models\Workspace;
 use Livewire\Volt\Volt;
 
@@ -73,6 +74,17 @@ Route::middleware(['auth'])->group(function () {
             );
         }
     )->name('tasks.create');
+
+    Route::get(
+        '/tasks/{task:slug}',
+        function (Task $task) {
+
+            return view(
+                'pages.tasks.show',
+                compact('task')
+            );
+        }
+    )->name('tasks.show');
 });
 
 

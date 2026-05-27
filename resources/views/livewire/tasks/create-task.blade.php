@@ -177,7 +177,9 @@ new class extends Component {
                             <div>
 
                                 <h3 class="font-semibold text-lg">
-                                    {{ $task->title }}
+                                    <a href="{{ route('tasks.show', $task) }}" class="font-semibold hover:underline">
+                                        {{ $task->title }}
+                                    </a>
                                 </h3>
 
                                 <p class="text-sm text-zinc-500 mt-2">

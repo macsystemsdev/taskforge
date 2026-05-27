@@ -8,9 +8,10 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 #[Table('tasks')]
-#[Fillable(['project_id', 'assigned_to', 'created_by', 'title', 'description', 'status', 'priority', 'due_date', 'completed_at'])]
+#[Fillable(['project_id', 'slug', 'assigned_to', 'created_by', 'title', 'description', 'status', 'priority', 'due_date', 'completed_at'])]
 class Task extends Model
 {
     // Relationships
@@ -82,5 +83,16 @@ class Task extends Model
         );
     }
 
-    
+    public function comments(): MorphMany
+    {
+        return $this->morphMany(
+            Comment::class,
+            'commentable'
+        );
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
 }

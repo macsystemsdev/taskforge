@@ -88,4 +88,8 @@ new class extends Component {
 
     </div>
 
+    @livewire('comments.comment-section', [
+        'commentable' => $project,
+    ])
+
 </div>

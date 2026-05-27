@@ -121,5 +121,34 @@ unset($__split);
 
     </div>
 
+    <?php
+$__split = function ($name, $params = []) {
+    return [$name, $params];
+};
+[$__name, $__params] = $__split('comments.comment-section', [
+        'commentable' => $project,
+    ]);
+
+$__keyOuter = $__key ?? null;
+
+$__key = null;
+$__componentSlots = [];
+
+$__key ??= \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::generateKey('lw-1579313436-1', $__key);
+
+$__html = app('livewire')->mount($__name, $__params, $__key, $__componentSlots);
+
+echo $__html;
+
+unset($__html);
+unset($__key);
+$__key = $__keyOuter;
+unset($__keyOuter);
+unset($__name);
+unset($__params);
+unset($__componentSlots);
+unset($__split);
+?>
+
 </div>
 <?php /**PATH D:\Code\taskforge\resources\views/livewire/projects/show-project.blade.php ENDPATH**/ ?>

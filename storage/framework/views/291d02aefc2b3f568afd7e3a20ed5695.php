@@ -187,8 +187,10 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
                             <div>
 
                                 <h3 class="font-semibold text-lg">
-                                    <?php echo e($task->title); ?>
+                                    <a href="<?php echo e(route('tasks.show', $task)); ?>" class="font-semibold hover:underline">
+                                        <?php echo e($task->title); ?>
 
+                                    </a>
                                 </h3>
 
                                 <p class="text-sm text-zinc-500 mt-2">

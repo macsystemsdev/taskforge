@@ -7,6 +7,7 @@ use App\Models\Project;
 use App\Notifications\TaskAssignedNotification;
 use Illuminate\Support\Facades\Auth;
 use App\Enums\TaskStatus;
+use Illuminate\Support\Str;
 
 class CreateTaskAction
 {
@@ -28,6 +29,8 @@ class CreateTaskAction
             'description' => $data->description,
 
             'priority' => $data->priority,
+
+            'slug' => Str::slug($data->title) . '-' . Str::random(5),
 
             'status' => TaskStatus::TODO,
 
