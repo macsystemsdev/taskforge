@@ -14,12 +14,12 @@ class Workspace extends Model
 {
 
 
-    public function organization_workspace(): BelongsTo
+    public function organization(): BelongsTo
     {
         return $this->belongsTo(Organization::class);
     }
 
-    public function projects(): HasMany
+    public function project(): HasMany
     {
         return $this->hasMany(Project::class);
     }

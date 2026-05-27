@@ -61,7 +61,7 @@ new class extends Component {
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-    {{-- TASK CREATION FORM --}}
+    
     <div class="lg:col-span-1">
 
         <div class="rounded-2xl border bg-dark p-6 shadow-sm">
@@ -70,11 +70,12 @@ new class extends Component {
                 Create Task
             </h2>
 
-            @if (session('success'))
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(session('success')): ?>
                 <div class="mb-4 rounded-xl bg-green-100 px-4 py-3 text-green-700">
-                    {{ session('success') }}
+                    <?php echo e(session('success')); ?>
+
                 </div>
-            @endif
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
             <form wire:submit="createTask" class="space-y-5">
 
@@ -85,11 +86,19 @@ new class extends Component {
 
                     <input type="text" wire:model="title" class="w-full rounded-xl border px-4 py-3">
 
-                    @error('title')
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['title'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
                         <p class="text-sm text-red-500 mt-1">
-                            {{ $message }}
+                            <?php echo e($message); ?>
+
                         </p>
-                    @enderror
+                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                 </div>
 
                 <div>
@@ -110,11 +119,12 @@ new class extends Component {
                             Unassigned
                         </option>
 
-                        @foreach ($members as $member)
-                            <option value="{{ $member->id }}">
-                                {{ $member->name }}
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $members; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $member): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                            <option value="<?php echo e($member->id); ?>">
+                                <?php echo e($member->name); ?>
+
                             </option>
-                        @endforeach
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
 
                     </select>
                 </div>
@@ -150,7 +160,7 @@ new class extends Component {
 
     </div>
 
-    {{-- TASK LIST --}}
+    
     <div class="lg:col-span-2">
 
         <div class="rounded-2xl border bg-dark p-6 shadow-sm">
@@ -162,14 +172,14 @@ new class extends Component {
                 </h2>
 
                 <span class="text-sm text-zinc-500">
-                    {{ $project->tasks->count() }} Tasks
+                    <?php echo e($project->tasks->count()); ?> Tasks
                 </span>
 
             </div>
 
             <div class="space-y-4">
 
-                @forelse ($project->tasks as $task)
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $project->tasks; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $task): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
                     <div class="rounded-2xl border p-5">
 
                         <div class="flex items-start justify-between gap-4">
@@ -177,23 +187,27 @@ new class extends Component {
                             <div>
 
                                 <h3 class="font-semibold text-lg">
-                                    {{ $task->title }}
+                                    <?php echo e($task->title); ?>
+
                                 </h3>
 
                                 <p class="text-sm text-zinc-500 mt-2">
-                                    {{ $task->description }}
+                                    <?php echo e($task->description); ?>
+
                                 </p>
 
                                 <div class="mt-4 flex items-center gap-3 text-sm text-zinc-500">
 
                                     <span>
                                         Assigned to:
-                                        {{ $task->assignee?->name ?? 'Unassigned' }}
+                                        <?php echo e($task->assignee?->name ?? 'Unassigned'); ?>
+
                                     </span>
 
                                     <span>
                                         Due:
-                                        {{ $task->due_date?->format('M d, Y') ?? 'N/A' }}
+                                        <?php echo e($task->due_date?->format('M d, Y') ?? 'N/A'); ?>
+
                                     </span>
 
                                 </div>
@@ -203,11 +217,13 @@ new class extends Component {
                             <div class="flex flex-col gap-2 items-end">
 
                                 <span class="rounded-full border px-3 py-1 text-sm">
-                                    {{ str($task->priority->value)->headline() }}
+                                    <?php echo e(str($task->priority->value)->headline()); ?>
+
                                 </span>
 
                                 <span class="rounded-full border px-3 py-1 text-sm">
-                                    {{ str($task->status->value)->headline() }}
+                                    <?php echo e(str($task->status->value)->headline()); ?>
+
                                 </span>
 
                             </div>
@@ -216,7 +232,7 @@ new class extends Component {
 
                     </div>
 
-                @empty
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
 
                     <div class="rounded-2xl border border-dashed p-10 text-center">
 
@@ -225,7 +241,7 @@ new class extends Component {
                         </p>
 
                     </div>
-                @endforelse
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
             </div>
 
@@ -234,3 +250,4 @@ new class extends Component {
     </div>
 
 </div>
+<?php /**PATH D:\Code\taskforge\resources\views/livewire/tasks/create-task.blade.php ENDPATH**/ ?>

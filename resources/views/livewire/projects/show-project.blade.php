@@ -70,9 +70,9 @@ new class extends Component {
 
     </div>
 
-    <div class="space-y-8">
+    <div class="space-y-8 mt-4">
 
-        <div class="rounded-2xl border bg-white p-6">
+        <div class="rounded-2xl border bg-dark p-6">
 
             <h1 class="text-3xl font-bold">
                 {{ $project->name }}

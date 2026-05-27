@@ -19,7 +19,7 @@ class Task extends Model
         return $this->belongsTo(Project::class);
     }
 
-    public function assignedUser(): BelongsTo
+    public function assignee(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to');
     }
@@ -73,4 +73,14 @@ class Task extends Model
             ]
         );
     }
+
+    public function scopeAssignedTo($query, int $userId)
+    {
+        return $query->where(
+            'assigned_to',
+            $userId
+        );
+    }
+
+    
 }

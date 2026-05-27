@@ -10,7 +10,7 @@ class WorkspaceService
         Organization $organization
     ): Workspace {
 
-        return Workspace::create([
+        return $organization->workspaces()->create([
             'organization_id' => $organization->id,
             'name' => 'General Workspace',
             'description' => 'Default workspace',

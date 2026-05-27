@@ -27,6 +27,8 @@ new class extends Component {
 
         // handle function call in CreateprojectAction to create project with DTO data
         $project = $action->handle(workspace: $this->workspace, data: $data);
+        
+        Flux::toast(variant: 'success', text: __('Project created successfully.'));
 
         return redirect()->route('projects.show', $project);
     }
