@@ -67,4 +67,9 @@ class Invitation extends Model
             default => 'blue',
         };
     }
+
+    public function activityLogs()
+    {
+        return $this->morphMany(ActivityLog::class, 'subject');
+    }
 }

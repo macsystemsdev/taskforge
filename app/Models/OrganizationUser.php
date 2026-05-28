@@ -37,4 +37,10 @@ class OrganizationUser extends Pivot
     {
         return $this->belongsTo(User::class, 'invited_by');
     }
+
+    // Activity logs for this organization user morphMany
+    public function activityLogs()
+    {
+        return $this->morphMany(ActivityLog::class, 'subject');
+    }
 }

@@ -3,6 +3,7 @@
 use App\Actions\Projects\CreateProjectAction;
 use App\Data\Projects\CreateProjectData;
 use App\Models\Workspace;
+use Flux\Flux;
 use Livewire\Component;
 
 new class extends Component {
@@ -41,57 +42,40 @@ new class extends Component {
 };
 
 ?>
-<div>
-    <div class="max-w-3xl mx-auto py-10">
+<x-ui.page size="3xl">
+    <x-ui.page-header
+        :title="__('Create Project')"
+        :description="__('Create a project inside :workspace and define its first operational boundary.', ['workspace' => $workspace->name])"
+    />
 
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold">
-                Create Project
-            </h1>
-
-            <p class="text-zinc-500 mt-2">
-                Create a new project inside {{ $workspace->name }}.
-            </p>
-        </div>
-
+    <x-ui.card>
         <form wire:submit="createProject" class="space-y-6">
-
-            <div>
-                <label class="block text-sm font-medium mb-2">
-                    Project Name
-                </label>
-
-                <input type="text" wire:model="name" class="w-full rounded-xl border-zinc-300">
+            <div class="space-y-2">
+                <label for="project-name">Project Name</label>
+                <input id="project-name" type="text" wire:model="name" class="w-full px-3 py-2.5">
 
                 @error('name')
-                    <p class="text-red-500 text-sm mt-1">
+                    <p class="text-sm font-medium text-red-600 dark:text-red-400">
                         {{ $message }}
                     </p>
                 @enderror
             </div>
 
-            <div>
-                <label class="block text-sm font-medium mb-2">
-                    Description
-                </label>
-
-                <textarea wire:model="description" rows="5" class="w-full rounded-xl border-zinc-300"></textarea>
+            <div class="space-y-2">
+                <label for="project-description">Description</label>
+                <textarea id="project-description" wire:model="description" rows="5" class="w-full px-3 py-2.5"></textarea>
             </div>
 
-            <div>
-                <label class="block text-sm font-medium mb-2">
-                    Due Date
-                </label>
-
-                <input type="date" wire:model="due_date" class="w-full rounded-xl border-zinc-300">
+            <div class="space-y-2">
+                <label for="project-due-date">Due Date</label>
+                <input id="project-due-date" type="date" wire:model="due_date" class="w-full px-3 py-2.5">
             </div>
 
-            <div>
-                <button type="submit" class="px-6 py-3 rounded-xl bg-black text-white">
+            <div class="flex justify-end border-t border-zinc-200 pt-5 dark:border-white/10">
+                <button type="submit" class="tf-button-primary">
                     Create Project
                 </button>
             </div>
-
         </form>
-    </div>
-</div>
+    </x-ui.card>
+</x-ui.page>

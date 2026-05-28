@@ -1,7 +1,5 @@
 <?php
 
-namespace App\Livewire\Tasks;
-
 use App\Actions\Tasks\CreateTaskAction;
 use App\Data\Tasks\CreateTaskData;
 use App\Models\Project;
@@ -25,8 +23,6 @@ new class extends Component {
 
     public function createTask(CreateTaskAction $action)
     {
-        $tasks = $this->project->tasks()->when($this->statusFilter, fn($query) => $query->where('status', $this->statusFilter))->latest()->get();
-
         $validated = $this->validate([
             'title' => ['required', 'string', 'max:255'],
 
@@ -52,60 +48,68 @@ new class extends Component {
 
     public function render()
     {
+        $this->project->load(['tasks.assignee']);
+
         return view('livewire.tasks.create-task', [
             'members' => $this->project->workspace->organization->members,
+            'tasks' => $this->project->tasks()
+                ->with('assignee')
+                ->when($this->statusFilter, fn($query) => $query->where('status', $this->statusFilter))
+                ->latest()
+                ->get(),
         ]);
     }
 };
 ?>
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="grid grid-cols-1 gap-6 xl:grid-cols-[360px_1fr]">
 
     {{-- TASK CREATION FORM --}}
-    <div class="lg:col-span-1">
+    <div>
 
-        <div class="rounded-2xl border bg-dark p-6 shadow-sm">
+        <x-ui.card class="space-y-5">
 
-            <h2 class="text-xl font-semibold mb-6">
-                Create Task
-            </h2>
+            <div>
+                <h2 class="tf-panel-title">Create Task</h2>
+                <p class="tf-panel-subtitle">Add work directly to this project.</p>
+            </div>
 
             @if (session('success'))
-                <div class="mb-4 rounded-xl bg-green-100 px-4 py-3 text-green-700">
+                <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-200">
                     {{ session('success') }}
                 </div>
             @endif
 
             <form wire:submit="createTask" class="space-y-5">
 
-                <div>
-                    <label class="block text-sm font-medium mb-2">
+                <div class="space-y-2">
+                    <label for="task-title">
                         Title
                     </label>
 
-                    <input type="text" wire:model="title" class="w-full rounded-xl border px-4 py-3">
+                    <input id="task-title" type="text" wire:model="title" class="w-full px-3 py-2.5">
 
                     @error('title')
-                        <p class="text-sm text-red-500 mt-1">
+                        <p class="text-sm font-medium text-red-600 dark:text-red-400">
                             {{ $message }}
                         </p>
                     @enderror
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium mb-2">
+                <div class="space-y-2">
+                    <label for="task-description">
                         Description
                     </label>
 
-                    <textarea wire:model="description" rows="4" class="w-full rounded-xl border px-4 py-3"></textarea>
+                    <textarea id="task-description" wire:model="description" rows="4" class="w-full px-3 py-2.5"></textarea>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium mb-2">
+                <div class="space-y-2">
+                    <label for="task-assignee">
                         Assign To
                     </label>
 
-                    <select wire:model="assigned_to" class="w-full rounded-xl border px-4 py-3">
+                    <select id="task-assignee" wire:model="assigned_to" class="w-full px-3 py-2.5">
                         <option value="">
                             Unassigned
                         </option>
@@ -119,12 +123,12 @@ new class extends Component {
                     </select>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium mb-2">
+                <div class="space-y-2">
+                    <label for="task-priority">
                         Priority
                     </label>
 
-                    <select wire:model="priority" class="w-full rounded-xl border px-4 py-3">
+                    <select id="task-priority" wire:model="priority" class="w-full px-3 py-2.5">
                         <option value="low">Low</option>
                         <option value="medium">Medium</option>
                         <option value="high">High</option>
@@ -132,106 +136,93 @@ new class extends Component {
                     </select>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium mb-2">
+                <div class="space-y-2">
+                    <label for="task-due-date">
                         Due Date
                     </label>
 
-                    <input type="date" wire:model="due_date" class="w-full rounded-xl border px-4 py-3">
+                    <input id="task-due-date" type="date" wire:model="due_date" class="w-full px-3 py-2.5">
                 </div>
 
-                <button type="submit" class="w-full rounded-xl bg-black px-5 py-3 text-white">
+                <button type="submit" class="tf-button-primary w-full">
                     Create Task
                 </button>
 
             </form>
 
-        </div>
+        </x-ui.card>
 
     </div>
 
     {{-- TASK LIST --}}
-    <div class="lg:col-span-2">
+    <div>
 
-        <div class="rounded-2xl border bg-dark p-6 shadow-sm">
+        <x-ui.card padding="p-0" class="overflow-hidden">
 
-            <div class="flex items-center justify-between mb-6">
+            <div class="flex flex-col gap-4 border-b border-zinc-200 px-5 py-4 dark:border-white/10 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                    <h2 class="tf-panel-title">Project Tasks</h2>
+                    <p class="tf-panel-subtitle">{{ $project->tasks->count() }} tasks in this project.</p>
+                </div>
 
-                <h2 class="text-xl font-semibold">
-                    Project Tasks
-                </h2>
-
-                <span class="text-sm text-zinc-500">
-                    {{ $project->tasks->count() }} Tasks
-                </span>
-
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" wire:click="$set('statusFilter', null)" class="{{ $statusFilter === null ? 'tf-button-primary' : 'tf-button-secondary' }} px-3 py-2">
+                        All
+                    </button>
+                    @foreach (\App\Enums\TaskStatus::cases() as $status)
+                        <button type="button" wire:click="$set('statusFilter', '{{ $status->value }}')" class="{{ $statusFilter === $status->value ? 'tf-button-primary' : 'tf-button-secondary' }} px-3 py-2">
+                            {{ str($status->value)->headline() }}
+                        </button>
+                    @endforeach
+                </div>
             </div>
 
-            <div class="space-y-4">
+            @if ($tasks->isNotEmpty())
+                <div class="overflow-x-auto">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Task</th>
+                                <th>Status</th>
+                                <th>Priority</th>
+                                <th>Assignee</th>
+                                <th>Due</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($tasks as $task)
+                                <tr class="tf-row-link cursor-pointer" onclick="window.location.href='{{ route('tasks.show', $task) }}'">
+                                    <td>
+                                        <a href="{{ route('tasks.show', $task) }}" class="font-medium text-zinc-950 hover:underline dark:text-white" wire:navigate>
+                                            {{ $task->title }}
+                                        </a>
+                                        @if ($task->description)
+                                            <p class="mt-1 max-w-xl truncate text-sm text-zinc-500 dark:text-zinc-400">
+                                                {{ $task->description }}
+                                            </p>
+                                        @endif
+                                    </td>
+                                    <td><x-ui.status-badge :status="$task->status" /></td>
+                                    <td><x-ui.priority-badge :priority="$task->priority" /></td>
+                                    <td>
+                                        <div class="flex items-center gap-2">
+                                            <x-ui.avatar :name="$task->assignee?->name ?? 'Unassigned'" size="sm" />
+                                            <span>{{ $task->assignee?->name ?? 'Unassigned' }}</span>
+                                        </div>
+                                    </td>
+                                    <td>{{ $task->due_date?->format('M d, Y') ?? 'No date' }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @else
+                <div class="p-5">
+                    <x-ui.empty-state title="No matching tasks" description="Create a task or change the status filter to widen the list." />
+                </div>
+            @endif
 
-                @forelse ($project->tasks as $task)
-                    <div class="rounded-2xl border p-5">
-
-                        <div class="flex items-start justify-between gap-4">
-
-                            <div>
-
-                                <h3 class="font-semibold text-lg">
-                                    <a href="{{ route('tasks.show', $task) }}" class="font-semibold hover:underline">
-                                        {{ $task->title }}
-                                    </a>
-                                </h3>
-
-                                <p class="text-sm text-zinc-500 mt-2">
-                                    {{ $task->description }}
-                                </p>
-
-                                <div class="mt-4 flex items-center gap-3 text-sm text-zinc-500">
-
-                                    <span>
-                                        Assigned to:
-                                        {{ $task->assignee?->name ?? 'Unassigned' }}
-                                    </span>
-
-                                    <span>
-                                        Due:
-                                        {{ $task->due_date?->format('M d, Y') ?? 'N/A' }}
-                                    </span>
-
-                                </div>
-
-                            </div>
-
-                            <div class="flex flex-col gap-2 items-end">
-
-                                <span class="rounded-full border px-3 py-1 text-sm">
-                                    {{ str($task->priority->value)->headline() }}
-                                </span>
-
-                                <span class="rounded-full border px-3 py-1 text-sm">
-                                    {{ str($task->status->value)->headline() }}
-                                </span>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                @empty
-
-                    <div class="rounded-2xl border border-dashed p-10 text-center">
-
-                        <p class="text-zinc-500">
-                            No tasks created yet.
-                        </p>
-
-                    </div>
-                @endforelse
-
-            </div>
-
-        </div>
+        </x-ui.card>
 
     </div>
 

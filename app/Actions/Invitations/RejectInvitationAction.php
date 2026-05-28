@@ -2,11 +2,15 @@
 
 namespace App\Actions\Invitations;
 
+use App\Actions\ActivityLogs\CreateActivityLogAction;
 use App\Models\Invitation;
 use App\Models\User;
 
 class RejectInvitationAction
 {
+    public function __construct(
+        protected CreateActivityLogAction $activity
+    ) {}
     public function handle(
         string $token,
         User $user,
@@ -42,5 +46,14 @@ class RejectInvitationAction
             'status' => 'rejected',
             'rejection_reason' => $reason,
         ]);
+
+        $this->activity->handle(
+            subject: $invitation,
+            event: 'invitation_rejected',
+            properties: [
+                'email' => $invitation->email,
+                'reason' => $reason,
+            ]
+        );
     }
 }

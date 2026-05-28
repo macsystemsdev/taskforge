@@ -26,45 +26,32 @@ new class extends Component {
 
 ?>
 
-<div class="min-h-screen flex items-center justify-center px-6 py-12">
+<x-ui.page size="3xl">
+    <x-ui.page-header
+        :title="__('Create Organization')"
+        :description="__('Set up a durable operating space for workspaces, projects, members, and invitations.')"
+    />
 
-    <div class="w-full max-w-2xl">
+    <x-ui.card class="space-y-6">
+        <form wire:submit="createOrganization" class="space-y-6">
+            <flux:input
+                wire:model="name"
+                :label="__('Organization Name')"
+                type="text"
+                placeholder="Acme Inc."
+                required
+                autofocus
+            />
 
-        <flux:card class="space-y-8">
+            <div class="flex flex-col gap-3 border-t border-zinc-200 pt-5 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
+                <p class="text-sm text-zinc-500 dark:text-zinc-400">
+                    You can rename the organization later.
+                </p>
 
-            <div class="space-y-2">
-
-                <flux:heading size="xl">
+                <flux:button variant="primary" type="submit">
                     Create Organization
-                </flux:heading>
-
-                <flux:subheading>
-                    Set up a new organization workspace for your team.
-                </flux:subheading>
-
+                </flux:button>
             </div>
-
-            <form wire:submit="createOrganization" class="space-y-6">
-
-                <flux:input wire:model="name" :label="__('Organization Name')" type="text" placeholder="Acme Inc."
-                    required autofocus />
-
-                <div class="flex items-center justify-between pt-4">
-
-                    <p class="text-sm text-zinc-500">
-                        You can rename this later.
-                    </p>
-
-                    <flux:button variant="primary" type="submit">
-                        Create Organization
-                    </flux:button>
-
-                </div>
-
-            </form>
-
-        </flux:card>
-
-    </div>
-
-</div>
+        </form>
+    </x-ui.card>
+</x-ui.page>

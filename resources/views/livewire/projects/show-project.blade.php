@@ -8,88 +8,61 @@ new class extends Component {
 
     public function render()
     {
-        $this->project->load(['workspace', 'owner']);
+        $this->project->load(['workspace.organization', 'owner', 'tasks.assignee']);
 
         return view('livewire.projects.show-project');
     }
 };
 ?>
 
-<div class="max-w-5xl mx-auto py-10">
+<x-ui.page>
+    @php
+        $tasks = $project->tasks;
+        $openTasks = $tasks->whereNotIn('status', [\App\Enums\TaskStatus::DONE])->count();
+        $completedTasks = $tasks->where('status', \App\Enums\TaskStatus::DONE)->count();
+        $dueDate = $project->due_date ? \Illuminate\Support\Carbon::parse($project->due_date)->format('M d, Y') : 'No due date';
+    @endphp
 
-    <div class="flex items-center justify-between mb-8">
+    <x-ui.page-header
+        :title="$project->name"
+        :description="$project->description ?: __('No project description has been added yet.')"
+        :eyebrow="$project->workspace->organization->name.' / '.$project->workspace->name"
+    >
+        <x-slot:actions>
+            <x-ui.status-badge :status="$project->status ?? 'active'" />
+        </x-slot:actions>
+    </x-ui.page-header>
 
-        <div>
-            <h1 class="text-3xl font-bold">
-                {{ $project->name }}
-            </h1>
+    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <x-ui.card class="space-y-2">
+            <p class="tf-muted">Owner</p>
+            <div class="flex items-center gap-2">
+                <x-ui.avatar :name="$project->owner->name" size="sm" />
+                <p class="font-semibold text-zinc-950 dark:text-white">{{ $project->owner->name }}</p>
+            </div>
+        </x-ui.card>
 
-            <p class="text-zinc-500 mt-2">
-                {{ $project->description }}
-            </p>
-        </div>
+        <x-ui.card class="space-y-2">
+            <p class="tf-muted">Due date</p>
+            <p class="font-semibold text-zinc-950 dark:text-white">{{ $dueDate }}</p>
+        </x-ui.card>
 
-        <div class="text-sm text-zinc-500">
-            Workspace:
-            {{ $project->workspace->name }}
-        </div>
+        <x-ui.card class="space-y-2">
+            <p class="tf-muted">Open tasks</p>
+            <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">{{ $openTasks }}</p>
+        </x-ui.card>
 
+        <x-ui.card class="space-y-2">
+            <p class="tf-muted">Completed</p>
+            <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">{{ $completedTasks }}</p>
+        </x-ui.card>
     </div>
 
-    <div class="grid grid-cols-3 gap-6">
-
-        <div class="p-6 rounded-2xl border bg-red">
-            <p class="text-sm text-zinc-500">
-                Status
-            </p>
-
-            <p class="mt-2 font-semibold">
-                {{ ucfirst($project->status) }}
-            </p>
-        </div>
-
-        <div class="p-6 rounded-2xl border bg-red">
-            <p class="text-sm text-zinc-500">
-                Owner
-            </p>
-
-            <p class="mt-2 font-semibold">
-                {{ $project->owner->name }}
-            </p>
-        </div>
-
-        <div class="p-6 rounded-2xl border bg-red">
-            <p class="text-sm text-zinc-500">
-                Due Date
-            </p>
-
-            <p class="mt-2 font-semibold">
-                {{ $project->due_date ?? 'No due date' }}
-            </p>
-        </div>
-
-    </div>
-
-    <div class="space-y-8 mt-4">
-
-        <div class="rounded-2xl border bg-dark p-6">
-
-            <h1 class="text-3xl font-bold">
-                {{ $project->name }}
-            </h1>
-
-            <p class="mt-3 text-zinc-600">
-                {{ $project->description }}
-            </p>
-
-        </div>
-
+    <div class="mt-6 space-y-6">
         @livewire('tasks.create-task', ['project' => $project])
 
+        @livewire('comments.comment-section', [
+            'commentable' => $project,
+        ])
     </div>
-
-    @livewire('comments.comment-section', [
-        'commentable' => $project,
-    ])
-
-</div>
+</x-ui.page>

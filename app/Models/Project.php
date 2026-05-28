@@ -41,4 +41,13 @@ class Project extends Model
             'commentable'
         );
     }
+
+    public function activityLogs(): MorphMany
+    {
+        return $this->morphMany(
+            ActivityLog::class,
+            'subject'
+        );
+    }
+
 }

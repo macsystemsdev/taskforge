@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 #[Table('workspaces')]
 #[Fillable(['name', 'description', 'organization_id', 'slug'])]
@@ -19,10 +20,15 @@ class Workspace extends Model
         return $this->belongsTo(Organization::class);
     }
 
-    public function project(): HasMany
+    public function projects(): HasMany
     {
         return $this->hasMany(Project::class);
     }
 
+    // activity log
+    public function activityLogs(): MorphMany
+    {
+        return $this->morphMany(ActivityLog::class, 'subject');
+    }
    
 }

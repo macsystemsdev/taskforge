@@ -81,4 +81,9 @@ class User extends Authenticatable
             'created_by'
         );
     }
+
+    public function activityLogs(): HasMany
+    {
+        return $this->hasMany(ActivityLog::class);
+    }
 }

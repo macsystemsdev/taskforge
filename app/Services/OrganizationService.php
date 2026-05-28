@@ -2,13 +2,18 @@
 
 namespace App\Services;
 
+use App\Actions\ActivityLogs\CreateActivityLogAction;
 use App\Data\Organizations\CreateOrganizationData;
+use App\Models\ActivityLog;
 use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Support\Str;
 
 class OrganizationService
 {
+    public function __construct(
+        protected CreateActivityLogAction $activity
+    ) {}
     public function create(CreateOrganizationData $data): Organization
     {
         $organization = Organization::create([
@@ -24,6 +29,15 @@ class OrganizationService
         'status' => 'active',
         'joined_at' => now(),
     ]);
+
+    // log created organization and owner
+    $this->activity->handle(
+        event: 'organization_created',
+        subject: $organization,
+        properties: [
+            'organization_name' => $organization->name,
+        ]
+    );
 
     app(WorkspaceService::class)->createDefaultWorkspace(
         organization: $organization

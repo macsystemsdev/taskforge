@@ -24,32 +24,32 @@ new class extends Component {
     public function render()
     {
         return view('livewire.comments.comment-section', [
-            'comments' => $this->commentable->comments()->with('user')->latest()->get(),
+            'comments' => $this->commentable->comments()->with('user')->oldest()->get(),
         ]);
     }
 };
 ?>
 
-<div class="rounded-2xl mt-5 border bg-dark p-6 shadow-sm">
-
-    <h2 class="text-xl font-semibold mb-6">
-        Comments
-    </h2>
+<x-ui.card class="space-y-6">
+    <div>
+        <h2 class="tf-panel-title">Comments</h2>
+        <p class="tf-panel-subtitle">Collaborate around decisions, blockers, and follow-up context.</p>
+    </div>
 
     {{-- COMMENT FORM --}}
-    <form wire:submit="createComment" class="space-y-4 mb-8">
+    <form wire:submit="createComment" class="space-y-4 rounded-lg border border-zinc-200 bg-zinc-50/80 p-4 dark:border-white/10 dark:bg-white/[0.03]">
 
-        <textarea wire:model="content" rows="4" class="w-full rounded-2xl border px-4 py-3" placeholder="Write a comment..."></textarea>
+        <textarea wire:model="content" rows="4" class="w-full px-3 py-2.5" placeholder="Write a comment..."></textarea>
 
         @error('content')
-            <p class="text-sm text-red-500">
+            <p class="text-sm font-medium text-red-600 dark:text-red-400">
                 {{ $message }}
             </p>
         @enderror
 
         <div class="flex justify-end">
 
-            <button type="submit" class="rounded-xl bg-black px-5 py-3 text-white">
+            <button type="submit" class="tf-button-primary">
                 Send Comment
             </button>
 
@@ -58,24 +58,19 @@ new class extends Component {
     </form>
 
     {{-- COMMENTS --}}
-    <div class="space-y-6">
+    <div class="space-y-4">
 
         @forelse ($comments as $comment)
-            <div class="flex gap-4">
-
-                <div class="h-10 w-10 rounded-full bg-zinc-200 flex items-center justify-center text-sm font-semibold">
-
-                    {{ strtoupper(substr($comment->user->name, 0, 1)) }}
-
-                </div>
+            <div class="flex gap-3">
+                <x-ui.avatar :name="$comment->user->name" size="lg" />
 
                 <div class="flex-1">
 
-                    <div class="rounded-2xl border p-4">
+                    <div class="rounded-lg border border-zinc-200 bg-white p-4 dark:border-white/10 dark:bg-zinc-950/60">
 
-                        <div class="flex items-center justify-between mb-2">
+                        <div class="mb-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
 
-                            <h3 class="font-semibold">
+                            <h3 class="font-semibold text-zinc-950 dark:text-white">
                                 {{ $comment->user->name }}
                             </h3>
 
@@ -85,7 +80,7 @@ new class extends Component {
 
                         </div>
 
-                        <p class="text-zinc-700 whitespace-pre-line">
+                        <p class="whitespace-pre-line text-sm leading-6 text-zinc-700 dark:text-zinc-300">
                             {{ $comment->content }}
                         </p>
 
@@ -96,16 +91,9 @@ new class extends Component {
             </div>
 
         @empty
-
-            <div class="rounded-2xl border border-dashed p-8 text-center">
-
-                <p class="text-zinc-500">
-                    No comments yet.
-                </p>
-
-            </div>
+            <x-ui.empty-state title="No comments yet" description="Start the discussion by adding the first update or decision note." />
         @endforelse
 
     </div>
 
-</div>
+</x-ui.card>

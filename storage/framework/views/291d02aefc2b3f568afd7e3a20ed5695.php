@@ -1,7 +1,5 @@
 <?php
 
-namespace App\Livewire\Tasks;
-
 use App\Actions\Tasks\CreateTaskAction;
 use App\Data\Tasks\CreateTaskData;
 use App\Models\Project;
@@ -25,8 +23,6 @@ new class extends Component {
 
     public function createTask(CreateTaskAction $action)
     {
-        $tasks = $this->project->tasks()->when($this->statusFilter, fn($query) => $query->where('status', $this->statusFilter))->latest()->get();
-
         $validated = $this->validate([
             'title' => ['required', 'string', 'max:255'],
 
@@ -52,26 +48,45 @@ new class extends Component {
 
     public function render()
     {
+        $this->project->load(['tasks.assignee']);
+
         return view('livewire.tasks.create-task', [
             'members' => $this->project->workspace->organization->members,
+            'tasks' => $this->project->tasks()
+                ->with('assignee')
+                ->when($this->statusFilter, fn($query) => $query->where('status', $this->statusFilter))
+                ->latest()
+                ->get(),
         ]);
     }
 };
 ?>
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="grid grid-cols-1 gap-6 xl:grid-cols-[360px_1fr]">
 
     
-    <div class="lg:col-span-1">
+    <div>
 
-        <div class="rounded-2xl border bg-dark p-6 shadow-sm">
+        <?php if (isset($component)) { $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.card','data' => ['class' => 'space-y-5']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('ui.card'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['class' => 'space-y-5']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-            <h2 class="text-xl font-semibold mb-6">
-                Create Task
-            </h2>
+
+            <div>
+                <h2 class="tf-panel-title">Create Task</h2>
+                <p class="tf-panel-subtitle">Add work directly to this project.</p>
+            </div>
 
             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(session('success')): ?>
-                <div class="mb-4 rounded-xl bg-green-100 px-4 py-3 text-green-700">
+                <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-200">
                     <?php echo e(session('success')); ?>
 
                 </div>
@@ -79,19 +94,19 @@ new class extends Component {
 
             <form wire:submit="createTask" class="space-y-5">
 
-                <div>
-                    <label class="block text-sm font-medium mb-2">
+                <div class="space-y-2">
+                    <label for="task-title">
                         Title
                     </label>
 
-                    <input type="text" wire:model="title" class="w-full rounded-xl border px-4 py-3">
+                    <input id="task-title" type="text" wire:model="title" class="w-full px-3 py-2.5">
 
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['title'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?>
-                        <p class="text-sm text-red-500 mt-1">
+                        <p class="text-sm font-medium text-red-600 dark:text-red-400">
                             <?php echo e($message); ?>
 
                         </p>
@@ -101,20 +116,20 @@ endif;
 unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium mb-2">
+                <div class="space-y-2">
+                    <label for="task-description">
                         Description
                     </label>
 
-                    <textarea wire:model="description" rows="4" class="w-full rounded-xl border px-4 py-3"></textarea>
+                    <textarea id="task-description" wire:model="description" rows="4" class="w-full px-3 py-2.5"></textarea>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium mb-2">
+                <div class="space-y-2">
+                    <label for="task-assignee">
                         Assign To
                     </label>
 
-                    <select wire:model="assigned_to" class="w-full rounded-xl border px-4 py-3">
+                    <select id="task-assignee" wire:model="assigned_to" class="w-full px-3 py-2.5">
                         <option value="">
                             Unassigned
                         </option>
@@ -129,12 +144,12 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
                     </select>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium mb-2">
+                <div class="space-y-2">
+                    <label for="task-priority">
                         Priority
                     </label>
 
-                    <select wire:model="priority" class="w-full rounded-xl border px-4 py-3">
+                    <select id="task-priority" wire:model="priority" class="w-full px-3 py-2.5">
                         <option value="low">Low</option>
                         <option value="medium">Medium</option>
                         <option value="high">High</option>
@@ -142,112 +157,209 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
                     </select>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium mb-2">
+                <div class="space-y-2">
+                    <label for="task-due-date">
                         Due Date
                     </label>
 
-                    <input type="date" wire:model="due_date" class="w-full rounded-xl border px-4 py-3">
+                    <input id="task-due-date" type="date" wire:model="due_date" class="w-full px-3 py-2.5">
                 </div>
 
-                <button type="submit" class="w-full rounded-xl bg-black px-5 py-3 text-white">
+                <button type="submit" class="tf-button-primary w-full">
                     Create Task
                 </button>
 
             </form>
 
-        </div>
+         <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93)): ?>
+<?php $attributes = $__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93; ?>
+<?php unset($__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginaldae4cd48acb67888a4631e1ba48f2f93)): ?>
+<?php $component = $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93; ?>
+<?php unset($__componentOriginaldae4cd48acb67888a4631e1ba48f2f93); ?>
+<?php endif; ?>
 
     </div>
 
     
-    <div class="lg:col-span-2">
+    <div>
 
-        <div class="rounded-2xl border bg-dark p-6 shadow-sm">
+        <?php if (isset($component)) { $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.card','data' => ['padding' => 'p-0','class' => 'overflow-hidden']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('ui.card'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['padding' => 'p-0','class' => 'overflow-hidden']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-            <div class="flex items-center justify-between mb-6">
 
-                <h2 class="text-xl font-semibold">
-                    Project Tasks
-                </h2>
+            <div class="flex flex-col gap-4 border-b border-zinc-200 px-5 py-4 dark:border-white/10 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                    <h2 class="tf-panel-title">Project Tasks</h2>
+                    <p class="tf-panel-subtitle"><?php echo e($project->tasks->count()); ?> tasks in this project.</p>
+                </div>
 
-                <span class="text-sm text-zinc-500">
-                    <?php echo e($project->tasks->count()); ?> Tasks
-                </span>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" wire:click="$set('statusFilter', null)" class="<?php echo e($statusFilter === null ? 'tf-button-primary' : 'tf-button-secondary'); ?> px-3 py-2">
+                        All
+                    </button>
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = \App\Enums\TaskStatus::cases(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $status): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                        <button type="button" wire:click="$set('statusFilter', '<?php echo e($status->value); ?>')" class="<?php echo e($statusFilter === $status->value ? 'tf-button-primary' : 'tf-button-secondary'); ?> px-3 py-2">
+                            <?php echo e(str($status->value)->headline()); ?>
 
+                        </button>
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                </div>
             </div>
 
-            <div class="space-y-4">
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($tasks->isNotEmpty()): ?>
+                <div class="overflow-x-auto">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Task</th>
+                                <th>Status</th>
+                                <th>Priority</th>
+                                <th>Assignee</th>
+                                <th>Due</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $tasks; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $task): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                <tr class="tf-row-link cursor-pointer" onclick="window.location.href='<?php echo e(route('tasks.show', $task)); ?>'">
+                                    <td>
+                                        <a href="<?php echo e(route('tasks.show', $task)); ?>" class="font-medium text-zinc-950 hover:underline dark:text-white" wire:navigate>
+                                            <?php echo e($task->title); ?>
 
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $project->tasks; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $task): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                    <div class="rounded-2xl border p-5">
+                                        </a>
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($task->description): ?>
+                                            <p class="mt-1 max-w-xl truncate text-sm text-zinc-500 dark:text-zinc-400">
+                                                <?php echo e($task->description); ?>
 
-                        <div class="flex items-start justify-between gap-4">
+                                            </p>
+                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                    </td>
+                                    <td><?php if (isset($component)) { $__componentOriginaldf5a194c1ccdd1698e9a89f0cb5bf2c8 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginaldf5a194c1ccdd1698e9a89f0cb5bf2c8 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.status-badge','data' => ['status' => $task->status]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('ui.status-badge'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['status' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($task->status)]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-                            <div>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginaldf5a194c1ccdd1698e9a89f0cb5bf2c8)): ?>
+<?php $attributes = $__attributesOriginaldf5a194c1ccdd1698e9a89f0cb5bf2c8; ?>
+<?php unset($__attributesOriginaldf5a194c1ccdd1698e9a89f0cb5bf2c8); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginaldf5a194c1ccdd1698e9a89f0cb5bf2c8)): ?>
+<?php $component = $__componentOriginaldf5a194c1ccdd1698e9a89f0cb5bf2c8; ?>
+<?php unset($__componentOriginaldf5a194c1ccdd1698e9a89f0cb5bf2c8); ?>
+<?php endif; ?></td>
+                                    <td><?php if (isset($component)) { $__componentOriginal5ea2e86292230ce7e0ef1e38c0291982 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal5ea2e86292230ce7e0ef1e38c0291982 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.priority-badge','data' => ['priority' => $task->priority]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('ui.priority-badge'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['priority' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($task->priority)]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-                                <h3 class="font-semibold text-lg">
-                                    <a href="<?php echo e(route('tasks.show', $task)); ?>" class="font-semibold hover:underline">
-                                        <?php echo e($task->title); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal5ea2e86292230ce7e0ef1e38c0291982)): ?>
+<?php $attributes = $__attributesOriginal5ea2e86292230ce7e0ef1e38c0291982; ?>
+<?php unset($__attributesOriginal5ea2e86292230ce7e0ef1e38c0291982); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal5ea2e86292230ce7e0ef1e38c0291982)): ?>
+<?php $component = $__componentOriginal5ea2e86292230ce7e0ef1e38c0291982; ?>
+<?php unset($__componentOriginal5ea2e86292230ce7e0ef1e38c0291982); ?>
+<?php endif; ?></td>
+                                    <td>
+                                        <div class="flex items-center gap-2">
+                                            <?php if (isset($component)) { $__componentOriginald04dd79f9e235eb8e58dee4526a2f3c2 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginald04dd79f9e235eb8e58dee4526a2f3c2 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.avatar','data' => ['name' => $task->assignee?->name ?? 'Unassigned','size' => 'sm']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('ui.avatar'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['name' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($task->assignee?->name ?? 'Unassigned'),'size' => 'sm']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-                                    </a>
-                                </h3>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginald04dd79f9e235eb8e58dee4526a2f3c2)): ?>
+<?php $attributes = $__attributesOriginald04dd79f9e235eb8e58dee4526a2f3c2; ?>
+<?php unset($__attributesOriginald04dd79f9e235eb8e58dee4526a2f3c2); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginald04dd79f9e235eb8e58dee4526a2f3c2)): ?>
+<?php $component = $__componentOriginald04dd79f9e235eb8e58dee4526a2f3c2; ?>
+<?php unset($__componentOriginald04dd79f9e235eb8e58dee4526a2f3c2); ?>
+<?php endif; ?>
+                                            <span><?php echo e($task->assignee?->name ?? 'Unassigned'); ?></span>
+                                        </div>
+                                    </td>
+                                    <td><?php echo e($task->due_date?->format('M d, Y') ?? 'No date'); ?></td>
+                                </tr>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php else: ?>
+                <div class="p-5">
+                    <?php if (isset($component)) { $__componentOriginal3607a477fdef7402bc742abad5df9c51 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal3607a477fdef7402bc742abad5df9c51 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.empty-state','data' => ['title' => 'No matching tasks','description' => 'Create a task or change the status filter to widen the list.']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('ui.empty-state'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['title' => 'No matching tasks','description' => 'Create a task or change the status filter to widen the list.']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-                                <p class="text-sm text-zinc-500 mt-2">
-                                    <?php echo e($task->description); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal3607a477fdef7402bc742abad5df9c51)): ?>
+<?php $attributes = $__attributesOriginal3607a477fdef7402bc742abad5df9c51; ?>
+<?php unset($__attributesOriginal3607a477fdef7402bc742abad5df9c51); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal3607a477fdef7402bc742abad5df9c51)): ?>
+<?php $component = $__componentOriginal3607a477fdef7402bc742abad5df9c51; ?>
+<?php unset($__componentOriginal3607a477fdef7402bc742abad5df9c51); ?>
+<?php endif; ?>
+                </div>
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
-                                </p>
-
-                                <div class="mt-4 flex items-center gap-3 text-sm text-zinc-500">
-
-                                    <span>
-                                        Assigned to:
-                                        <?php echo e($task->assignee?->name ?? 'Unassigned'); ?>
-
-                                    </span>
-
-                                    <span>
-                                        Due:
-                                        <?php echo e($task->due_date?->format('M d, Y') ?? 'N/A'); ?>
-
-                                    </span>
-
-                                </div>
-
-                            </div>
-
-                            <div class="flex flex-col gap-2 items-end">
-
-                                <span class="rounded-full border px-3 py-1 text-sm">
-                                    <?php echo e(str($task->priority->value)->headline()); ?>
-
-                                </span>
-
-                                <span class="rounded-full border px-3 py-1 text-sm">
-                                    <?php echo e(str($task->status->value)->headline()); ?>
-
-                                </span>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-
-                    <div class="rounded-2xl border border-dashed p-10 text-center">
-
-                        <p class="text-zinc-500">
-                            No tasks created yet.
-                        </p>
-
-                    </div>
-                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-
-            </div>
-
-        </div>
+         <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93)): ?>
+<?php $attributes = $__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93; ?>
+<?php unset($__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginaldae4cd48acb67888a4631e1ba48f2f93)): ?>
+<?php $component = $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93; ?>
+<?php unset($__componentOriginaldae4cd48acb67888a4631e1ba48f2f93); ?>
+<?php endif; ?>
 
     </div>
 

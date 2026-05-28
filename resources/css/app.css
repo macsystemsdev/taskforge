@@ -61,6 +61,60 @@ select:focus[data-flux-control] {
     @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
 }
 
+@layer base {
+    body {
+        @apply bg-zinc-50 text-zinc-950 antialiased dark:bg-zinc-950 dark:text-zinc-100;
+    }
+
+    label {
+        @apply text-sm font-medium text-zinc-800 dark:text-zinc-200;
+    }
+
+    input:not([type='checkbox']):not([type='radio']),
+    textarea,
+    select {
+        @apply rounded-lg border-zinc-300 bg-white text-sm text-zinc-950 shadow-xs transition placeholder:text-zinc-400 focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10 dark:border-white/10 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-white dark:focus:ring-white/10;
+    }
+
+    table {
+        @apply w-full border-separate border-spacing-0 text-sm;
+    }
+
+    thead th {
+        @apply border-b border-zinc-200 bg-zinc-50 px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-400;
+    }
+
+    tbody td {
+        @apply border-b border-zinc-100 px-4 py-4 align-middle text-zinc-700 dark:border-white/5 dark:text-zinc-300;
+    }
+}
+
+@layer components {
+    .tf-panel-title {
+        @apply text-base font-semibold text-zinc-950 dark:text-white;
+    }
+
+    .tf-panel-subtitle {
+        @apply mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400;
+    }
+
+    .tf-muted {
+        @apply text-sm text-zinc-500 dark:text-zinc-400;
+    }
+
+    .tf-row-link {
+        @apply transition hover:bg-zinc-50 dark:hover:bg-white/[0.03];
+    }
+
+    .tf-button-primary {
+        @apply inline-flex items-center justify-center rounded-lg bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-zinc-800 focus:outline-hidden focus:ring-2 focus:ring-zinc-900/20 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200 dark:focus:ring-white/20;
+    }
+
+    .tf-button-secondary {
+        @apply inline-flex items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 shadow-sm transition hover:bg-zinc-50 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-white/10;
+    }
+}
+
 /* \[:where(&)\]:size-4 {
     @apply size-4;
 } */

@@ -31,6 +31,8 @@ Route::prefix('{current_team}')
 Route::middleware(['auth'])->group(function () {
     Route::livewire('invitations/{invitation}/accept', 'pages::teams.accept-invitation')->name('invitations.accept');
 
+    Route::view('/organizations', 'pages.organizations.index')->name('organizations.index');
+
     // Create and show organization
     Route::get('/organizations/create', fn() => view('pages.organizations.create'))->name('organizations.create');
     Route::get(
@@ -64,6 +66,8 @@ Route::middleware(['auth'])->group(function () {
         }
     )->name('projects.show');
 
+    Route::view('/projects', 'pages.projects.index')->name('projects.index');
+
     // create task
     Route::get(
         '/projects/{project}/tasks/create',
@@ -85,6 +89,10 @@ Route::middleware(['auth'])->group(function () {
             );
         }
     )->name('tasks.show');
+
+    Route::view('/tasks', 'pages.tasks.index')->name('tasks.index');
+
+    Route::view('/notifications', 'pages.notifications.index')->name('notifications.index');
 });
 
 

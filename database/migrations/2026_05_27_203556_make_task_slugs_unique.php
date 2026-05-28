@@ -17,7 +17,6 @@ return new class extends Migration
                 ->nullable(false)
                 ->change();
 
-            $table->unique('slug');
         });
     }
 

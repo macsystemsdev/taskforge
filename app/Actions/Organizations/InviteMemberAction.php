@@ -2,6 +2,7 @@
 
 namespace App\Actions\Organizations;
 
+use App\Actions\ActivityLogs\CreateActivityLogAction;
 use App\Data\Invitations\InviteMemberData;
 use App\Mail\OrganizationInvitationMail;
 use App\Models\Invitation;
@@ -13,8 +14,12 @@ use Illuminate\Validation\ValidationException;
 
 class InviteMemberAction
 {
+    public function __construct(
+        protected CreateActivityLogAction $activity
+    ) {}
     public function handle(
         InviteMemberData $data,
+        
     ): Invitation {
 
         // Check if pending invitation already exists for the email and organization
@@ -51,6 +56,16 @@ class InviteMemberAction
             'token' => Str::uuid(),
             'expires_at' => now()->addDays(7),
         ]);
+
+        // Log activity
+        $this->activity->handle(
+            subject: $invitation,
+            event: 'member_invited',
+            properties: [
+                'invited_email' => $data->email,
+                'role' => $data->role,
+            ]
+        );
 
         Mail::to($invitation->email)
             ->send(

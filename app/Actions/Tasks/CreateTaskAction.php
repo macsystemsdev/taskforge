@@ -2,6 +2,7 @@
 
 namespace App\Actions\Tasks;
 
+use App\Actions\ActivityLogs\CreateActivityLogAction;
 use App\Data\Tasks\CreateTaskData;
 use App\Models\Project;
 use App\Notifications\TaskAssignedNotification;
@@ -11,12 +12,13 @@ use Illuminate\Support\Str;
 
 class CreateTaskAction
 {
-    /**
-     * Create a new class instance.
-     */
+    public function __construct(
+        protected CreateActivityLogAction $activity
+    ) {}
     public function handle(
         CreateTaskData $data,
         Project $project,
+        
     ) {
 
         $task = $project->tasks()->create([
@@ -36,6 +38,17 @@ class CreateTaskAction
 
             'due_date' => $data->due_date,
         ]);
+
+        $this->activity->handle(
+            event: 'task_created',
+
+            subject: $task,
+
+            properties: [
+                'title' => $task->title,
+                'assigned_to' => $task->assigned_to,
+            ]
+        );
 
         if ($task->assignee) {
 

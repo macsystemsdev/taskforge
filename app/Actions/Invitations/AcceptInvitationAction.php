@@ -2,15 +2,21 @@
 
 namespace App\Actions\Invitations;
 
+use App\Actions\ActivityLogs\CreateActivityLogAction;
 use App\Models\Invitation;
 use App\Models\Organization;
 use App\Models\User;
 
 class AcceptInvitationAction
 {
+
+    public function __construct(
+        protected CreateActivityLogAction $activity
+    ) {}
     public function handle(
         string $token,
         User $user,
+
     ): Organization {
 
         $invitation = Invitation::query()
@@ -51,6 +57,17 @@ class AcceptInvitationAction
             'accepted_at' => now(),
         ]);
 
-        return $invitation->  organization;
+        // log activity
+
+        $this->activity->handle(
+            subject: $invitation,
+            event: 'Invitation accepted',
+            properties: [
+                'organization' => $invitation->organization->name,
+                'email' => $invitation->email,
+                'role' => $invitation->role,
+            ]
+        );
+        return $invitation->organization;
     }
 }

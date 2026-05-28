@@ -5,6 +5,7 @@ use App\Models\Invitation;
 use Livewire\Component;
 use App\Actions\Organizations\InviteMemberAction;
 use App\Data\Invitations\InviteMemberData;
+use Flux\Flux;
 
 new class extends Component {
     public Organization $organization;
@@ -17,7 +18,7 @@ new class extends Component {
     // load organization workspaces and memebers
     public function mount(Organization $organization): void
     {
-        $this->organization = $organization->load(['workspaces', 'members']);
+        $this->organization = $organization->load(['workspaces.project.tasks', 'members']);
     }
 
     // Handle organization memeber invitation
@@ -63,114 +64,85 @@ new class extends Component {
 
 ?>
 
-<div class="max-w-7xl mx-auto py-10 space-y-8">
+<x-ui.page>
+    <x-ui.page-header
+        :title="$organization->name"
+        :description="__('Manage workspaces, members, invitations, and project flow for this organization.')"
+        :eyebrow="__('Organization')"
+    >
+        <x-slot:actions>
+            <x-ui.status-badge :status="$organization->subscription_status ?? 'active'" />
+        </x-slot:actions>
+    </x-ui.page-header>
 
-    <div class="flex items-start justify-between">
+    <div class="mb-6 grid gap-4 sm:grid-cols-3">
+        <x-ui.card class="space-y-2">
+            <p class="tf-muted">Workspaces</p>
+            <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">{{ $organization->workspaces->count() }}</p>
+        </x-ui.card>
 
-        <div>
+        <x-ui.card class="space-y-2">
+            <p class="tf-muted">Members</p>
+            <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">{{ $organization->members->count() }}</p>
+        </x-ui.card>
 
-            <flux:heading size="xl">
-                {{ $organization->name }}
-            </flux:heading>
-
-            <flux:subheading class="mt-2">
-                Manage workspaces, teams, and members.
-            </flux:subheading>
-
-        </div>
-
-        <flux:badge color="green">
-            {{ ucfirst($organization->subscription_plan) }}
-        </flux:badge>
-
+        <x-ui.card class="space-y-2">
+            <p class="tf-muted">Open invitations</p>
+            <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">{{ $this->invitations->where('status', 'pending')->count() }}</p>
+        </x-ui.card>
     </div>
 
     {{-- Workspaces --}}
-    <div class="lg:col-span-2">
-
-        <flux:card class="space-y-6">
-
-            <div class="flex items-center justify-between">
-
-                <div>
-
-                    <flux:heading size="lg">
-                        Workspaces
-                    </flux:heading>
-
-                    <flux:subheading>
-                        Operational spaces inside the organization.
-                    </flux:subheading>
-
-                </div>
-
-                <flux:button variant="primary">
-                    New Workspace
-                </flux:button>
-
+    <x-ui.card class="mb-6 space-y-5">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h2 class="tf-panel-title">Workspaces</h2>
+                <p class="tf-panel-subtitle">Operational spaces inside this organization.</p>
             </div>
+        </div>
 
-            <div class="space-y-4">
-
+        <div class="grid gap-4 lg:grid-cols-2">
                 @forelse ($organization->workspaces as $workspace)
-                    <div class="border rounded-xl p-4">
-
-                        <div class="flex items-center justify-between">
-
-                            <div>
-
-                                <h3 class="font-semibold text-lg">
+                    <div class="rounded-lg border border-zinc-200 p-4 transition hover:bg-zinc-50 dark:border-white/10 dark:hover:bg-white/[0.03]">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="min-w-0">
+                                <h3 class="truncate font-semibold text-zinc-950 dark:text-white">
                                     {{ $workspace->name }}
                                 </h3>
 
-                                <p class="text-sm text-zinc-500 mt-1">
-                                    {{ $workspace->description }}
+                                <p class="mt-1 line-clamp-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                                    {{ $workspace->description ?: 'No workspace description.' }}
                                 </p>
-
                             </div>
-
                         </div>
-                       
 
+                        <div class="mt-4 flex items-center justify-between border-t border-zinc-100 pt-4 dark:border-white/5">
+                            <span class="text-sm text-zinc-500 dark:text-zinc-400">
+                                {{ $workspace->project->count() }} projects
+                            </span>
+
+                            <a href="{{ route('projects.create', $workspace) }}" class="tf-button-secondary px-3 py-2" wire:navigate>
+                                Create Project
+                            </a>
+                        </div>
                     </div>
-                    
-                     <a href="{{ route('projects.create', $workspace) }}"
-                            class="px-4 py-2 rounded-xl bg-black text-white text-sm">
-                            Create Project
-                    </a>
 
                 @empty
-
-                    <div class="text-sm text-zinc-500">
-                        No workspaces created yet.
+                    <div class="lg:col-span-2">
+                        <x-ui.empty-state title="No workspaces" description="Workspaces will appear here when they are added to this organization." />
                     </div>
                 @endforelse
+        </div>
+    </x-ui.card>
 
-            </div>
-
-
-
-        </flux:card>
-
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
 
         {{-- Invitation Form --}}
-        <div>
-            <flux:card class="space-y-6">
-
-                <div>
-
-                    <flux:heading size="lg">
-                        Invite Member
-                    </flux:heading>
-
-                    <flux:subheading>
-                        Invite collaborators into this organization.
-                    </flux:subheading>
-
-                </div>
+        <x-ui.card class="space-y-6">
+            <div>
+                <h2 class="tf-panel-title">Invite Member</h2>
+                <p class="tf-panel-subtitle">Invite collaborators into this organization.</p>
+            </div>
 
                 <form wire:submit="inviteMember" class="space-y-4">
 
@@ -208,47 +180,35 @@ new class extends Component {
                         </p>
                     @enderror
 
-                    <flux:button variant="primary" type="submit">
+                    <flux:button variant="primary" type="submit" class="w-full sm:w-auto">
                         Send Invitation
                     </flux:button>
 
                 </form>
-
-            </flux:card>
-        </div>
+        </x-ui.card>
 
         {{-- Members --}}
-        <div>
-
-            <flux:card class="space-y-6">
-
-                <div>
-
-                    <flux:heading size="lg">
-                        Members
-                    </flux:heading>
-
-                    <flux:subheading>
-                        Organization participants.
-                    </flux:subheading>
-
-                </div>
+        <x-ui.card class="space-y-6">
+            <div>
+                <h2 class="tf-panel-title">Members</h2>
+                <p class="tf-panel-subtitle">Organization participants.</p>
+            </div>
 
                 <div class="space-y-3">
 
                     @foreach ($organization->members as $member)
-                        <div class="flex items-center justify-between">
-
-                            <div>
-
-                                <p class="font-medium">
+                        <div class="flex items-center justify-between gap-3 rounded-lg border border-zinc-200 p-3 dark:border-white/10">
+                            <div class="flex min-w-0 items-center gap-3">
+                                <x-ui.avatar :name="$member->name" />
+                                <div class="min-w-0">
+                                    <p class="truncate font-medium text-zinc-950 dark:text-white">
                                     {{ $member->name }}
-                                </p>
+                                    </p>
 
-                                <p class="text-sm text-zinc-500">
+                                    <p class="truncate text-sm text-zinc-500 dark:text-zinc-400">
                                     {{ $member->email }}
-                                </p>
-
+                                    </p>
+                                </div>
                             </div>
 
                             <flux:badge>
@@ -259,53 +219,39 @@ new class extends Component {
                     @endforeach
 
                 </div>
-
-            </flux:card>
-
-        </div>
-
+        </x-ui.card>
 
     </div>
 
     {{-- Invitations Table --}}
-    <div>
-        <flux:card class="mt-8">
-
-            <div class="mb-6">
-
-                <flux:heading size="lg">
-                    Invitations
-                </flux:heading>
-
-                <flux:subheading>
-                    Track invitation states.
-                </flux:subheading>
-
-            </div>
+    <x-ui.card padding="p-0" class="mt-6 overflow-hidden">
+        <div class="border-b border-zinc-200 px-5 py-4 dark:border-white/10">
+            <h2 class="tf-panel-title">Invitations</h2>
+            <p class="tf-panel-subtitle">Track invitation states and pending access.</p>
+        </div>
 
             <div class="overflow-x-auto">
-
-                <table class="w-full text-sm">
+                <table>
 
                     <thead>
-                        <tr class="border-b">
-                            <th class="text-left py-3">
+                        <tr>
+                            <th>
                                 Email
                             </th>
 
-                            <th class="text-left py-3">
+                            <th>
                                 Role
                             </th>
 
-                            <th class="text-left py-3">
+                            <th>
                                 Status
                             </th>
 
-                            <th class="text-left py-3">
+                            <th>
                                 Invited
                             </th>
 
-                            <th class="text-left py-3">
+                            <th>
                                 Actions
                             </th>
                         </tr>
@@ -313,22 +259,20 @@ new class extends Component {
 
                     <tbody>
 
-                        @foreach ($this->invitations as $invitation)
-                            <tr class="border-b">
+                        @forelse ($this->invitations as $invitation)
+                            <tr class="tf-row-link">
 
-                                <td class="py-4">
+                                <td>
                                     {{ $invitation->email }}
                                 </td>
 
-                                <td class="py-4">
+                                <td>
                                     {{ ucfirst($invitation->role) }}
                                 </td>
 
-                                <td class="py-4">
+                                <td>
 
-                                    <flux:badge color="{{ $invitation->status_color }}">
-                                        {{ ucfirst($invitation->computed_status) }}
-                                    </flux:badge>
+                                    <x-ui.status-badge :status="$invitation->computed_status" />
 
                                     @if ($invitation->rejection_reason)
                                         <p class="text-xs text-zinc-500 mt-1">
@@ -341,11 +285,11 @@ new class extends Component {
 
                                 </td>
 
-                                <td class="py-4">
+                                <td>
                                     {{ $invitation->created_at->diffForHumans() }}
                                 </td>
 
-                                <td class="py-4">
+                                <td>
 
                                     @if ($invitation->isPending())
                                         <flux:button size="sm" variant="danger"
@@ -361,18 +305,18 @@ new class extends Component {
                                 </td>
 
                             </tr>
-                        @endforeach
+                        @empty
+                            <tr>
+                                <td colspan="5">
+                                    <x-ui.empty-state title="No invitations" description="Pending and historical invitations will appear here." />
+                                </td>
+                            </tr>
+                        @endforelse
 
                     </tbody>
 
                 </table>
 
             </div>
-
-        </flux:card>
-    </div>
-
-
-
-
-</div>
+    </x-ui.card>
+</x-ui.page>

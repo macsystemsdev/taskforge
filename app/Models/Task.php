@@ -95,4 +95,12 @@ class Task extends Model
     {
         return 'slug';
     }
+
+    public function activityLogs(): MorphMany
+    {
+        return $this->morphMany(
+            ActivityLog::class,
+            'subject'
+        );
+    }
 }
