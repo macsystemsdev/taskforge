@@ -1,17 +1,29 @@
 <?php
 
+use App\Data\Organizations\CreateOrganizationData;
+use App\Models\Organization;
 use App\Services\OrganizationService;
 use Flux\Flux;
+use Illuminate\Support\Str;
 use Livewire\Component;
-use App\Data\Organizations\CreateOrganizationData;
 
-new class extends Component {
+new class extends Component
+{
     public string $name = '';
 
     public function createOrganization(OrganizationService $organizationService): void
     {
         $validated = $this->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                function (string $attribute, mixed $value, Closure $fail): void {
+                    if (Organization::where('slug', Str::slug((string) $value))->exists()) {
+                        $fail(__('An organization with that name already exists.'));
+                    }
+                },
+            ],
         ]);
 
         $organizationData = new CreateOrganizationData(name: $this->name, owner_id: auth()->id());

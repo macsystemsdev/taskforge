@@ -1,47 +1,66 @@
-<?php if (isset($component)) { $__componentOriginal23399719f391f3076fe3bf0929a84741 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal23399719f391f3076fe3bf0929a84741 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'f4ac99e09542ff494432bc959d4fee61::app.sidebar','data' => ['title' => $title ?? null]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('layouts::app.sidebar'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['title' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($title ?? null)]); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+<!DOCTYPE html>
+<html
+    lang="<?php echo e(str_replace('_', '-', app()->getLocale())); ?>"
+    class="h-full"
+>
 
-    <?php if (isset($component)) { $__componentOriginal95c5505ccad18880318521d2bba3eac7 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal95c5505ccad18880318521d2bba3eac7 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::main','data' => []] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::main'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes([]); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+<head>
 
-        <?php echo e($slot); ?>
+    <meta charset="utf-8">
 
-     <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginal95c5505ccad18880318521d2bba3eac7)): ?>
-<?php $attributes = $__attributesOriginal95c5505ccad18880318521d2bba3eac7; ?>
-<?php unset($__attributesOriginal95c5505ccad18880318521d2bba3eac7); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginal95c5505ccad18880318521d2bba3eac7)): ?>
-<?php $component = $__componentOriginal95c5505ccad18880318521d2bba3eac7; ?>
-<?php unset($__componentOriginal95c5505ccad18880318521d2bba3eac7); ?>
-<?php endif; ?>
- <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginal23399719f391f3076fe3bf0929a84741)): ?>
-<?php $attributes = $__attributesOriginal23399719f391f3076fe3bf0929a84741; ?>
-<?php unset($__attributesOriginal23399719f391f3076fe3bf0929a84741); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginal23399719f391f3076fe3bf0929a84741)): ?>
-<?php $component = $__componentOriginal23399719f391f3076fe3bf0929a84741; ?>
-<?php unset($__componentOriginal23399719f391f3076fe3bf0929a84741); ?>
-<?php endif; ?>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+
+    <title>
+        <?php echo e(config('app.name', 'TaskForge')); ?>
+
+    </title>
+
+    <?php echo app('Illuminate\Foundation\Vite')([
+        'resources/css/app.css',
+        'resources/js/app.js'
+    ]); ?>
+
+    <?php echo \Livewire\Mechanisms\FrontendAssets\FrontendAssets::styles(); ?>
+
+    <?php echo app('flux')->fluxAppearance(); ?>
+
+
+</head>
+
+<body class="min-h-screen bg-zinc-100 dark:bg-zinc-900">
+
+    <div class="flex min-h-screen">
+
+        
+        <?php echo $__env->make('layouts.app.sidebar', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+
+        <div class="flex-1 flex flex-col">
+
+            
+            <?php echo $__env->make('layouts.app.header', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+
+            
+            <main class="flex-1 p-6 lg:p-10">
+
+                <?php echo e($slot); ?>
+
+
+            </main>
+
+        </div>
+
+    </div>
+
+    <?php echo \Livewire\Mechanisms\FrontendAssets\FrontendAssets::scripts(); ?>
+
+    <?php app('livewire')->forceAssetInjection(); ?>
+<?php echo app('flux')->scripts(); ?>
+
+
+</body>
+
+</html>
 <?php /**PATH D:\Code\taskforge\resources\views/layouts/app.blade.php ENDPATH**/ ?>

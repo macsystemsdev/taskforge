@@ -18,7 +18,7 @@ new class extends Component {
     // load organization workspaces and memebers
     public function mount(Organization $organization): void
     {
-        $this->organization = $organization->load(['workspaces.project.tasks', 'members']);
+        $this->organization = $organization->load(['workspaces.projects.tasks', 'members']);
     }
 
     // Handle organization memeber invitation
@@ -118,7 +118,7 @@ new class extends Component {
 
                         <div class="mt-4 flex items-center justify-between border-t border-zinc-100 pt-4 dark:border-white/5">
                             <span class="text-sm text-zinc-500 dark:text-zinc-400">
-                                {{ $workspace->project->count() }} projects
+                                {{ $workspace->projects->count() }} projects
                             </span>
 
                             <a href="{{ route('projects.create', $workspace) }}" class="tf-button-secondary px-3 py-2" wire:navigate>

@@ -2,11 +2,14 @@
 
 use App\Actions\Projects\CreateProjectAction;
 use App\Data\Projects\CreateProjectData;
+use App\Models\Project;
 use App\Models\Workspace;
 use Flux\Flux;
+use Illuminate\Support\Str;
 use Livewire\Component;
 
-new class extends Component {
+new class extends Component
+{
     public Workspace $workspace;
 
     public string $name = '';
@@ -18,7 +21,16 @@ new class extends Component {
     public function createProject(CreateProjectAction $action)
     {
         $validated = $this->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                function (string $attribute, mixed $value, Closure $fail): void {
+                    if (Project::where('slug', Str::slug((string) $value))->exists()) {
+                        $fail(__('A project with that name already exists.'));
+                    }
+                },
+            ],
             'description' => ['nullable', 'string'],
             'due_date' => ['nullable', 'date'],
         ]);
@@ -28,7 +40,7 @@ new class extends Component {
 
         // handle function call in CreateprojectAction to create project with DTO data
         $project = $action->handle(workspace: $this->workspace, data: $data);
-        
+
         Flux::toast(variant: 'success', text: __('Project created successfully.'));
 
         return redirect()->route('projects.show', $project);
