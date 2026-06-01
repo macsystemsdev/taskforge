@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
-#[Table('organization_users')]
+#[Table('organization_user')]
 class OrganizationUser extends Pivot
 {
 

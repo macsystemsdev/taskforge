@@ -1,6 +1,6 @@
 <x-layouts::app :title="__('Dashboard')">
     @php
-        $organizations = auth()->user()->organizations()->with('workspaces.project.tasks')->get();
+        $organizations = auth()->user()->organizations()->with('workspaces.projects.tasks')->get();
         $ownedOrganizations = \App\Models\Organization::query()
             ->where('owner_id', auth()->id())
             ->with('workspaces.project.tasks')
@@ -9,7 +9,7 @@
         $workspaces = $allOrganizations->flatMap->workspaces;
         $projects = $workspaces->flatMap->project;
         $tasks = $projects->flatMap->tasks;
-        $assignedTasks = auth()->user()->assignedTasks()->with('project.workspace')->latest()->limit(6)->get();
+        $assignedTasks = auth()->user()->assignedTasks()->with('projects.workspace')->latest()->limit(6)->get();
         $unreadNotifications = auth()->user()->unreadNotifications()->count();
         $dueSoon = $tasks->filter(fn ($task) => $task->due_date && $task->due_date->isFuture() && $task->due_date->diffInDays(now()) <= 7)->count();
     @endphp

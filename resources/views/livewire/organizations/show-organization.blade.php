@@ -15,10 +15,10 @@ new class extends Component {
         return $this->organization->invitations()->latest()->get();
     }
 
-    // load organization workspaces and memebers
+    // load organization workspaces, teams and members
     public function mount(Organization $organization): void
     {
-        $this->organization = $organization->load(['workspaces.projects.tasks', 'members']);
+        $this->organization = $organization->load(['workspaces.projects.tasks', 'members', 'teams']);
     }
 
     // Handle organization memeber invitation
@@ -75,10 +75,15 @@ new class extends Component {
         </x-slot:actions>
     </x-ui.page-header>
 
-    <div class="mb-6 grid gap-4 sm:grid-cols-3">
+    <div class="mb-6 grid gap-4 sm:grid-cols-4">
         <x-ui.card class="space-y-2">
             <p class="tf-muted">Workspaces</p>
             <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">{{ $organization->workspaces->count() }}</p>
+        </x-ui.card>
+
+        <x-ui.card class="space-y-2">
+            <p class="tf-muted">Teams</p>
+            <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">{{ $organization->teams->count() }}</p>
         </x-ui.card>
 
         <x-ui.card class="space-y-2">
@@ -130,6 +135,48 @@ new class extends Component {
                 @empty
                     <div class="lg:col-span-2">
                         <x-ui.empty-state title="No workspaces" description="Workspaces will appear here when they are added to this organization." />
+                    </div>
+                @endforelse
+        </div>
+    </x-ui.card>
+
+    {{-- Teams --}}
+    <x-ui.card class="mb-6 space-y-5">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h2 class="tf-panel-title">Teams</h2>
+                <p class="tf-panel-subtitle">Organize members into specialized teams within this organization.</p>
+            </div>
+            <a href="{{ route('teams.create', $organization) }}" class="tf-button-primary px-3 py-2" wire:navigate>
+                Create Team
+            </a>
+        </div>
+
+        <div class="grid gap-4 lg:grid-cols-2">
+                @forelse ($organization->teams as $team)
+                    <a href="{{ route('teams.show', ['organization' => $organization, 'team' => $team]) }}" class="rounded-lg border border-zinc-200 p-4 transition hover:bg-zinc-50 dark:border-white/10 dark:hover:bg-white/[0.03]" wire:navigate>
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="min-w-0">
+                                <h3 class="truncate font-semibold text-zinc-950 dark:text-white">
+                                    {{ $team->name }}
+                                </h3>
+
+                                <p class="mt-1 line-clamp-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                                    {{ $team->description ?: 'No team description.' }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 flex items-center justify-between border-t border-zinc-100 pt-4 dark:border-white/5">
+                            <span class="text-sm text-zinc-500 dark:text-zinc-400">
+                                {{ $team->members->count() }} members
+                            </span>
+                        </div>
+                    </a>
+
+                @empty
+                    <div class="lg:col-span-2">
+                        <x-ui.empty-state title="No teams yet" description="Create a team to organize members and projects within this organization." />
                     </div>
                 @endforelse
         </div>

@@ -5,7 +5,7 @@
     </flux:sidebar.header>
 
     <div class="px-2 py-3">
-        <livewire:team-switcher />
+        <!-- Team switcher removed - teams are now organization-scoped -->
     </div>
 
     <flux:sidebar.nav>
@@ -32,10 +32,6 @@
         </flux:sidebar.group>
 
         <flux:sidebar.group :heading="__('Administration')" class="grid gap-1">
-            <flux:sidebar.item icon="users" :href="route('teams.index')" :current="request()->routeIs('teams.*')" wire:navigate>
-                {{ __('Teams') }}
-            </flux:sidebar.item>
-
             <flux:sidebar.item icon="cog-6-tooth" :href="route('profile.edit')" :current="request()->routeIs('profile.edit') || request()->routeIs('security.edit') || request()->routeIs('appearance.edit')" wire:navigate>
                 {{ __('Settings') }}
             </flux:sidebar.item>
@@ -45,12 +41,6 @@
     <flux:spacer />
 
     <flux:sidebar.nav>
-        <flux:modal.trigger name="create-team-switcher">
-            <flux:sidebar.item icon="user-plus" href="#">
-                {{ __('New Team') }}
-            </flux:sidebar.item>
-        </flux:modal.trigger>
-
         <flux:sidebar.item icon="plus" :href="route('organizations.create')" :current="request()->routeIs('organizations.create')" wire:navigate>
             {{ __('New Organization') }}
         </flux:sidebar.item>

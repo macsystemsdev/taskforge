@@ -42,7 +42,7 @@ class OrganizationInvitationController
         );
 
         return redirect()
-            ->route('organizations.show', $invitation->organization_id)
+            ->route('organizations.show', $invitation->organization)
             ->with('success', 'Invitation accepted successfully!');
     }
 

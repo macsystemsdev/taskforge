@@ -78,32 +78,7 @@
 <?php endif; ?>
 
     <div class="px-2 py-3">
-        <?php
-$__split = function ($name, $params = []) {
-    return [$name, $params];
-};
-[$__name, $__params] = $__split('team-switcher', []);
-
-$__keyOuter = $__key ?? null;
-
-$__key = null;
-$__componentSlots = [];
-
-$__key ??= \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::generateKey('lw-4195998214-0', $__key);
-
-$__html = app('livewire')->mount($__name, $__params, $__key, $__componentSlots);
-
-echo $__html;
-
-unset($__html);
-unset($__key);
-$__key = $__keyOuter;
-unset($__keyOuter);
-unset($__name);
-unset($__params);
-unset($__componentSlots);
-unset($__split);
-?>
+        <!-- Team switcher removed - teams are now organization-scoped -->
     </div>
 
     <?php if (isset($component)) { $__componentOriginal061367e9976089f15083f05bd78a70e4 = $component; } ?>
@@ -279,31 +254,6 @@ unset($__split);
 
             <?php if (isset($component)) { $__componentOriginalfe86969babb72517ecf97426e7c9330d = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalfe86969babb72517ecf97426e7c9330d = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::sidebar.item','data' => ['icon' => 'users','href' => route('teams.index'),'current' => request()->routeIs('teams.*'),'wire:navigate' => true]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::sidebar.item'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['icon' => 'users','href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('teams.index')),'current' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(request()->routeIs('teams.*')),'wire:navigate' => true]); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
-                <?php echo e(__('Teams')); ?>
-
-             <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginalfe86969babb72517ecf97426e7c9330d)): ?>
-<?php $attributes = $__attributesOriginalfe86969babb72517ecf97426e7c9330d; ?>
-<?php unset($__attributesOriginalfe86969babb72517ecf97426e7c9330d); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalfe86969babb72517ecf97426e7c9330d)): ?>
-<?php $component = $__componentOriginalfe86969babb72517ecf97426e7c9330d; ?>
-<?php unset($__componentOriginalfe86969babb72517ecf97426e7c9330d); ?>
-<?php endif; ?>
-
-            <?php if (isset($component)) { $__componentOriginalfe86969babb72517ecf97426e7c9330d = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginalfe86969babb72517ecf97426e7c9330d = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::sidebar.item','data' => ['icon' => 'cog-6-tooth','href' => route('profile.edit'),'current' => request()->routeIs('profile.edit') || request()->routeIs('security.edit') || request()->routeIs('appearance.edit'),'wire:navigate' => true]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::sidebar.item'); ?>
 <?php if ($component->shouldRender()): ?>
@@ -381,53 +331,6 @@ unset($__split);
 <?php endif; ?>
 <?php $component->withAttributes([]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
-        <?php if (isset($component)) { $__componentOriginal1db8c57e729d67f7d4103875cf3230cb = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal1db8c57e729d67f7d4103875cf3230cb = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::modal.trigger','data' => ['name' => 'create-team-switcher']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::modal.trigger'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['name' => 'create-team-switcher']); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
-            <?php if (isset($component)) { $__componentOriginalfe86969babb72517ecf97426e7c9330d = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginalfe86969babb72517ecf97426e7c9330d = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::sidebar.item','data' => ['icon' => 'user-plus','href' => '#']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::sidebar.item'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['icon' => 'user-plus','href' => '#']); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
-                <?php echo e(__('New Team')); ?>
-
-             <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginalfe86969babb72517ecf97426e7c9330d)): ?>
-<?php $attributes = $__attributesOriginalfe86969babb72517ecf97426e7c9330d; ?>
-<?php unset($__attributesOriginalfe86969babb72517ecf97426e7c9330d); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalfe86969babb72517ecf97426e7c9330d)): ?>
-<?php $component = $__componentOriginalfe86969babb72517ecf97426e7c9330d; ?>
-<?php unset($__componentOriginalfe86969babb72517ecf97426e7c9330d); ?>
-<?php endif; ?>
-         <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginal1db8c57e729d67f7d4103875cf3230cb)): ?>
-<?php $attributes = $__attributesOriginal1db8c57e729d67f7d4103875cf3230cb; ?>
-<?php unset($__attributesOriginal1db8c57e729d67f7d4103875cf3230cb); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginal1db8c57e729d67f7d4103875cf3230cb)): ?>
-<?php $component = $__componentOriginal1db8c57e729d67f7d4103875cf3230cb; ?>
-<?php unset($__componentOriginal1db8c57e729d67f7d4103875cf3230cb); ?>
-<?php endif; ?>
 
         <?php if (isset($component)) { $__componentOriginalfe86969babb72517ecf97426e7c9330d = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalfe86969babb72517ecf97426e7c9330d = $attributes; } ?>

@@ -55,4 +55,9 @@ class Organization extends Model
     {
         return $this->morphMany(ActivityLog::class, 'subject');
     }
+
+    public function teams(): HasMany
+    {
+        return $this->hasMany(Team::class);
+    }
 }

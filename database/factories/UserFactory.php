@@ -38,21 +38,18 @@ class UserFactory extends Factory
         ];
     }
 
-    /**
-     * Configure the model factory.
-     */
     public function configure(): static
     {
-        return $this->afterCreating(function ($user) {
+        return $this->afterCreating(function (User $user) {
             $team = Team::factory()->personal()->create([
-                'name' => $user->name."'s Team",
+                'name' => "{$user->name}'s Team",
             ]);
 
             $team->members()->attach($user, [
                 'role' => TeamRole::Owner->value,
             ]);
 
-            $user->switchTeam($team);
+            $user->update(['current_team_id' => $team->id]);
         });
     }
 

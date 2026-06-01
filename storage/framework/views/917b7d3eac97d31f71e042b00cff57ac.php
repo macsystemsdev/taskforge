@@ -334,35 +334,6 @@
 <?php $component = $__componentOriginalca54afb14f8d43d7f1acc5dbe6164a0a; ?>
 <?php unset($__componentOriginalca54afb14f8d43d7f1acc5dbe6164a0a); ?>
 <?php endif; ?>
-
-    <div class="max-lg:hidden">
-        <?php
-$__split = function ($name, $params = []) {
-    return [$name, $params];
-};
-[$__name, $__params] = $__split('team-switcher', []);
-
-$__keyOuter = $__key ?? null;
-
-$__key = null;
-$__componentSlots = [];
-
-$__key ??= \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::generateKey('lw-3271808143-0', $__key);
-
-$__html = app('livewire')->mount($__name, $__params, $__key, $__componentSlots);
-
-echo $__html;
-
-unset($__html);
-unset($__key);
-$__key = $__keyOuter;
-unset($__keyOuter);
-unset($__name);
-unset($__params);
-unset($__componentSlots);
-unset($__split);
-?>
-    </div>
  <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginale96c14d638c792103c11b984a4ed1896)): ?>
@@ -453,33 +424,6 @@ unset($__split);
 <?php $component = $__componentOriginal837232b594bf97def5cd04bcaa1b6bb0; ?>
 <?php unset($__componentOriginal837232b594bf97def5cd04bcaa1b6bb0); ?>
 <?php endif; ?>
-
-    <?php
-$__split = function ($name, $params = []) {
-    return [$name, $params];
-};
-[$__name, $__params] = $__split('team-switcher', []);
-
-$__keyOuter = $__key ?? null;
-
-$__key = null;
-$__componentSlots = [];
-
-$__key ??= \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::generateKey('lw-3271808143-1', $__key);
-
-$__html = app('livewire')->mount($__name, $__params, $__key, $__componentSlots);
-
-echo $__html;
-
-unset($__html);
-unset($__key);
-$__key = $__keyOuter;
-unset($__keyOuter);
-unset($__name);
-unset($__params);
-unset($__componentSlots);
-unset($__split);
-?>
 
     <?php if (isset($component)) { $__componentOriginal061367e9976089f15083f05bd78a70e4 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal061367e9976089f15083f05bd78a70e4 = $attributes; } ?>
@@ -651,31 +595,6 @@ unset($__split);
 <?php endif; ?>
 <?php $component->withAttributes(['heading' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(__('Administration'))]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
-            <?php if (isset($component)) { $__componentOriginalfe86969babb72517ecf97426e7c9330d = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginalfe86969babb72517ecf97426e7c9330d = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::sidebar.item','data' => ['icon' => 'users','href' => route('teams.index'),'current' => request()->routeIs('teams.*'),'wire:navigate' => true]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::sidebar.item'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['icon' => 'users','href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('teams.index')),'current' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(request()->routeIs('teams.*')),'wire:navigate' => true]); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
-                <?php echo e(__('Teams')); ?>
-
-             <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginalfe86969babb72517ecf97426e7c9330d)): ?>
-<?php $attributes = $__attributesOriginalfe86969babb72517ecf97426e7c9330d; ?>
-<?php unset($__attributesOriginalfe86969babb72517ecf97426e7c9330d); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalfe86969babb72517ecf97426e7c9330d)): ?>
-<?php $component = $__componentOriginalfe86969babb72517ecf97426e7c9330d; ?>
-<?php unset($__componentOriginalfe86969babb72517ecf97426e7c9330d); ?>
-<?php endif; ?>
 
             <?php if (isset($component)) { $__componentOriginalfe86969babb72517ecf97426e7c9330d = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalfe86969babb72517ecf97426e7c9330d = $attributes; } ?>

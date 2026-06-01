@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\OrganizationInvitationController;
-use App\Http\Middleware\EnsureTeamMembership;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 use App\Models\Organization;
@@ -10,10 +9,12 @@ use App\Models\Task;
 use App\Models\Workspace;
 use Livewire\Volt\Volt;
 
+
+
 Route::get('/invitations/{token}/accept', [OrganizationInvitationController::class, 'accept'])
     ->name('invitations.accept')->middleware('auth');
 
-Route::get('/invitations/{token}/reject', [OrganizationInvitationController::class, 'reject'])
+Route::post('/invitations/{token}/reject', [OrganizationInvitationController::class, 'reject'])
     ->name('invitations.reject')->middleware('auth');
 
 Route::get('/invitations/{token}/reject', [OrganizationInvitationController::class, 'showRejectForm'])->name('invitations.reject.form')->middleware('auth');
@@ -22,14 +23,13 @@ Route::view('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('home');
 
-Route::prefix('{current_team}')
-    ->middleware(['auth', 'verified', EnsureTeamMembership::class])
+Route::middleware(['auth', 'verified'])
     ->group(function () {
         Route::view('dashboard', 'dashboard')->name('dashboard');
     });
 
 Route::middleware(['auth'])->group(function () {
-    Route::livewire('invitations/{invitation}/accept', 'pages::teams.accept-invitation')->name('invitations.accept');
+    Route::livewire('invitations/{invitation}/accept', 'pages::teams.accept-invitation')->name('team-invitations.accept');
 
     Route::view('/organizations', 'pages.organizations.index')->name('organizations.index');
 
@@ -45,6 +45,14 @@ Route::middleware(['auth'])->group(function () {
             );
         }
     )->name('organizations.show');
+
+    // Teams routes (within organization)
+    Route::get('/organizations/{organization}/teams/create', function (Organization $organization) {
+        return view('livewire.teams.create-team', compact('organization'));
+    })->name('teams.create');
+    Route::get('/organizations/{organization}/teams/{team}', function (Organization $organization, \App\Models\Team $team) {
+        return view('pages.teams.show', compact('organization', 'team'));
+    })->name('teams.show');
 
     Route::get(
         '/workspaces/{workspace}/projects/create',
