@@ -50,4 +50,9 @@ class Project extends Model
         );
     }
 
+    public function teams()
+    {
+        return $this->belongsToMany(Team::class, 'project_team', 'project_id', 'team_id')
+            ->using(ProjectTeam::class);
+    }
 }

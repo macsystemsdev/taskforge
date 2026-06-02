@@ -3,7 +3,7 @@
         $organizations = auth()->user()->organizations()->with('workspaces.projects.tasks')->get();
         $ownedOrganizations = \App\Models\Organization::query()
             ->where('owner_id', auth()->id())
-            ->with('workspaces.project.tasks')
+            ->with('workspaces.projects.tasks')
             ->get();
         $allOrganizations = $ownedOrganizations->merge($organizations)->unique('id')->values();
         $workspaces = $allOrganizations->flatMap->workspaces;

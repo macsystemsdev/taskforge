@@ -8,6 +8,11 @@
         <!-- Team switcher removed - teams are now organization-scoped -->
     </div>
 
+    @php
+        $currentProject = request()->route('project');
+        $unreadNotifications = auth()->check() ? auth()->user()->unreadNotifications()->count() : 0;
+    @endphp
+
     <flux:sidebar.nav>
         <flux:sidebar.group :heading="__('Workspace')" class="grid gap-1">
             <flux:sidebar.item icon="layout-grid" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
@@ -28,8 +33,31 @@
 
             <flux:sidebar.item icon="bell" :href="route('notifications.index')" :current="request()->routeIs('notifications.*')" wire:navigate>
                 {{ __('Notifications') }}
+                @if ($unreadNotifications)
+                    <span class="ml-2 inline-flex items-center justify-center rounded-full bg-rose-600 px-2 py-0.5 text-[10px] font-semibold text-white">
+                        {{ $unreadNotifications }}
+                    </span>
+                @endif
             </flux:sidebar.item>
         </flux:sidebar.group>
+
+        @if ($currentProject)
+            <flux:sidebar.group :heading="__('Current project')" class="grid gap-1">
+                <flux:sidebar.item icon="folder-open" :href="route('projects.show', $currentProject)" :current="request()->routeIs('projects.show')" wire:navigate>
+                    {{ $currentProject->name }}
+                </flux:sidebar.item>
+            </flux:sidebar.group>
+
+            @if ($currentProject->teams()->exists())
+                <flux:sidebar.group :heading="__('Teams')" class="grid gap-1">
+                    @foreach ($currentProject->teams as $team)
+                        <flux:sidebar.item icon="users" :href="route('teams.edit', $team)" :current="request()->routeIs('teams.edit') && request()->route('team') && request()->route('team')->id === $team->id" wire:navigate>
+                            {{ $team->name }}
+                        </flux:sidebar.item>
+                    @endforeach
+                </flux:sidebar.group>
+            @endif
+        @endif
 
         <flux:sidebar.group :heading="__('Administration')" class="grid gap-1">
             <flux:sidebar.item icon="cog-6-tooth" :href="route('profile.edit')" :current="request()->routeIs('profile.edit') || request()->routeIs('security.edit') || request()->routeIs('appearance.edit')" wire:navigate>

@@ -73,16 +73,6 @@ class Team extends Model
     }
 
     /**
-     * Get all invitations for this team.
-     *
-     * @return HasMany<TeamInvitation, $this>
-     */
-    public function invitations(): HasMany
-    {
-        return $this->hasMany(TeamInvitation::class);
-    }
-
-    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -105,5 +95,11 @@ class Team extends Model
     public function organization(): BelongsTo
     {
         return $this->belongsTo(Organization::class);
+    }
+
+    public function projects()
+    {
+        return $this->belongsToMany(Project::class, 'project_team', 'team_id', 'project_id')
+            ->using(ProjectTeam::class);
     }
 }

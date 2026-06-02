@@ -23,8 +23,6 @@ new class extends Component
 
     public array $members = [];
 
-    public array $invitations = [];
-
     public array $availableRoles = [];
 
     public bool $isCurrentTeam = false;
@@ -102,17 +100,6 @@ new class extends Component
             'role_label' => $member->pivot->role?->label(),
         ])->toArray();
 
-        $this->invitations = $team->invitations()
-            ->whereNull('accepted_at')
-            ->get()
-            ->map(fn ($invitation) => [
-                'code' => $invitation->code,
-                'email' => $invitation->email,
-                'role' => $invitation->role->value,
-                'role_label' => $invitation->role->label(),
-                'created_at' => $invitation->created_at->toISOString(),
-            ])->toArray();
-
         $this->availableRoles = TeamRole::assignable();
 
         $this->isCurrentTeam = $user->isCurrentTeam($team);
@@ -170,10 +157,10 @@ new class extends Component
                         @endif
                     </div>
 
-                    @if ($this->permissions->canCreateInvitation)
-                        <flux:modal.trigger name="invite-member">
-                            <flux:button variant="primary" icon="user-plus" data-test="invite-member-button">
-                                {{ __('Invite member') }}
+                    @if ($this->permissions->canAddMember)
+                        <flux:modal.trigger name="add-member">
+                            <flux:button variant="primary" icon="user-plus" data-test="add-member-button">
+                                {{ __('Add member') }}
                             </flux:button>
                         </flux:modal.trigger>
                     @endif
@@ -241,52 +228,7 @@ new class extends Component
                 </div>
             </div>
 
-            @if (count($invitations) > 0)
-                <div class="space-y-6">
-                    <div>
-                        <flux:heading>{{ __('Pending invitations') }}</flux:heading>
-                        <flux:subheading>{{ __('Invitations that have not been accepted yet') }}</flux:subheading>
-                    </div>
-
-                    <div class="space-y-3">
-                        @foreach ($invitations as $invitation)
-                            <div class="flex items-center justify-between rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900" data-test="invitation-row">
-                                <div class="flex items-center gap-4">
-                                    <div class="flex size-10 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800">
-                                        <flux:icon name="envelope" class="text-zinc-500" />
-                                    </div>
-                                    <div>
-                                        <div class="font-medium">{{ $invitation['email'] }}</div>
-                                        <flux:text class="text-sm text-zinc-500 dark:text-zinc-400">{{ $invitation['role_label'] }}</flux:text>
-                                    </div>
-                                </div>
-
-                                @if ($this->permissions->canCancelInvitation)
-                                    <flux:modal.trigger name="cancel-invitation-{{ $invitation['code'] }}">
-                                        <flux:tooltip :content="__('Cancel invitation')">
-                                            <flux:button
-                                                variant="ghost"
-                                                size="sm"
-                                                icon="x-mark"
-                                                data-test="invitation-cancel-button"
-                                            />
-                                        </flux:tooltip>
-                                    </flux:modal.trigger>
-                                @endif
-                            </div>
-                            @if ($this->permissions->canCancelInvitation)
-                                <livewire:pages::teams.cancel-invitation-modal
-                                    :team="$teamModel"
-                                    :invitation-code="$invitation['code']"
-                                    :invitation-email="$invitation['email']"
-                                    :modal-name="'cancel-invitation-'.$invitation['code']"
-                                    :key="'cancel-invitation-modal-'.$invitation['code']"
-                                />
-                            @endif
-                        @endforeach
-                    </div>
-                </div>
-            @endif
+            
 
             @if ($this->permissions->canDeleteTeam && ! $teamData['is_personal'])
                 <div class="space-y-6">
@@ -312,8 +254,8 @@ new class extends Component
         </div>
     </x-pages::settings.layout>
 
-    @if ($this->permissions->canCreateInvitation)
-        <livewire:pages::teams.invite-member-modal :team="$teamModel" />
+    @if ($this->permissions->canAddMember)
+        <livewire:pages::teams.add-member-modal :team="$teamModel" />
     @endif
 
     @if ($this->permissions->canDeleteTeam && ! $teamData['is_personal'])

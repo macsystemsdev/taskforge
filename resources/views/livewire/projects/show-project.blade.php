@@ -20,14 +20,12 @@ new class extends Component {
         $tasks = $project->tasks;
         $openTasks = $tasks->whereNotIn('status', [\App\Enums\TaskStatus::DONE])->count();
         $completedTasks = $tasks->where('status', \App\Enums\TaskStatus::DONE)->count();
-        $dueDate = $project->due_date ? \Illuminate\Support\Carbon::parse($project->due_date)->format('M d, Y') : 'No due date';
+        $dueDate = $project->due_date
+            ? \Illuminate\Support\Carbon::parse($project->due_date)->format('M d, Y')
+            : 'No due date';
     @endphp
 
-    <x-ui.page-header
-        :title="$project->name"
-        :description="$project->description ?: __('No project description has been added yet.')"
-        :eyebrow="$project->workspace->organization->name.' / '.$project->workspace->name"
-    >
+    <x-ui.page-header :title="$project->name" :description="$project->description ?: __('No project description has been added yet.')" :eyebrow="$project->workspace->organization->name . ' / ' . $project->workspace->name">
         <x-slot:actions>
             <x-ui.status-badge :status="$project->status ?? 'active'" />
         </x-slot:actions>
@@ -58,11 +56,17 @@ new class extends Component {
         </x-ui.card>
     </div>
 
-    <div class="mt-6 space-y-6">
-        @livewire('tasks.create-task', ['project' => $project])
+    <div class="mt-6 grid gap-4 md:grid-cols-[minmax(0,1fr)_320px]">
+        <div class="space-y-6">
+            @livewire('tasks.create-task', ['project' => $project])
 
-        @livewire('comments.comment-section', [
-            'commentable' => $project,
-        ])
+            @livewire('comments.comment-section', [
+                'commentable' => $project,
+            ])
+        </div>
+
+        <aside class="space-y-6 md:sticky md:top-20">
+            @livewire('projects.manage-project-teams', ['project' => $project])
+        </aside>
     </div>
 </x-ui.page>

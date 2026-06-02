@@ -12,6 +12,7 @@
 
     <?php
         $notifications = auth()->user()->notifications()->latest()->get();
+        $unreadCount = auth()->user()->unreadNotifications()->count();
     ?>
 
     <?php if (isset($component)) { $__componentOriginal1f4cdfbcf032dc00af93962c134fd24f = $component; } ?>
@@ -28,17 +29,32 @@
 
         <?php if (isset($component)) { $__componentOriginal91a231a9270579fa1ae9246bd51fb785 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal91a231a9270579fa1ae9246bd51fb785 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.page-header','data' => ['title' => __('Notifications'),'description' => __('Review recent assignments, invitations, and workflow events that need attention.')]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.page-header','data' => ['title' => __('Notifications'),'description' => __('Review recent assignments, membership changes, and workflow events that need attention.')]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('ui.page-header'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['title' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(__('Notifications')),'description' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(__('Review recent assignments, invitations, and workflow events that need attention.'))]); ?>
+<?php $component->withAttributes(['title' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(__('Notifications')),'description' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(__('Review recent assignments, membership changes, and workflow events that need attention.'))]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-<?php echo $__env->renderComponent(); ?>
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($unreadCount): ?>
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="inline-flex items-center rounded-full bg-rose-600 px-3 py-1 text-sm font-semibold text-white">
+                        <?php echo e($unreadCount); ?> <?php echo e(\Illuminate\Support\Str::plural(__('new'), $unreadCount)); ?>
+
+                    </span>
+                    <form method="POST" action="<?php echo e(route('notifications.read-all')); ?>">
+                        <?php echo csrf_field(); ?>
+                        <button type="submit" class="rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-white dark:hover:bg-zinc-900">
+                            <?php echo e(__('Mark all as read')); ?>
+
+                        </button>
+                    </form>
+                </div>
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+         <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginal91a231a9270579fa1ae9246bd51fb785)): ?>
 <?php $attributes = $__attributesOriginal91a231a9270579fa1ae9246bd51fb785; ?>
@@ -70,6 +86,12 @@
                                 <p class="font-medium text-zinc-950 dark:text-white">
                                     <?php echo e($notification->data['title'] ?? class_basename($notification->type)); ?>
 
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! $notification->read_at): ?>
+                                        <span class="ml-2 inline-flex items-center rounded-full bg-rose-600 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                                            <?php echo e(__('New')); ?>
+
+                                        </span>
+                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                 </p>
                                 <p class="text-xs text-zinc-500 dark:text-zinc-400">
                                     <?php echo e($notification->created_at->diffForHumans()); ?>
@@ -85,14 +107,14 @@
                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
                     <?php if (isset($component)) { $__componentOriginal3607a477fdef7402bc742abad5df9c51 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal3607a477fdef7402bc742abad5df9c51 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.empty-state','data' => ['title' => 'No notifications','description' => 'Workflow and invitation updates will appear here when there is something to review.']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.empty-state','data' => ['title' => 'No notifications','description' => 'Recent updates and workflow alerts will appear here once there is something to review.']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('ui.empty-state'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['title' => 'No notifications','description' => 'Workflow and invitation updates will appear here when there is something to review.']); ?>
+<?php $component->withAttributes(['title' => 'No notifications','description' => 'Recent updates and workflow alerts will appear here once there is something to review.']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
 <?php echo $__env->renderComponent(); ?>

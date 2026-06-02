@@ -27,8 +27,6 @@ enum TeamRole: string
             self::Owner => TeamPermission::cases(),
             self::Admin => [
                 TeamPermission::UpdateTeam,
-                TeamPermission::CreateInvitation,
-                TeamPermission::CancelInvitation,
             ],
             self::Member => [],
         };

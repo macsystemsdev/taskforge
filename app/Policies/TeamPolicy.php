@@ -65,22 +65,6 @@ class TeamPolicy
     }
 
     /**
-     * Determine whether the user can invite members to the team.
-     */
-    public function inviteMember(User $user, Team $team): bool
-    {
-        return $user->hasTeamPermission($team, TeamPermission::CreateInvitation);
-    }
-
-    /**
-     * Determine whether the user can cancel invitations.
-     */
-    public function cancelInvitation(User $user, Team $team): bool
-    {
-        return $user->hasTeamPermission($team, TeamPermission::CancelInvitation);
-    }
-
-    /**
      * Determine whether the user can delete the model.
      */
     public function delete(User $user, Team $team): bool

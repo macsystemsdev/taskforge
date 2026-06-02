@@ -1,8 +1,11 @@
 <?php
 
 use App\Enums\TeamRole;
+use App\Models\Organization;
 use App\Models\Team;
 use App\Models\User;
+use App\Notifications\Teams\TeamMemberAdded;
+use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
 
 test('team member role can be updated by owner', function () {
@@ -20,6 +23,51 @@ test('team member role can be updated by owner', function () {
         ->assertHasNoErrors();
 
     expect($team->members()->where('user_id', $member->id)->first()->pivot->role->value)->toEqual(TeamRole::Admin->value);
+});
+
+test('adding an organization member to a team sends a database notification', function () {
+    Notification::fake();
+
+    $owner = User::factory()->create();
+    $member = User::factory()->create();
+
+    $organization = Organization::create([
+        'name' => 'Test Organization',
+        'slug' => 'test-organization',
+        'subscription_plan' => 'free',
+        'subscription_status' => 'active',
+        'owner_id' => $owner->id,
+    ]);
+
+    $team = Team::factory()->create(['organization_id' => $organization->id]);
+
+    $organization->members()->attach($owner, [
+        'role' => 'owner',
+        'status' => 'active',
+        'joined_at' => now(),
+    ]);
+
+    $organization->members()->attach($member, [
+        'role' => 'member',
+        'status' => 'active',
+        'joined_at' => now(),
+    ]);
+
+    $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
+
+    $this->actingAs($owner);
+
+    Livewire::test('pages::teams.add-member-modal', ['team' => $team])
+        ->call('addMember', $member->id)
+        ->assertHasNoErrors();
+
+    expect($member->fresh()->belongsToTeam($team))->toBeTrue();
+
+    Notification::assertSentTo(
+        $member,
+        TeamMemberAdded::class,
+        fn ($notification, $channels) => in_array('database', $channels, true)
+    );
 });
 
 test('team member role cannot be updated by non owner', function () {

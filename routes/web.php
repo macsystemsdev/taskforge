@@ -29,8 +29,6 @@ Route::middleware(['auth', 'verified'])
     });
 
 Route::middleware(['auth'])->group(function () {
-    Route::livewire('invitations/{invitation}/accept', 'pages::teams.accept-invitation')->name('team-invitations.accept');
-
     Route::view('/organizations', 'pages.organizations.index')->name('organizations.index');
 
     // Create and show organization
@@ -48,7 +46,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Teams routes (within organization)
     Route::get('/organizations/{organization}/teams/create', function (Organization $organization) {
-        return view('livewire.teams.create-team', compact('organization'));
+        return view('pages.teams.create', compact('organization'));
     })->name('teams.create');
     Route::get('/organizations/{organization}/teams/{team}', function (Organization $organization, \App\Models\Team $team) {
         return view('pages.teams.show', compact('organization', 'team'));
@@ -101,6 +99,12 @@ Route::middleware(['auth'])->group(function () {
     Route::view('/tasks', 'pages.tasks.index')->name('tasks.index');
 
     Route::view('/notifications', 'pages.notifications.index')->name('notifications.index');
+
+    Route::post('/notifications/mark-all-read', function () {
+        auth()->user()->unreadNotifications->markAsRead();
+
+        return back();
+    })->name('notifications.read-all');
 });
 
 
