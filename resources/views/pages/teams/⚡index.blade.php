@@ -1,6 +1,7 @@
 <?php
 
 use App\Actions\Teams\CreateTeam;
+use App\Data\Teams\CreateTeamData;
 use App\Rules\TeamName;
 use App\Support\UserTeam;
 use Flux\Flux;
@@ -13,17 +14,26 @@ use Livewire\Component;
 new #[Title('Teams')] class extends Component {
     public string $name = '';
 
+    public string $description = '';
+
     public function createTeam(CreateTeam $createTeam): void
     {
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:255', new TeamName],
+            'description' => ['nullable', 'string'],
         ]);
 
-        $team = $createTeam->handle(Auth::user(), $validated['name']);
+        $team = $createTeam->handle(
+            Auth::user(),
+            new CreateTeamData(
+                name: $validated['name'],
+                description: $validated['description'] ?? null,
+            )
+        );
 
         $this->dispatch('close-modal', name: 'create-team');
 
-        $this->reset('name');
+        $this->reset(['name', 'description']);
 
         Flux::toast(variant: 'success', text: __('Team created.'));
 
@@ -98,6 +108,8 @@ new #[Title('Teams')] class extends Component {
             </div>
 
             <flux:input wire:model="name" :label="__('Team name')" type="text" required autofocus data-test="create-team-name" />
+
+            <flux:textarea wire:model="description" :label="__('Description')" placeholder="{{ __('What is this team responsible for?') }}" />
 
             <div class="flex justify-end space-x-2 rtl:space-x-reverse">
                 <flux:modal.close>

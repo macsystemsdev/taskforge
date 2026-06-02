@@ -51,6 +51,27 @@ test('team slug uses next available suffix', function () {
     ]);
 });
 
+test('creating a team attaches the creator as owner', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::teams.index')
+        ->set('name', 'Owner Team')
+        ->set('description', 'Owned by creator')
+        ->call('createTeam')
+        ->assertHasNoErrors();
+
+    $team = Team::where('name', 'Owner Team')->first();
+
+    $this->assertNotNull($team);
+    $this->assertDatabaseHas('team_members', [
+        'team_id' => $team->id,
+        'user_id' => $user->id,
+        'role' => TeamRole::Owner->value,
+    ]);
+});
+
 test('team edit page can be rendered', function () {
     $user = User::factory()->create();
     $team = Team::factory()->create();

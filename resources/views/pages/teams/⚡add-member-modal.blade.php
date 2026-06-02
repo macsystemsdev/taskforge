@@ -16,9 +16,11 @@ use Livewire\Component;
 new class extends Component {
     public Team $team;
 
+
     public array $candidates = [];
 
-    public string $role = 'member';
+    // Per-candidate role selections keyed by user id.
+    public array $roles = [];
 
     public string $search = '';
 
@@ -67,7 +69,9 @@ new class extends Component {
     {
         Gate::authorize('addMember', $this->team);
 
-        $validated = Validator::make(['role' => $this->role], [
+        $roleValue = $this->roles[$userId] ?? TeamRole::Member->value;
+
+        $validated = Validator::make(['role' => $roleValue], [
             'role' => ['required', 'string', Rule::enum(TeamRole::class)],
         ])->validate();
 
@@ -129,7 +133,7 @@ new class extends Component {
                     </div>
 
                     <div class="flex items-center gap-2">
-                        <flux:select wire:model="role" :label="__('Role')">
+                        <flux:select wire:model="roles.{{ $candidate['id'] }}" :label="__('Role')">
                             @foreach ($this->availableRoles as $role)
                                 <flux:select.option value="{{ $role['value'] }}">{{ $role['label'] }}</flux:select.option>
                             @endforeach

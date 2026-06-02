@@ -24,7 +24,8 @@ new class extends Component {
             data: new CreateTeamData(
                 name: $validated['name'],
                 description: $validated['description']
-            )
+            ),
+            owner: auth()->user(),
         );
 
         return redirect()->route('teams.show', ['organization' => $this->organization, 'team' => $team]);

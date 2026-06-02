@@ -50,7 +50,6 @@ new class extends Component {
                 ->where('id', '!=', $user->id)
                 ->each(fn (User $affectedUser) => $affectedUser->switchTeam($affectedUser->personalTeam()));
 
-            $this->team->invitations()->delete();
             $this->team->memberships()->delete();
             $this->team->delete();
         });
