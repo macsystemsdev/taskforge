@@ -5,6 +5,9 @@ use App\Models\Invitation;
 use Livewire\Component;
 use App\Actions\Organizations\InviteMemberAction;
 use App\Data\Invitations\InviteMemberData;
+use App\Enums\OrganizationRole;
+use App\Models\User;
+use App\Actions\Organizations\UpdateOrganizationMemberRoleAction;
 use Flux\Flux;
 
 new class extends Component {
@@ -60,16 +63,28 @@ new class extends Component {
 
         Flux::toast(variant: 'success', text: 'Invitation cancelled.');
     }
+
+    // Update Roles
+    public function updateRole(UpdateOrganizationMemberRoleAction $updateRoleAction, int $memberId, string $role): void
+    {
+        try {
+            $member = User::findOrFail($memberId);
+
+            $updateRoleAction->handle(organization: $this->organization, member: $member, role: OrganizationRole::from($role));
+
+            $this->organization->refresh();
+
+            Flux::toast(text: 'Role updated successfully.', variant: 'success');
+        } catch (\DomainException $e) {
+            Flux::toast(text: $e->getMessage(), variant: 'danger');
+        }
+    }
 };
 
 ?>
 
 <x-ui.page>
-    <x-ui.page-header
-        :title="$organization->name"
-        :description="__('Manage workspaces, members, invitations, and project flow for this organization.')"
-        :eyebrow="__('Organization')"
-    >
+    <x-ui.page-header :title="$organization->name" :description="__('Manage workspaces, members, invitations, and project flow for this organization.')" :eyebrow="__('Organization')">
         <x-slot:actions>
             <x-ui.status-badge :status="$organization->subscription_status ?? 'active'" />
         </x-slot:actions>
@@ -78,22 +93,26 @@ new class extends Component {
     <div class="mb-6 grid gap-4 sm:grid-cols-4">
         <x-ui.card class="space-y-2">
             <p class="tf-muted">Workspaces</p>
-            <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">{{ $organization->workspaces->count() }}</p>
+            <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+                {{ $organization->workspaces->count() }}</p>
         </x-ui.card>
 
         <x-ui.card class="space-y-2">
             <p class="tf-muted">Teams</p>
-            <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">{{ $organization->teams->count() }}</p>
+            <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+                {{ $organization->teams->count() }}</p>
         </x-ui.card>
 
         <x-ui.card class="space-y-2">
             <p class="tf-muted">Members</p>
-            <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">{{ $organization->members->count() }}</p>
+            <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+                {{ $organization->members->count() }}</p>
         </x-ui.card>
 
         <x-ui.card class="space-y-2">
             <p class="tf-muted">Open invitations</p>
-            <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">{{ $this->invitations->where('status', 'pending')->count() }}</p>
+            <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+                {{ $this->invitations->where('status', 'pending')->count() }}</p>
         </x-ui.card>
     </div>
 
@@ -107,36 +126,40 @@ new class extends Component {
         </div>
 
         <div class="grid gap-4 lg:grid-cols-2">
-                @forelse ($organization->workspaces as $workspace)
-                    <div class="rounded-lg border border-zinc-200 p-4 transition hover:bg-zinc-50 dark:border-white/10 dark:hover:bg-white/[0.03]">
-                        <div class="flex items-start justify-between gap-4">
-                            <div class="min-w-0">
-                                <h3 class="truncate font-semibold text-zinc-950 dark:text-white">
-                                    {{ $workspace->name }}
-                                </h3>
+            @forelse ($organization->workspaces as $workspace)
+                <div
+                    class="rounded-lg border border-zinc-200 p-4 transition hover:bg-zinc-50 dark:border-white/10 dark:hover:bg-white/[0.03]">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="min-w-0">
+                            <h3 class="truncate font-semibold text-zinc-950 dark:text-white">
+                                {{ $workspace->name }}
+                            </h3>
 
-                                <p class="mt-1 line-clamp-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                                    {{ $workspace->description ?: 'No workspace description.' }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="mt-4 flex items-center justify-between border-t border-zinc-100 pt-4 dark:border-white/5">
-                            <span class="text-sm text-zinc-500 dark:text-zinc-400">
-                                {{ $workspace->projects->count() }} projects
-                            </span>
-
-                            <a href="{{ route('projects.create', $workspace) }}" class="tf-button-secondary px-3 py-2" wire:navigate>
-                                Create Project
-                            </a>
+                            <p class="mt-1 line-clamp-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                                {{ $workspace->description ?: 'No workspace description.' }}
+                            </p>
                         </div>
                     </div>
 
-                @empty
-                    <div class="lg:col-span-2">
-                        <x-ui.empty-state title="No workspaces" description="Workspaces will appear here when they are added to this organization." />
+                    <div
+                        class="mt-4 flex items-center justify-between border-t border-zinc-100 pt-4 dark:border-white/5">
+                        <span class="text-sm text-zinc-500 dark:text-zinc-400">
+                            {{ $workspace->projects->count() }} projects
+                        </span>
+
+                        <a href="{{ route('projects.create', $workspace) }}" class="tf-button-secondary px-3 py-2"
+                            wire:navigate>
+                            Create Project
+                        </a>
                     </div>
-                @endforelse
+                </div>
+
+            @empty
+                <div class="lg:col-span-2">
+                    <x-ui.empty-state title="No workspaces"
+                        description="Workspaces will appear here when they are added to this organization." />
+                </div>
+            @endforelse
         </div>
     </x-ui.card>
 
@@ -153,32 +176,36 @@ new class extends Component {
         </div>
 
         <div class="grid gap-4 lg:grid-cols-2">
-                @forelse ($organization->teams as $team)
-                    <a href="{{ route('teams.show', ['organization' => $organization, 'team' => $team]) }}" class="rounded-lg border border-zinc-200 p-4 transition hover:bg-zinc-50 dark:border-white/10 dark:hover:bg-white/[0.03]" wire:navigate>
-                        <div class="flex items-start justify-between gap-4">
-                            <div class="min-w-0">
-                                <h3 class="truncate font-semibold text-zinc-950 dark:text-white">
-                                    {{ $team->name }}
-                                </h3>
+            @forelse ($organization->teams as $team)
+                <a href="{{ route('teams.show', ['organization' => $organization, 'team' => $team]) }}"
+                    class="rounded-lg border border-zinc-200 p-4 transition hover:bg-zinc-50 dark:border-white/10 dark:hover:bg-white/[0.03]"
+                    wire:navigate>
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="min-w-0">
+                            <h3 class="truncate font-semibold text-zinc-950 dark:text-white">
+                                {{ $team->name }}
+                            </h3>
 
-                                <p class="mt-1 line-clamp-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                                    {{ $team->description ?: 'No team description.' }}
-                                </p>
-                            </div>
+                            <p class="mt-1 line-clamp-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                                {{ $team->description ?: 'No team description.' }}
+                            </p>
                         </div>
-
-                        <div class="mt-4 flex items-center justify-between border-t border-zinc-100 pt-4 dark:border-white/5">
-                            <span class="text-sm text-zinc-500 dark:text-zinc-400">
-                                {{ $team->members->count() }} members
-                            </span>
-                        </div>
-                    </a>
-
-                @empty
-                    <div class="lg:col-span-2">
-                        <x-ui.empty-state title="No teams yet" description="Create a team to organize members and projects within this organization." />
                     </div>
-                @endforelse
+
+                    <div
+                        class="mt-4 flex items-center justify-between border-t border-zinc-100 pt-4 dark:border-white/5">
+                        <span class="text-sm text-zinc-500 dark:text-zinc-400">
+                            {{ $team->members->count() }} members
+                        </span>
+                    </div>
+                </a>
+
+            @empty
+                <div class="lg:col-span-2">
+                    <x-ui.empty-state title="No teams yet"
+                        description="Create a team to organize members and projects within this organization." />
+                </div>
+            @endforelse
         </div>
     </x-ui.card>
 
@@ -191,44 +218,44 @@ new class extends Component {
                 <p class="tf-panel-subtitle">Invite collaborators into this organization.</p>
             </div>
 
-                <form wire:submit="inviteMember" class="space-y-4">
+            <form wire:submit="inviteMember" class="space-y-4">
 
-                    <flux:input wire:model="inviteEmail" label="Email" type="email" required />
+                <flux:input wire:model="inviteEmail" label="Email" type="email" required />
 
-                    @error('email')
-                        <p class="text-sm text-red-500 mt-1">
-                            {{ $message }}
-                        </p>
-                    @enderror
+                @error('email')
+                    <p class="text-sm text-red-500 mt-1">
+                        {{ $message }}
+                    </p>
+                @enderror
 
-                    @error('inviteEmail')
-                        <div class="text-red-600 text-sm mt-1">{{ $message }}</div>
-                    @enderror
+                @error('inviteEmail')
+                    <div class="text-red-600 text-sm mt-1">{{ $message }}</div>
+                @enderror
 
-                    <flux:select wire:model="inviteRole" label="Role">
+                <flux:select wire:model="inviteRole" label="Role">
 
-                        <option value="member">
-                            Member
-                        </option>
+                    <option value="member">
+                        Member
+                    </option>
 
-                        <option value="admin">
-                            Admin
-                        </option>
+                    <option value="admin">
+                        Admin
+                    </option>
 
 
-                    </flux:select>
+                </flux:select>
 
-                    @error('inviteRole')
-                        <p class="text-sm text-red-500 mt-1">
-                            {{ $message }}
-                        </p>
-                    @enderror
+                @error('inviteRole')
+                    <p class="text-sm text-red-500 mt-1">
+                        {{ $message }}
+                    </p>
+                @enderror
 
-                    <flux:button variant="primary" type="submit" class="w-full sm:w-auto">
-                        Send Invitation
-                    </flux:button>
+                <flux:button variant="primary" type="submit" class="w-full sm:w-auto">
+                    Send Invitation
+                </flux:button>
 
-                </form>
+            </form>
         </x-ui.card>
 
         {{-- Members --}}
@@ -238,32 +265,41 @@ new class extends Component {
                 <p class="tf-panel-subtitle">Organization participants.</p>
             </div>
 
-                <div class="space-y-3">
+            <div class="space-y-3">
 
-                    @foreach ($organization->members as $member)
-                        <div class="flex items-center justify-between gap-3 rounded-lg border border-zinc-200 p-3 dark:border-white/10">
-                            <div class="flex min-w-0 items-center gap-3">
-                                <x-ui.avatar :name="$member->name" />
-                                <div class="min-w-0">
-                                    <p class="truncate font-medium text-zinc-950 dark:text-white">
+                @foreach ($organization->members as $member)
+                    <div
+                        class="flex items-center justify-between gap-3 rounded-lg border border-zinc-200 p-3 dark:border-white/10">
+                        <div class="flex min-w-0 items-center gap-3">
+                            <x-ui.avatar :name="$member->name" />
+                            <div class="min-w-0">
+                                <p class="truncate font-medium text-zinc-950 dark:text-white">
                                     {{ $member->name }}
-                                    </p>
+                                </p>
 
-                                    <p class="truncate text-sm text-zinc-500 dark:text-zinc-400">
+                                <p class="truncate text-sm text-zinc-500 dark:text-zinc-400">
                                     {{ $member->email }}
-                                    </p>
-                                </div>
+                                </p>
                             </div>
-
-                  
-                            <flux:badge>
-                                {{ $member->role }}
-                            </flux:badge>
-
                         </div>
-                    @endforeach
 
-                </div>
+
+                        <flux:select
+                            wire:change="updateRole(
+        {{ $member->id }},
+        $event.target.value
+    )">
+                            @foreach (App\Enums\OrganizationRole::cases() as $role)
+                                <option value="{{ $role->value }}" @selected($member->pivot->role === $role)>
+                                    {{ ucfirst($role->value) }}
+                                </option>
+                            @endforeach
+                        </flux:select>
+
+                    </div>
+                @endforeach
+
+            </div>
         </x-ui.card>
 
     </div>
@@ -275,93 +311,94 @@ new class extends Component {
             <p class="tf-panel-subtitle">Track invitation states and pending access.</p>
         </div>
 
-            <div class="overflow-x-auto">
-                <table>
+        <div class="overflow-x-auto">
+            <table>
 
-                    <thead>
-                        <tr>
-                            <th>
-                                Email
-                            </th>
+                <thead>
+                    <tr>
+                        <th>
+                            Email
+                        </th>
 
-                            <th>
-                                Role
-                            </th>
+                        <th>
+                            Role
+                        </th>
 
-                            <th>
-                                Status
-                            </th>
+                        <th>
+                            Status
+                        </th>
 
-                            <th>
-                                Invited
-                            </th>
+                        <th>
+                            Invited
+                        </th>
 
-                            <th>
-                                Actions
-                            </th>
-                        </tr>
-                    </thead>
+                        <th>
+                            Actions
+                        </th>
+                    </tr>
+                </thead>
 
-                    <tbody>
+                <tbody>
 
-                        @forelse ($this->invitations as $invitation)
-                            <tr class="tf-row-link">
+                    @forelse ($this->invitations as $invitation)
+                        <tr class="tf-row-link">
 
-                                <td>
-                                    {{ $invitation->email }}
-                                </td>
+                            <td>
+                                {{ $invitation->email }}
+                            </td>
 
-                                <td>
-                                    {{ ucfirst($invitation->role) }}
-                                </td>
+                            <td>
+                                {{ ucfirst($invitation->role) }}
+                            </td>
 
-                                <td>
+                            <td>
 
-                                    <x-ui.status-badge :status="$invitation->computed_status" />
+                                <x-ui.status-badge :status="$invitation->computed_status" />
 
-                                    @if ($invitation->rejection_reason)
-                                        <p class="text-xs text-zinc-500 mt-1">
+                                @if ($invitation->rejection_reason)
+                                    <p class="text-xs text-zinc-500 mt-1">
 
-                                            Reason:
-                                            {{ $invitation->rejection_reason }}
+                                        Reason:
+                                        {{ $invitation->rejection_reason }}
 
-                                        </p>
-                                    @endif
+                                    </p>
+                                @endif
 
-                                </td>
+                            </td>
 
-                                <td>
-                                    {{ $invitation->created_at->diffForHumans() }}
-                                </td>
+                            <td>
+                                {{ $invitation->created_at->diffForHumans() }}
+                            </td>
 
-                                <td>
+                            <td>
 
-                                    @if ($invitation->isPending())
-                                        <flux:button size="sm" variant="danger"
-                                            wire:click="
+                                @if ($invitation->isPending())
+                                    <flux:button size="sm" variant="danger"
+                                        wire:click="
                                         cancelInvitation(
                                             {{ $invitation->id }}
                                         )
                                     ">
-                                            Cancel
-                                        </flux:button>
-                                    @endif
+                                        Cancel
+                                    </flux:button>
+                                @endif
 
-                                </td>
+                            </td>
 
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5">
-                                    <x-ui.empty-state title="No invitations" description="Pending and historical invitations will appear here." />
-                                </td>
-                            </tr>
-                        @endforelse
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5">
+                                <x-ui.empty-state title="No invitations"
+                                    description="Pending and historical invitations will appear here." />
+                            </td>
+                        </tr>
+                    @endforelse
 
-                    </tbody>
+                </tbody>
 
-                </table>
+            </table>
 
-            </div>
+        </div>
     </x-ui.card>
 </x-ui.page>
