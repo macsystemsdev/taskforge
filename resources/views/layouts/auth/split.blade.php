@@ -11,18 +11,15 @@
                     <span class="flex h-10 w-10 items-center justify-center rounded-md">
                         <x-app-logo-icon class="me-2 h-7 fill-current text-white" />
                     </span>
-                    {{ config('app.name', 'Laravel') }}
+                    {{ config('app.name', 'TaskForge') }}
                 </a>
 
-                @php
-                    [$message, $author] = str(Illuminate\Foundation\Inspiring::quotes()->random())->explode('-');
-                @endphp
-
                 <div class="relative z-20 mt-auto">
-                    <blockquote class="space-y-2">
-                        <flux:heading size="lg">&ldquo;{{ trim($message) }}&rdquo;</flux:heading>
-                        <footer><flux:heading>{{ trim($author) }}</flux:heading></footer>
-                    </blockquote>
+                    <div class="space-y-6">
+                        <p class="text-sm uppercase tracking-[0.32em] text-white/70">TaskForge</p>
+                        <flux:heading size="lg">Focus every sprint, deliver every milestone.</flux:heading>
+                        <p class="max-w-sm text-sm leading-6 text-white/75">TaskForge helps your team move from plan to done with fewer meetings and more clarity.</p>
+                    </div>
                 </div>
             </div>
             <div class="w-full lg:p-8">
@@ -32,7 +29,7 @@
                             <x-app-logo-icon class="size-9 fill-current text-black dark:text-white" />
                         </span>
 
-                        <span class="sr-only">{{ config('app.name', 'Laravel') }}</span>
+                        <span class="sr-only">{{ config('app.name', 'TaskForge') }}</span>
                     </a>
                     {{ $slot }}
                 </div>

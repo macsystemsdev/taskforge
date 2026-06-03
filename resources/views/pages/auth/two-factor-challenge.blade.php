@@ -32,17 +32,11 @@
             <div x-show="!showRecoveryInput">
                 <x-auth-header
                     :title="__('Authentication code')"
-                    :description="__('Enter the authentication code provided by your authenticator application.')"
-                />
-            </div>
-
+                            :description="__('Enter the authentication code from your authenticator app to sign into TaskForge.')"
             <div x-show="showRecoveryInput">
                 <x-auth-header
                     :title="__('Recovery code')"
-                    :description="__('Please confirm access to your account by entering one of your emergency recovery codes.')"
-                />
-            </div>
-
+                            :description="__('Please confirm access to your TaskForge account using one of your emergency recovery codes.')"
             <form method="POST" action="{{ route('two-factor.login.store') }}">
                 @csrf
 

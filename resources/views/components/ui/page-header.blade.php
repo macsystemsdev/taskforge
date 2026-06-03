@@ -23,9 +23,9 @@
         @endif
     </div>
 
-    @isset($actions)
+    @if (isset($actions) || trim((string) $slot))
         <div class="flex shrink-0 items-center gap-2">
-            {{ $actions }}
+            {{ $actions ?? $slot }}
         </div>
-    @endisset
+    @endif
 </div>

@@ -5,6 +5,7 @@ import laravel from 'laravel-vite-plugin';
 import { bunny } from 'laravel-vite-plugin/fonts';
 import tailwindcss from "@tailwindcss/vite";
 
+
 export default defineConfig({
     plugins: [
         laravel({
@@ -20,6 +21,9 @@ export default defineConfig({
     ],
     server: {
         cors: true,
+        // This allows Vite to be accessible over the tunnel hook
+        // host: '0.0.0.0',
+        // allowedHosts: ['.sharedwithexpose.com'],
         watch: {
             ignored: ['**/storage/framework/views/**'],
         },

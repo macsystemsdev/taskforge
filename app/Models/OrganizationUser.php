@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\OrganizationRole;
 use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
@@ -22,6 +23,30 @@ class OrganizationUser extends Pivot
     protected $casts = [
         'joined_at' => 'datetime',
     ];
+
+    public function isOwner(): bool
+    {
+        return $this->role === OrganizationRole::OWNER;
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === OrganizationRole::ADMIN;
+    }
+
+    public function isMember(): bool
+    {
+        return $this->role === OrganizationRole::MEMBER;
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'role' => OrganizationRole::class,
+        ];
+    }
+
+
 
     public function organization(): BelongsTo
     {

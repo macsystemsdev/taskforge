@@ -211,13 +211,10 @@ new class extends Component {
                             Member
                         </option>
 
-                        <option value="manager">
-                            Manager
+                        <option value="admin">
+                            Admin
                         </option>
 
-                        <option value="manager">
-                            Viewer
-                        </option>
 
                     </flux:select>
 
@@ -258,8 +255,9 @@ new class extends Component {
                                 </div>
                             </div>
 
+                  
                             <flux:badge>
-                                {{ $member->pivot->role }}
+                                {{ $member->role }}
                             </flux:badge>
 
                         </div>

@@ -1,8 +1,9 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="TaskForge helps your team manage projects, tasks, and workflows in one centralized application." />
 
 <title>
-    {{ filled($title ?? null) ? $title.' - '.config('app.name', 'Laravel') : config('app.name', 'Laravel') }}
+    {{ filled($title ?? null) ? $title.' - '.config('app.name', 'TaskForge') : config('app.name', 'TaskForge') }}
 </title>
 
 <link rel="icon" href="/favicon.ico" sizes="any">

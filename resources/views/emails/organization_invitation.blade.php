@@ -109,9 +109,7 @@
 
                                     <td>
 
-                                        <a href="{{ route('invitations.accept', 
-                                            $invitation->token
-                                        ) }}"
+                                        <a href="{{ route('invitations.accept', $invitation->token) }}"
                                             style="
                                                 display: inline-block;
                                                 background: #18181b;
@@ -130,9 +128,7 @@
 
                                     <td>
 
-                                        <a href="{{ route('invitations.reject.form', 
-                                            $invitation->token
-                                        ) }}"
+                                        <a href="{{ route('invitations.reject.form', $invitation->token) }}"
                                             style="
                                                 display: inline-block;
                                                 background: #dc2626;
@@ -180,9 +176,7 @@
                                     font-size: 13px;
                                     color: #2563eb;
                                 ">
-                                {{ route('invitations.accept', 
-                                    $invitation->token
-                                ) }}
+                                {{ route('invitations.accept', $invitation->token) }}
                             </p>
 
                         </td>

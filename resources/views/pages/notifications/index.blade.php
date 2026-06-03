@@ -9,19 +9,21 @@
             :title="__('Notifications')"
             :description="__('Review recent assignments, membership changes, and workflow events that need attention.')"
         >
-            @if ($unreadCount)
-                <div class="flex flex-wrap items-center gap-2">
-                    <span class="inline-flex items-center rounded-full bg-rose-600 px-3 py-1 text-sm font-semibold text-white">
-                        {{ $unreadCount }} {{ \Illuminate\Support\Str::plural(__('new'), $unreadCount) }}
-                    </span>
-                    <form method="POST" action="{{ route('notifications.read-all') }}">
-                        @csrf
-                        <button type="submit" class="rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-white dark:hover:bg-zinc-900">
-                            {{ __('Mark all as read') }}
-                        </button>
-                    </form>
-                </div>
-            @endif
+            <x-slot:actions>
+                @if ($unreadCount)
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="inline-flex items-center rounded-full bg-rose-600 px-3 py-1 text-sm font-semibold text-white">
+                            {{ $unreadCount }} {{ \Illuminate\Support\Str::plural(__('new'), $unreadCount) }}
+                        </span>
+                        <form method="POST" action="{{ route('notifications.read-all') }}">
+                            @csrf
+                            <button type="submit" class="rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-white dark:hover:bg-zinc-900">
+                                {{ __('Mark all as read') }}
+                            </button>
+                        </form>
+                    </div>
+                @endif
+            </x-slot:actions>
         </x-ui.page-header>
 
         <x-ui.card>
