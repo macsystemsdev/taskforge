@@ -11,7 +11,7 @@ use App\Models\User;
 class CreateTeam
 {
     /**
-     * Create a new team and add the user as owner.
+     * Create a new team and add the user as leader(using owner as variable to store since decision to change owner to leader was made earlier on).
      */
     public function handle(
         User|Organization $organization,
@@ -38,7 +38,7 @@ class CreateTeam
 
         $team->memberships()->create([
             'user_id' => $owner->id,
-            'role' => TeamRole::Owner,
+            'role' => TeamRole::LEADER,
         ]);
 
         return $team;

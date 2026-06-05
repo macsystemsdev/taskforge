@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\Organizations\Enums\OrganizationRole;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Model;
@@ -59,5 +60,41 @@ class Organization extends Model
     public function teams(): HasMany
     {
         return $this->hasMany(Team::class);
+    }
+
+    // Role-based access control for organization members
+
+    public function roleFor(User $user): ?OrganizationRole
+    {
+        $membership = $this->users()
+            ->where('users.id', $user->id)
+            ->first();
+
+        return $membership?->pivot->role;
+    }
+
+    // Check if the user has a specific role in the organization
+    public function hasRole(
+        User $user,
+        OrganizationRole $role
+    ): bool {
+        return $this->roleFor($user) === $role;
+    }
+
+
+    // check if user is owner of organization
+    public function isOwner(
+        User $user
+    ): bool {
+        return $this->roleFor($user)
+            === OrganizationRole::OWNER;
+    }
+
+    // check if user is admin of organization
+    public function isAdmin(
+        User $user
+    ): bool {
+        return $this->roleFor($user)
+            === OrganizationRole::ADMIN;
     }
 }

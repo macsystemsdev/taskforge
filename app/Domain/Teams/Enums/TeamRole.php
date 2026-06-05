@@ -1,12 +1,11 @@
 <?php
 
-namespace App\Enums;
+namespace App\Domain\Teams\Enums;
 
 enum TeamRole: string
 {
-    case Owner = 'owner';
-    case Admin = 'admin';
-    case Member = 'member';
+    case LEADER = 'leader';
+    case MEMBER = 'member';
 
     /**
      * Get the display label for the role.
@@ -24,11 +23,8 @@ enum TeamRole: string
     public function permissions(): array
     {
         return match ($this) {
-            self::Owner => TeamPermission::cases(),
-            self::Admin => [
-                TeamPermission::UpdateTeam,
-            ],
-            self::Member => [],
+            self::LEADER => TeamPermission::cases(),
+            self::MEMBER => [],
         };
     }
 
@@ -47,9 +43,8 @@ enum TeamRole: string
     public function level(): int
     {
         return match ($this) {
-            self::Owner => 3,
-            self::Admin => 2,
-            self::Member => 1,
+            self::LEADER => 2,
+            self::MEMBER => 1,
         };
     }
 
@@ -69,7 +64,7 @@ enum TeamRole: string
     public static function assignable(): array
     {
         return collect(self::cases())
-            ->filter(fn (self $role) => $role !== self::Owner)
+            ->filter(fn (self $role) => $role !== self::LEADER)
             ->map(fn (self $role) => ['value' => $role->value, 'label' => $role->label()])
             ->values()
             ->toArray();
