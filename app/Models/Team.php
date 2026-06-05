@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Concerns\GeneratesUniqueTeamSlugs;
-use App\Enums\TeamRole;
+use App\Domain\Teams\Enums\TeamRole;
 use Database\Factories\TeamFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -45,7 +45,7 @@ class Team extends Model
     public function owner(): ?Model
     {
         return $this->members()
-            ->wherePivot('role', TeamRole::Owner->value)
+            ->wherePivot('role', TeamRole::LEADER->value)
             ->first();
     }
 

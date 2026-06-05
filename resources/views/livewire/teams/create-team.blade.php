@@ -4,6 +4,8 @@ use Livewire\Component;
 use App\Models\Organization;
 use App\Data\Teams\CreateTeamData;
 use App\Actions\Teams\CreateTeam;
+use Illuminate\Support\Facades\Gate;
+
 
 new class extends Component {
     public Organization $organization;
@@ -14,6 +16,8 @@ new class extends Component {
 
     public function createTeam(CreateTeam $action)
     {
+        Gate::authorize('createTeam', $organization);
+        
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],

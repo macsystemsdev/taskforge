@@ -66,7 +66,7 @@ class Organization extends Model
 
     public function roleFor(User $user): ?OrganizationRole
     {
-        $membership = $this->users()
+        $membership = $this->members()
             ->where('users.id', $user->id)
             ->first();
 

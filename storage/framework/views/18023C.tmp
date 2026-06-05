@@ -23,18 +23,9 @@ use Illuminate\Support\Facades\Gate;
 <?php $component->withAttributes([]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-    <?php if (isset($component)) { $__componentOriginal91a231a9270579fa1ae9246bd51fb785 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal91a231a9270579fa1ae9246bd51fb785 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.page-header','data' => ['title' => $organization->name,'description' => __('Manage workspaces, members, invitations, and project flow for this organization.'),'eyebrow' => __('Organization')]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('ui.page-header'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['title' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($organization->name),'description' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(__('Manage workspaces, members, invitations, and project flow for this organization.')),'eyebrow' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(__('Organization'))]); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
+    <x-ui.page-header :title="$organization->name" <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('create',)): ?>
+        
+    <?php endif; ?> :description="__('Manage workspaces, members, invitations, and project flow for this organization.')" :eyebrow="__('Organization')">
          <?php $__env->slot('actions', null, []); ?> 
             <?php if (isset($component)) { $__componentOriginaldf5a194c1ccdd1698e9a89f0cb5bf2c8 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginaldf5a194c1ccdd1698e9a89f0cb5bf2c8 = $attributes; } ?>
@@ -61,13 +52,13 @@ use Illuminate\Support\Facades\Gate;
          <?php $__env->endSlot(); ?>
      <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
-<?php if (isset($__attributesOriginal91a231a9270579fa1ae9246bd51fb785)): ?>
-<?php $attributes = $__attributesOriginal91a231a9270579fa1ae9246bd51fb785; ?>
-<?php unset($__attributesOriginal91a231a9270579fa1ae9246bd51fb785); ?>
+<?php if (isset($__attributesOriginal1f4cdfbcf032dc00af93962c134fd24f)): ?>
+<?php $attributes = $__attributesOriginal1f4cdfbcf032dc00af93962c134fd24f; ?>
+<?php unset($__attributesOriginal1f4cdfbcf032dc00af93962c134fd24f); ?>
 <?php endif; ?>
-<?php if (isset($__componentOriginal91a231a9270579fa1ae9246bd51fb785)): ?>
-<?php $component = $__componentOriginal91a231a9270579fa1ae9246bd51fb785; ?>
-<?php unset($__componentOriginal91a231a9270579fa1ae9246bd51fb785); ?>
+<?php if (isset($__componentOriginal1f4cdfbcf032dc00af93962c134fd24f)): ?>
+<?php $component = $__componentOriginal1f4cdfbcf032dc00af93962c134fd24f; ?>
+<?php unset($__componentOriginal1f4cdfbcf032dc00af93962c134fd24f); ?>
 <?php endif; ?>
 
     <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('viewActivityLog', $organization)): ?>
@@ -578,7 +569,6 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
                         </div>
 
 
-                         <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('changeMemberRole', $organization)): ?>
                         <?php if (isset($component)) { $__componentOriginala467913f9ff34913553be64599ec6e92 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginala467913f9ff34913553be64599ec6e92 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::select.index','data' => ['wire:change' => 'updateRole(
@@ -598,12 +588,10 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = App\Domain\Organizations\Enums\OrganizationRole::cases(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $role): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-
-                                <option value="<?php echo e($role); ?>" <?php if($member->pivot->role === $role): echo 'selected'; endif; ?> >
+                                <option value="<?php echo e($role); ?>" <?php if($member->pivot->role === $role): echo 'selected'; endif; ?>>
                                     <?php echo e(ucfirst($role->value)); ?>
 
-                                </option>   
-                              
+                                </option>
                             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
                          <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
@@ -615,13 +603,6 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
 <?php $component = $__componentOriginala467913f9ff34913553be64599ec6e92; ?>
 <?php unset($__componentOriginala467913f9ff34913553be64599ec6e92); ?>
 <?php endif; ?>
-                        <?php endif; ?>
-
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(!auth()->user()->can('changeMemberRole', $organization)): ?>
-
-                            <input type="text" disabled value="<?php echo e($member->pivot->role); ?>">
-
-                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
                     </div>
                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
@@ -832,11 +813,11 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
 
  <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
-<?php if (isset($__attributesOriginal1f4cdfbcf032dc00af93962c134fd24f)): ?>
-<?php $attributes = $__attributesOriginal1f4cdfbcf032dc00af93962c134fd24f; ?>
-<?php unset($__attributesOriginal1f4cdfbcf032dc00af93962c134fd24f); ?>
+<?php if (isset($__attributesOriginal)): ?>
+<?php $attributes = $__attributesOriginal; ?>
+<?php unset($__attributesOriginal); ?>
 <?php endif; ?>
-<?php if (isset($__componentOriginal1f4cdfbcf032dc00af93962c134fd24f)): ?>
-<?php $component = $__componentOriginal1f4cdfbcf032dc00af93962c134fd24f; ?>
-<?php unset($__componentOriginal1f4cdfbcf032dc00af93962c134fd24f); ?>
+<?php if (isset($__componentOriginal)): ?>
+<?php $component = $__componentOriginal; ?>
+<?php unset($__componentOriginal); ?>
 <?php endif; ?><?php /**PATH D:\Code\taskforge\storage\framework\views/livewire/views/7b1f7b52.blade.php ENDPATH**/ ?>

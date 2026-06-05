@@ -7,6 +7,7 @@ use App\Models\Workspace;
 use Flux\Flux;
 use Illuminate\Support\Str;
 use Livewire\Component;
+use Illuminate\Support\Facade\Gate;
 
 new class extends Component
 {
@@ -20,6 +21,7 @@ new class extends Component
 
     public function createProject(CreateProjectAction $action)
     {
+        Gate::authorize('createProject', $organization)
         $validated = $this->validate([
             'name' => [
                 'required',

@@ -3,7 +3,6 @@
 namespace App\Policies;
 
 use App\Domain\Organizations\Support\OrganizationPermissions;
-use App\Enums\OrganizationRole;
 use App\Models\Organization;
 use App\Models\User;
 

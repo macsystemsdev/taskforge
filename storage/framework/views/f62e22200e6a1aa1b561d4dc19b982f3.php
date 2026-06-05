@@ -16,7 +16,12 @@
             ->withCount(['workspaces', 'invitations'])
             ->latest()
             ->get();
-        $memberOrganizations = auth()->user()->organizations()->withCount(['workspaces', 'invitations'])->latest('organizations.created_at')->get();
+        $memberOrganizations = auth()
+            ->user()
+            ->organizations()
+            ->withCount(['workspaces', 'invitations'])
+            ->latest('organizations.created_at')
+            ->get();
         $organizations = $ownedOrganizations->merge($memberOrganizations)->unique('id')->values();
     ?>
 
@@ -85,16 +90,21 @@
         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($organizations->isNotEmpty()): ?>
             <div class="grid gap-4 lg:grid-cols-2">
                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $organizations; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $organization): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                    <a href="<?php echo e(route('organizations.show', $organization)); ?>" class="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md dark:border-white/10 dark:bg-zinc-900/70 dark:hover:border-white/20" wire:navigate>
+                    <a href="<?php echo e(route('organizations.show', $organization)); ?>"
+                        class="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md dark:border-white/10 dark:bg-zinc-900/70 dark:hover:border-white/20"
+                        wire:navigate>
                         <div class="flex items-start justify-between gap-4">
                             <div class="min-w-0">
                                 <h2 class="truncate text-base font-semibold text-zinc-950 dark:text-white">
                                     <?php echo e($organization->name); ?>
 
                                 </h2>
-                                <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                                    <?php echo e(ucfirst($organization->subscription_plan ?? 'standard')); ?> plan
-                                </p>
+                                <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('viewActivityLog', $organization)): ?>
+                                    <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                                        <?php echo e(ucfirst($organization->subscription_plan ?? 'standard')); ?> plan
+                                    </p>
+                                <?php endif; ?>
+
                             </div>
 
                             <?php if (isset($component)) { $__componentOriginaldf5a194c1ccdd1698e9a89f0cb5bf2c8 = $component; } ?>
@@ -119,18 +129,29 @@
 <?php $component = $__componentOriginaldf5a194c1ccdd1698e9a89f0cb5bf2c8; ?>
 <?php unset($__componentOriginaldf5a194c1ccdd1698e9a89f0cb5bf2c8); ?>
 <?php endif; ?>
+
                         </div>
 
-                        <div class="mt-5 grid grid-cols-2 gap-3 text-sm">
-                            <div class="rounded-lg bg-zinc-50 p-3 dark:bg-white/[0.03]">
-                                <p class="text-zinc-500 dark:text-zinc-400">Workspaces</p>
-                                <p class="mt-1 font-semibold text-zinc-950 dark:text-white"><?php echo e($organization->workspaces_count); ?></p>
+                        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('inviteMembers', $organization)): ?>
+                            <div>
+                                <div class="mt-5 grid grid-cols-2 gap-3 text-sm">
+                                    <div class="rounded-lg bg-zinc-50 p-3 dark:bg-white/[0.03]">
+                                        <p class="text-zinc-500 dark:text-zinc-400">Workspaces</p>
+                                        <p class="mt-1 font-semibold text-zinc-950 dark:text-white">
+                                            <?php echo e($organization->workspaces_count); ?></p>
+                                    </div>
+
+                                    <div class="rounded-lg bg-zinc-50 p-3 dark:bg-white/[0.03]">
+                                        <p class="text-zinc-500 dark:text-zinc-400">Invitations</p>
+                                        <p class="mt-1 font-semibold text-zinc-950 dark:text-white">
+                                            <?php echo e($organization->invitations_count); ?></p>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="rounded-lg bg-zinc-50 p-3 dark:bg-white/[0.03]">
-                                <p class="text-zinc-500 dark:text-zinc-400">Invitations</p>
-                                <p class="mt-1 font-semibold text-zinc-950 dark:text-white"><?php echo e($organization->invitations_count); ?></p>
-                            </div>
-                        </div>
+                        <?php endif; ?>
+
+
+
                     </a>
                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
             </div>

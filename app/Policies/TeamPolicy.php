@@ -2,7 +2,7 @@
 
 namespace App\Policies;
 
-use App\Enums\TeamPermission;
+use App\Domain\Teams\Enums\TeamPermission;
 use App\Models\Team;
 use App\Models\User;
 

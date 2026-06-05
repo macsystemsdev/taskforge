@@ -2,8 +2,8 @@
 
 namespace App\Concerns;
 
-use App\Enums\TeamPermission;
-use App\Enums\TeamRole;
+use App\Domain\Teams\Enums\TeamPermission;
+use App\Domain\Teams\Enums\TeamRole;
 use App\Models\Membership;
 use App\Models\Team;
 use App\Support\TeamPermissions;
@@ -43,7 +43,7 @@ trait HasTeams
             'id',
             'id',
             'team_id',
-        )->where('team_members.role', TeamRole::Owner->value);
+        )->where('team_members.role', TeamRole::LEADER->value);
     }
 
     /**
@@ -114,7 +114,7 @@ trait HasTeams
      */
     public function ownsTeam(Team $team): bool
     {
-        return $this->teamRole($team) === TeamRole::Owner;
+        return $this->teamRole($team) === TeamRole::LEADER;
     }
 
     /**

@@ -78,7 +78,8 @@
                     </dl>
                 </x-ui.card>
 
-                <x-ui.card>
+                
+                    <x-ui.card>
                     <h2 class="tf-panel-title">Activity</h2>
                     <div class="mt-5 space-y-4">
                         @forelse ($activityLogs as $log)
@@ -96,6 +97,8 @@
                         @endforelse
                     </div>
                 </x-ui.card>
+               
+                
             </aside>
         </div>
     </x-ui.page>

@@ -7,6 +7,7 @@ use App\Models\Organization;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\Workspace;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Volt\Volt;
 
 
@@ -37,6 +38,8 @@ Route::middleware(['auth'])->group(function () {
         '/organizations/{organization}',
         function (Organization $organization) {
 
+        Gate::authorize('view', $organization);
+
             return view(
                 'pages.organizations.show',
                 compact('organization')
@@ -55,6 +58,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get(
         '/workspaces/{workspace}/projects/create',
         function (Workspace $workspace) {
+    
             return view(
                 'pages.projects.create',
                 compact('workspace')

@@ -3,7 +3,7 @@
 namespace App\Actions\Organizations;
 
 use App\Actions\ActivityLogs\CreateActivityLogAction;
-use App\Enums\OrganizationRole;
+use App\Domain\Organizations\Enums\OrganizationRole;
 use App\Models\Organization;
 use App\Models\User;
 

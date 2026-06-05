@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use App\Enums\TaskPriority;
-use App\Enums\TaskStatus;
+use App\Domain\Task\TaskPriority;
+use App\Domain\Task\TaskStatus;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Model;

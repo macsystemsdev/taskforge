@@ -6,6 +6,7 @@ use App\Services\OrganizationService;
 use Flux\Flux;
 use Illuminate\Support\Str;
 use Livewire\Component;
+use App\Policies\OrganizationPolicy;
 
 new class extends Component
 {

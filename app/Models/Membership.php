@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Enums\TeamRole;
+use App\Domain\Teams\Enums\TeamRole;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
