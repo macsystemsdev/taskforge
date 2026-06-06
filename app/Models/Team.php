@@ -92,14 +92,13 @@ class Team extends Model
         return 'slug';
     }
 
-    public function organization(): BelongsTo
+    public function workspace(): BelongsTo
     {
-        return $this->belongsTo(Organization::class);
+        return $this->belongsTo(Workspace::class);
     }
 
     public function projects()
     {
-        return $this->belongsToMany(Project::class, 'project_team', 'team_id', 'project_id')
-            ->using(ProjectTeam::class);
+        return $this->hasMany(Project::class);
     }
 }

@@ -12,5 +12,6 @@ class CreateOrganizationData extends Data
     public function __construct(
         public string $name,
         public int $owner_id,
+        public string $workspace_name
     ) {}
 }

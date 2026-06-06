@@ -8,9 +8,9 @@ use Illuminate\Support\Str;
 use Livewire\Component;
 use App\Policies\OrganizationPolicy;
 
-new class extends Component
-{
+new class extends Component {
     public string $name = '';
+    public string $workspace_name = '';
 
     public function createOrganization(OrganizationService $organizationService): void
     {
@@ -25,9 +25,10 @@ new class extends Component
                     }
                 },
             ],
+            'workspace_name' => ['required', 'string', 'max:255'],
         ]);
 
-        $organizationData = new CreateOrganizationData(name: $this->name, owner_id: auth()->id());
+        $organizationData = new CreateOrganizationData(name: $this->name, owner_id: auth()->id(), workspace_name: $this->workspace_name);
 
         $organization = $organizationService->create($organizationData);
 
@@ -40,26 +41,23 @@ new class extends Component
 ?>
 
 <x-ui.page size="3xl">
-    <x-ui.page-header
-        :title="__('Create Organization')"
-        :description="__('Set up a durable operating space for workspaces, projects, members, and invitations.')"
-    />
+    <x-ui.page-header :title="__('Create Organization')" :description="__('Set up a durable operating space for workspaces, projects, members, and invitations.')" />
 
     <x-ui.card class="space-y-6">
         <form wire:submit="createOrganization" class="space-y-6">
-            <flux:input
-                wire:model="name"
-                :label="__('Organization Name')"
-                type="text"
-                placeholder="Acme Inc."
-                required
-                autofocus
-            />
+            <flux:input wire:model="name" :label="__('Organization Name')" type="text" placeholder="Acme Inc." required
+                autofocus />
 
-            <div class="flex flex-col gap-3 border-t border-zinc-200 pt-5 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
+            <flux:input wire:model="workspace_name" :label="__('Default Workspace Name')" type="text"
+                placeholder="Default Workspace" required />
+
+            <div
+                class="flex flex-col gap-3 border-t border-zinc-200 pt-5 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
                 <p class="text-sm text-zinc-500 dark:text-zinc-400">
                     You can rename the organization later.
                 </p>
+
+
 
                 <flux:button variant="primary" type="submit">
                     Create Organization

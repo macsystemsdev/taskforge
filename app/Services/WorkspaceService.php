@@ -12,12 +12,12 @@ class WorkspaceService
         protected CreateActivityLogAction $activity
     ) {}
     public function createDefaultWorkspace(
-        Organization $organization
+        Organization $organization, string $workspace_name
     ): Workspace {
 
         $workspace = $organization->workspaces()->create([
             'organization_id' => $organization->id,
-            'name' => 'General Workspace',
+            'name' => $workspace_name,
             'description' => 'Default workspace',
         ]);
 

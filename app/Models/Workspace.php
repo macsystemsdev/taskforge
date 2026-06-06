@@ -25,6 +25,11 @@ class Workspace extends Model
         return $this->hasMany(Project::class);
     }
 
+     public function teams(): HasMany
+    {
+        return $this->hasMany(Team::class);
+    }
+
     // activity log
     public function activityLogs(): MorphMany
     {

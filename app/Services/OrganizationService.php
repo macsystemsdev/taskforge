@@ -24,6 +24,8 @@ class OrganizationService
             ]);
         }
 
+
+
         $organization = Organization::create([
             'owner_id' => $data->owner_id,
             'name' => $data->name,
@@ -48,7 +50,7 @@ class OrganizationService
         );
 
         app(WorkspaceService::class)->createDefaultWorkspace(
-            organization: $organization
+            organization: $organization, workspace_name: $data->workspace_name
         );
 
         return $organization;

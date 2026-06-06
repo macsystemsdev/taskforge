@@ -12,7 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('teams', function (Blueprint $table) {
-                $table->foreignId('organization_id')->nullable()->constrained()->nullOnDelete();
+
+            $table->foreignId('workspace_id')
+                ->constrained()
+                ->cascadeOnDelete();
         });
     }
 
@@ -22,7 +25,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('teams', function (Blueprint $table) {
-            $table->dropConstrainedForeignId('organization_id');
+            $table->dropConstrainedForeignId('workspace_id');
         });
     }
 };

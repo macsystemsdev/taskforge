@@ -10,9 +10,43 @@ use App\Models\User;
 use App\Actions\Organizations\UpdateOrganizationMemberRoleAction;
 use Flux\Flux;
 use Illuminate\Support\Facades\Gate;
+use App\Actions\Workspaces\CreateWorkspaceAction;
+use App\Data\Workspaces\CreateWorkspaceData;
 
 new class extends Component {
     public Organization $organization;
+
+    public bool $showCreateWorkspaceModal = false;
+
+    public string $workspaceName = '';
+
+    public ?string $workspaceDescription = null;
+
+    // Create workspace
+
+    public function createWorkspace()
+    {
+        Gate::authorize('createWorkspace', $this->organization);
+
+        $this->validate([
+            'workspaceName' => ['required', 'string', 'max:255'],
+            'workspaceDescription' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        app(CreateWorkspaceAction::class)->handle(
+            $this->organization,
+            CreateWorkspaceData::from([
+                'name' => $this->workspaceName,
+                'description' => $this->workspaceDescription,
+            ]),
+        );
+
+        $this->showCreateWorkspaceModal = false;
+
+        Flux::toast(text: 'Workspace created successfully.', variant: 'success');
+
+        $this->organization->refresh();
+    }
 
     public function getInvitationsProperty()
     {
@@ -22,7 +56,10 @@ new class extends Component {
     // load organization workspaces, teams and members
     public function mount(Organization $organization): void
     {
-        $this->organization = $organization->load(['workspaces.projects.tasks', 'members', 'teams']);
+        $this->organization = $organization->load([
+            'workspaces' => fn($query) => $query->withCount(['teams', 'projects']),
+            'members',
+        ]);
     }
 
     // Handle organization memeber invitation
@@ -88,8 +125,7 @@ new class extends Component {
 ?>
 
 <x-ui.page>
-    <x-ui.page-header :title="$organization->name" :description="__('Manage workspaces, members, invitations, and project flow for this organization.')" :eyebrow="__('Organization')"
-        >
+    <x-ui.page-header :title="$organization->name" :description="__('Manage workspaces, members, invitations, and project flow for this organization.')" :eyebrow="__('Organization')">
         <x-slot:actions>
             <x-ui.status-badge :status="$organization->subscription_status ?? 'active'" />
         </x-slot:actions>
@@ -103,11 +139,7 @@ new class extends Component {
                     {{ $organization->workspaces->count() }}</p>
             </x-ui.card>
 
-            <x-ui.card class="space-y-2">
-                <p class="tf-muted">Teams</p>
-                <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
-                    {{ $organization->teams->count() }}</p>
-            </x-ui.card>
+
 
             <x-ui.card class="space-y-2">
                 <p class="tf-muted">Members</p>
@@ -146,22 +178,43 @@ new class extends Component {
                             <p class="mt-1 line-clamp-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
                                 {{ $workspace->description ?: 'No workspace description.' }}
                             </p>
+
+                            <x-ui.card class="space-y-2">
+                                <p class="tf-muted">Teams</p>
+                                <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+                                    {{ $workspace->teams_count }}</p>
+                            </x-ui.card>
+
+                            <x-ui.card class="space-y-2">
+                                <p class="tf-muted">Projects</p>
+                                <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+                                    {{ $workspace->projects_count }}</p>
+                            </x-ui.card>
+
+                            <flux:button
+                                :href="route(
+                                    'workspaces.show',
+                                    $workspace
+                                )">
+                                View Workspace
+                            </flux:button>
+
                         </div>
                     </div>
 
-                    @can('createProject', $organization)
-                        <div
-                            class="mt-4 flex items-center justify-between border-t border-zinc-100 pt-4 dark:border-white/5">
-                            <span class="text-sm text-zinc-500 dark:text-zinc-400">
-                                {{ $workspace->projects->count() }} projects
-                            </span>
+                    @can('createWorkspace', $organization)
+                        <flux:card wire:click="openCreateWorkspaceModal" class="cursor-pointer">
+                            <div class="flex h-full flex-col items-center justify-center gap-2">
 
-                            <a href="{{ route('projects.create', $workspace) }}" class="tf-button-secondary px-3 py-2"
-                                wire:navigate>
-                                Create Project
-                            </a>
-                        </div>
+                                <flux:icon.plus />
+
+                                <span>Create Workspace</span>
+
+                            </div>
+                        </flux:card>
                     @endcan
+
+
 
                 </div>
 
@@ -174,53 +227,7 @@ new class extends Component {
         </div>
     </x-ui.card>
 
-    {{-- Teams --}}
-    @can('createTeam', $organization)
-        <x-ui.card class="mb-6 space-y-5">
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h2 class="tf-panel-title">Teams</h2>
-                    <p class="tf-panel-subtitle">Organize members into specialized teams within this organization.</p>
-                </div>
-                <a href="{{ route('teams.create', $organization) }}" class="tf-button-primary px-3 py-2" wire:navigate>
-                    Create Team
-                </a>
-            </div>
-
-            <div class="grid gap-4 lg:grid-cols-2">
-                @forelse ($organization->teams as $team)
-                    <a href="{{ route('teams.show', ['organization' => $organization, 'team' => $team]) }}"
-                        class="rounded-lg border border-zinc-200 p-4 transition hover:bg-zinc-50 dark:border-white/10 dark:hover:bg-white/[0.03]"
-                        wire:navigate>
-                        <div class="flex items-start justify-between gap-4">
-                            <div class="min-w-0">
-                                <h3 class="truncate font-semibold text-zinc-950 dark:text-white">
-                                    {{ $team->name }}
-                                </h3>
-
-                                <p class="mt-1 line-clamp-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                                    {{ $team->description ?: 'No team description.' }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div
-                            class="mt-4 flex items-center justify-between border-t border-zinc-100 pt-4 dark:border-white/5">
-                            <span class="text-sm text-zinc-500 dark:text-zinc-400">
-                                {{ $team->members->count() }} members
-                            </span>
-                        </div>
-                    </a>
-
-                @empty
-                    <div class="lg:col-span-2">
-                        <x-ui.empty-state title="No teams yet"
-                            description="Create a team to organize members and projects within this organization." />
-                    </div>
-                @endforelse
-            </div>
-        </x-ui.card>
-    @endcan
+    
 
 
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -301,26 +308,22 @@ new class extends Component {
                         </div>
 
 
-                         @can('changeMemberRole', $organization)
-                        <flux:select
-                            wire:change="updateRole(
+                        @can('changeMemberRole', $organization)
+                            <flux:select
+                                wire:change="updateRole(
         {{ $member->id }},
         $event.target.value
     )">
-                            @foreach (App\Domain\Organizations\Enums\OrganizationRole::cases() as $role)
-
-                                <option value="{{ $role }}" @selected($member->pivot->role === $role) >
-                                    {{ ucfirst($role->value) }}
-                                </option>   
-                              
-                            @endforeach
-                        </flux:select>
+                                @foreach (App\Domain\Organizations\Enums\OrganizationRole::cases() as $role)
+                                    <option value="{{ $role }}" @selected($member->pivot->role === $role)>
+                                        {{ ucfirst($role->value) }}
+                                    </option>
+                                @endforeach
+                            </flux:select>
                         @endcan
 
                         @if (!auth()->user()->can('changeMemberRole', $organization))
-
                             <input type="text" disabled value="{{ $member->pivot->role }}">
-
                         @endif
 
                     </div>

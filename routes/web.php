@@ -47,10 +47,22 @@ Route::middleware(['auth'])->group(function () {
         }
     )->name('organizations.show');
 
+    // show workspace
+    Route::get(
+        '/workspaces/{workspace:slug}',
+        function (Workspace $workspace) {
+            return view(
+                'pages.workspaces.show',
+                compact('workspace')
+            );
+        }
+    )->name('workspaces.show');
+
     // Teams routes (within organization)
     Route::get('/organizations/{organization}/teams/create', function (Organization $organization) {
         return view('pages.teams.create', compact('organization'));
     })->name('teams.create');
+
     Route::get('/organizations/{organization}/teams/{team}', function (Organization $organization, \App\Models\Team $team) {
         return view('pages.teams.show', compact('organization', 'team'));
     })->name('teams.show');

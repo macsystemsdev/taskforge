@@ -57,10 +57,7 @@ class Organization extends Model
         return $this->morphMany(ActivityLog::class, 'subject');
     }
 
-    public function teams(): HasMany
-    {
-        return $this->hasMany(Team::class);
-    }
+   
 
     // Role-based access control for organization members
 
