@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Actions\Worksapces;
+namespace App\Actions\Workspaces;
 
 use App\Actions\ActivityLogs\CreateActivityLogAction;
-use App\Data\Worksapces\CreateWorkspaceData;
+use App\Data\Workspaces\CreateWorkspaceData;
 use App\Models\Workspace;
 use Illuminate\Support\Str;
 

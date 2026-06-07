@@ -34,6 +34,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Create and show organization
     Route::get('/organizations/create', fn() => view('pages.organizations.create'))->name('organizations.create');
+
     Route::get(
         '/organizations/{organization}',
         function (Organization $organization) {
@@ -49,7 +50,7 @@ Route::middleware(['auth'])->group(function () {
 
     // show workspace
     Route::get(
-        '/workspaces/{workspace:slug}',
+        '/workspaces/{workspace}',
         function (Workspace $workspace) {
             return view(
                 'pages.workspaces.show',
@@ -58,13 +59,13 @@ Route::middleware(['auth'])->group(function () {
         }
     )->name('workspaces.show');
 
-    // Teams routes (within organization)
-    Route::get('/organizations/{organization}/teams/create', function (Organization $organization) {
-        return view('pages.teams.create', compact('organization'));
+    // Teams routes (within workspace)
+    Route::get('/workspaces/{workspace}/teams/create', function (Workspace $workspace) {
+        return view('pages.teams.create', compact('workspace'));
     })->name('teams.create');
 
-    Route::get('/organizations/{organization}/teams/{team}', function (Organization $organization, \App\Models\Team $team) {
-        return view('pages.teams.show', compact('organization', 'team'));
+    Route::get('/workspaces/{workspace}/teams/{team}', function (Workspace $workspace, \App\Models\Team $team) {
+        return view('pages.teams.show', compact('workspace', 'team'));
     })->name('teams.show');
 
     Route::get(

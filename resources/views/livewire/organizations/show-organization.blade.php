@@ -24,6 +24,15 @@ new class extends Component {
 
     // Create workspace
 
+    public function openCreateWorkspaceModal(): void
+    {
+        Gate::authorize('createWorkspace', $this->organization);
+
+        $this->showCreateWorkspaceModal = true;
+
+        $this->reset(['workspaceName', 'workspaceDescription']);
+    }
+
     public function createWorkspace()
     {
         Gate::authorize('createWorkspace', $this->organization);
@@ -45,7 +54,10 @@ new class extends Component {
 
         Flux::toast(text: 'Workspace created successfully.', variant: 'success');
 
-        $this->organization->refresh();
+        $this->organization = $this->organization->fresh([
+            'workspaces' => fn($query) => $query->withCount(['teams', 'projects']),
+            'members',
+        ]);
     }
 
     public function getInvitationsProperty()
@@ -107,7 +119,7 @@ new class extends Component {
     // Update Roles
     public function updateRole(UpdateOrganizationMemberRoleAction $updateRoleAction, int $memberId, string $role): void
     {
-        Gate::authorize('changeMemberRole', $organization);
+        Gate::authorize('changeMemberRole', $this->organization);
         try {
             $member = User::findOrFail($memberId);
 
@@ -157,6 +169,43 @@ new class extends Component {
 
 
     {{-- Workspaces --}}
+
+    {{-- modal to create workspace --}}
+    
+    <flux:modal wire:model="showCreateWorkspaceModal">
+
+        <div class="space-y-6">
+
+            <div>
+                <flux:heading size="lg">
+                    Create Workspace
+                </flux:heading>
+
+                <flux:text class="mt-2">
+                    Create a new workspace within this organization.
+                </flux:text>
+            </div>
+
+            <flux:input wire:model="workspaceName" label="Name" />
+
+            <flux:textarea wire:model="workspaceDescription" label="Description" />
+
+            <div class="flex justify-end gap-2">
+
+                <flux:button variant="ghost" wire:click="$set('showCreateWorkspaceModal', false)">
+                    Cancel
+                </flux:button>
+
+                <flux:button variant="primary" wire:click="createWorkspace">
+                    Create Workspace
+                </flux:button>
+
+            </div>
+
+        </div>
+
+    </flux:modal>
+
     <x-ui.card class="mb-6 space-y-5">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -166,7 +215,7 @@ new class extends Component {
         </div>
 
         <div class="grid gap-4 lg:grid-cols-2">
-            @forelse ($organization->workspaces as $workspace)
+            @foreach ($organization->workspaces as $workspace)
                 <div
                     class="rounded-lg border border-zinc-200 p-4 transition hover:bg-zinc-50 dark:border-white/10 dark:hover:bg-white/[0.03]">
                     <div class="flex items-start justify-between gap-4">
@@ -174,6 +223,7 @@ new class extends Component {
                             <h3 class="truncate font-semibold text-zinc-950 dark:text-white">
                                 {{ $workspace->name }}
                             </h3>
+
 
                             <p class="mt-1 line-clamp-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
                                 {{ $workspace->description ?: 'No workspace description.' }}
@@ -191,43 +241,35 @@ new class extends Component {
                                     {{ $workspace->projects_count }}</p>
                             </x-ui.card>
 
-                            <flux:button
-                                :href="route(
-                                    'workspaces.show',
-                                    $workspace
-                                )">
-                                View Workspace
-                            </flux:button>
+
 
                         </div>
                     </div>
 
-                    @can('createWorkspace', $organization)
-                        <flux:card wire:click="openCreateWorkspaceModal" class="cursor-pointer">
-                            <div class="flex h-full flex-col items-center justify-center gap-2">
-
-                                <flux:icon.plus />
-
-                                <span>Create Workspace</span>
-
-                            </div>
-                        </flux:card>
-                    @endcan
-
-
+                    <a href="{{ route('workspaces.show', ['workspace' => $workspace]) }}">
+                        <flux:button>
+                            View Workspace
+                        </flux:button>
+                    </a>
 
                 </div>
+            @endforeach
 
-            @empty
-                <div class="lg:col-span-2">
-                    <x-ui.empty-state title="No workspaces"
-                        description="Workspaces will appear here when they are added to this organization." />
-                </div>
-            @endforelse
+            @can('createWorkspace', $organization)
+                <flux:card wire:click="openCreateWorkspaceModal" wire:key="create-workspace-card" class="cursor-pointer">
+                    <div class="flex h-full flex-col items-center justify-center gap-2">
+
+                        <flux:icon.plus />
+
+                        <span>Create Workspace</span>
+
+                    </div>
+                </flux:card>
+            @endcan
         </div>
     </x-ui.card>
 
-    
+
 
 
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">

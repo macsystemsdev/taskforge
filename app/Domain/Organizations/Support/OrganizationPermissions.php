@@ -76,6 +76,7 @@ readonly class OrganizationPermissions
         );
     }
 
+
     public static function canCreateProject(
         ?OrganizationRole $role
     ): bool {

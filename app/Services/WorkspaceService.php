@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Actions\ActivityLogs\CreateActivityLogAction;
 use App\Models\Organization;
 use App\Models\Workspace;
+use Illuminate\Support\Str;
 
 class WorkspaceService
 {
@@ -18,6 +19,7 @@ class WorkspaceService
         $workspace = $organization->workspaces()->create([
             'organization_id' => $organization->id,
             'name' => $workspace_name,
+            'slug' => Str::slug($workspace_name),
             'description' => 'Default workspace',
         ]);
 

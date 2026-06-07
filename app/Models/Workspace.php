@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Override;
 
 #[Table('workspaces')]
 #[Fillable(['name', 'description', 'organization_id', 'slug'])]
@@ -25,7 +26,7 @@ class Workspace extends Model
         return $this->hasMany(Project::class);
     }
 
-     public function teams(): HasMany
+    public function teams(): HasMany
     {
         return $this->hasMany(Team::class);
     }
@@ -35,5 +36,21 @@ class Workspace extends Model
     {
         return $this->morphMany(ActivityLog::class, 'subject');
     }
-   
+
+    // route by slug
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
+
+    public function roleFor(User $user): ?string
+    {
+        $membership = $this->organization->members()->where('user_id', $user->id)->first();
+
+        if ($membership) {
+            return $membership->pivot->role;
+        }
+
+        return null;
+    }
 }

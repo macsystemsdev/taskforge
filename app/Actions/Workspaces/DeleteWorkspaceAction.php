@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Actions\Worksapces;
+namespace App\Actions\Workspaces;
 
 use App\Actions\ActivityLogs\CreateActivityLogAction;
 use App\Models\Workspace;
