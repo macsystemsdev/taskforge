@@ -4,7 +4,7 @@ namespace App\Livewire\Workspaces;
 
 use App\Actions\Workspaces\DeleteWorkspaceAction;
 use App\Actions\Workspaces\UpdateWorkspaceAction;
-use App\Data\WorkspaceData;
+use App\Data\Workspaces\CreateWorkspaceData;
 use App\Models\Workspace;
 use Flux\Flux;
 use Illuminate\Support\Facades\Gate;
@@ -16,7 +16,9 @@ new class extends Component {
 
     public Organization $organization;
 
-    public bool $showEditModal = false;
+    public bool $showEditWorkspaceModal = false;
+
+    public bool $showDeleteWorkspaceModal = false;
 
     public string $name = '';
 
@@ -30,6 +32,15 @@ new class extends Component {
         $this->description = $workspace->description;
     }
 
+    public function openEditWorkspaceModal(): void
+    {
+        Gate::authorize('update', $this->workspace);
+
+        $this->workspaceName = $this->workspace->name;
+
+        $this->showEditWorkspaceModal = true;
+    }
+
     public function updateWorkspace(): void
     {
         Gate::authorize('update', $this->workspace);
@@ -41,7 +52,7 @@ new class extends Component {
 
         app(UpdateWorkspaceAction::class)->handle(
             $this->workspace,
-            WorkspaceData::from([
+            CreateWorkspaceData::from([
                 'name' => $this->name,
                 'description' => $this->description,
             ]),
@@ -49,11 +60,22 @@ new class extends Component {
 
         $this->workspace->refresh();
 
-        Flux::toast(text: 'Workspace updated.', variant: 'success');
+        $this->showEditWorkspaceModal = false;
 
-        $this->showEditModal = false;
+        Flux::toast(text: 'Workspace updated.', variant: 'success');
     }
 
+    // Delete Workspace modal
+    public function openDeleteWorkspaceModal(): void
+    {
+        Gate::authorize('delete', $this->workspace);
+
+        $this->workspaceName = $this->workspace->name;
+
+        $this->showDeleteWorkspaceModal = true;
+    }
+
+    // Delete organization
     public function deleteWorkspace(): void
     {
         Gate::authorize('delete', $this->workspace);
@@ -61,6 +83,8 @@ new class extends Component {
         $organization = $this->workspace->organization;
 
         app(DeleteWorkspaceAction::class)->handle($this->workspace);
+
+        $this->showDeleteWorkspaceModal = false;
 
         Flux::toast(text: 'Workspace deleted.', variant: 'success');
 
@@ -96,14 +120,14 @@ new class extends Component {
         <div class="flex gap-2">
 
             @can('update', $workspace)
-                <flux:button wire:click="$set('showEditModal', true)">
-                    Edit Workspace
+                <flux:button wire:click="openEditWorkspaceModal">
+                    Edit workspace
                 </flux:button>
             @endcan
 
             @can('delete', $workspace)
-                <flux:button variant="danger" wire:click="deleteWorkspace" wire:confirm="Delete this workspace?">
-                    Delete
+                <flux:button variant="danger" wire:click="openDeleteWorkspaceModal">
+                    Delete workspace
                 </flux:button>
             @endcan
 
@@ -243,6 +267,63 @@ new class extends Component {
             @endforelse
 
         </div>
+
+        {{-- Modal to edit workspace --}}
+        <flux:modal wire:model="showEditWorkspaceModal">
+
+            <div class="space-y-4">
+
+                <flux:heading>
+                    Edit Workspace
+                </flux:heading>
+
+                <flux:input wire:model="name" label="Workspace Name" />
+                 <flux:textarea wire:model="description" label="Description" />
+
+                <div class="flex justify-end gap-2">
+
+                    <flux:button variant="ghost" wire:click="$set('showEditWorkspaceModal', false)">
+                        Cancel
+                    </flux:button>
+
+                    <flux:button wire:click="updateWorkspace">
+                        Save Changes
+                    </flux:button>
+
+                </div>
+
+            </div>
+
+        </flux:modal>
+
+        {{-- Modal to delete workspace --}}
+        <flux:modal wire:model="showDeleteWorkspaceModal">
+
+            <div class="space-y-4">
+
+                <flux:heading>
+                    Delete Workspace
+                </flux:heading>
+
+                <p>
+                    Delete all teams and projects before deleting this Workspace.
+                </p>
+
+                <div class="flex justify-end gap-2">
+
+                    <flux:button variant="ghost" wire:click="$set('showDeleteWorkspaceModal', false)">
+                        Cancel
+                    </flux:button>
+
+                    <flux:button variant="danger" wire:click="deleteWorkspace">
+                        Delete
+                    </flux:button>
+
+                </div>
+
+            </div>
+
+        </flux:modal>
 
     </x-ui.card>
 

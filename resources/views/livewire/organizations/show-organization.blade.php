@@ -12,10 +12,74 @@ use Flux\Flux;
 use Illuminate\Support\Facades\Gate;
 use App\Actions\Workspaces\CreateWorkspaceAction;
 use App\Data\Workspaces\CreateWorkspaceData;
+use App\Actions\Organizations\DeleteOrganizationAction;
+use App\Actions\Organizations\UpdateOrganizationAction;
+use App\Data\Organizations\UpdateOrganizationData;
 
 new class extends Component {
     public Organization $organization;
 
+    // Organization edit and delete modal control
+    public bool $showEditOrganizationModal = false;
+
+    public bool $showDeleteOrganizationModal = false;
+
+    public string $organizationName = '';
+
+    // Edit organization modal
+    public function openEditOrganizationModal(): void
+    {
+        Gate::authorize('update', $this->organization);
+
+        $this->organizationName = $this->organization->name;
+
+        $this->showEditOrganizationModal = true;
+    }
+
+    // Update organization
+    public function updateOrganization(): void
+    {
+        Gate::authorize('update', $this->organization);
+
+        $this->validate([
+            'organizationName' => ['required', 'string', 'max:255'],
+        ]);
+
+        app(UpdateOrganizationAction::class)->handle($this->organization, 
+        UpdateOrganizationData::from([
+            'name' => $this->organizationName
+        ]));
+
+        $this->organization->refresh();
+
+        $this->showEditOrganizationModal = false;
+
+        Flux::toast(text: 'Organization updated successfully.', variant: 'success');
+    }
+
+    // Delete Organization modal
+    public function openDeleteOrganizationModal(): void
+    {
+        Gate::authorize('delete', $this->organization);
+
+        $this->organizationName = $this->organization->name;
+
+        $this->showDeleteOrganizationModal = true;
+    }
+
+    // Delete organization
+    public function deleteOrganization(): void
+    {
+        Gate::authorize('delete', $this->organization);
+
+        app(DeleteOrganizationAction::class)->handle($this->organization);
+
+        Flux::toast(text: 'Organization deleted successfully.', variant: 'success');
+
+        $this->redirectRoute('organizations.index');
+    }
+
+    // workspace modal control
     public bool $showCreateWorkspaceModal = false;
 
     public string $workspaceName = '';
@@ -167,11 +231,27 @@ new class extends Component {
         </div>
     @endcan
 
+    <div class="flex gap-2">
+
+        @can('update', $organization)
+            <flux:button wire:click="openEditOrganizationModal">
+                Edit Organization
+            </flux:button>
+        @endcan
+
+        @can('delete', $organization)
+            <flux:button variant="danger" wire:click="openDeleteOrganizationModal">
+                Delete Organization
+            </flux:button>
+        @endcan
+
+    </div>
+
 
     {{-- Workspaces --}}
 
     {{-- modal to create workspace --}}
-    
+
     <flux:modal wire:model="showCreateWorkspaceModal">
 
         <div class="space-y-6">
@@ -267,6 +347,65 @@ new class extends Component {
                 </flux:card>
             @endcan
         </div>
+
+
+
+        {{-- Modal to edit organization --}}
+        <flux:modal wire:model="showEditOrganizationModal">
+
+            <div class="space-y-4">
+
+                <flux:heading>
+                    Edit Organization
+                </flux:heading>
+
+                <flux:input wire:model="organizationName" label="Organization Name" />
+
+                <div class="flex justify-end gap-2">
+
+                    <flux:button variant="ghost" wire:click="$set('showEditOrganizationModal', false)">
+                        Cancel
+                    </flux:button>
+
+                    <flux:button wire:click="updateOrganization">
+                        Save Changes
+                    </flux:button>
+
+                </div>
+
+            </div>
+
+        </flux:modal>
+
+        {{-- Modal to delete organization --}}
+        <flux:modal wire:model="showDeleteOrganizationModal">
+
+            <div class="space-y-4">
+
+                <flux:heading>
+                    Delete Organization
+                </flux:heading>
+
+                <p>
+                    Delete all workspaces before deleting this organization.
+                </p>
+
+                <div class="flex justify-end gap-2">
+
+                    <flux:button variant="ghost" wire:click="$set('showDeleteOrganizationModal', false)">
+                        Cancel
+                    </flux:button>
+
+                    <flux:button variant="danger" wire:click="deleteOrganization">
+                        Delete
+                    </flux:button>
+
+                </div>
+
+            </div>
+
+        </flux:modal>
+
     </x-ui.card>
 
 

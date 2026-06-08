@@ -65,8 +65,6 @@
                             </div>
                         @endcan
 
-
-
                     </a>
                 @endforeach
             </div>

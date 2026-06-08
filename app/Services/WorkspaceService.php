@@ -20,6 +20,7 @@ class WorkspaceService
             'organization_id' => $organization->id,
             'name' => $workspace_name,
             'slug' => Str::slug($workspace_name),
+            'is_default' => true,
             'description' => 'Default workspace',
         ]);
 

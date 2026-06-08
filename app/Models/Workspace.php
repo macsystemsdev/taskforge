@@ -43,14 +43,5 @@ class Workspace extends Model
         return 'slug';
     }
 
-    public function roleFor(User $user): ?string
-    {
-        $membership = $this->organization->members()->where('user_id', $user->id)->first();
-
-        if ($membership) {
-            return $membership->pivot->role;
-        }
-
-        return null;
-    }
+    
 }
