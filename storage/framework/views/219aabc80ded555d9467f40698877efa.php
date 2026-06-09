@@ -1,8 +1,9 @@
 <?php
 use Livewire\Component;
-use App\Models\Organization;
+use App\Models\Workspace;
 use App\Data\Teams\CreateTeamData;
 use App\Actions\Teams\CreateTeam;
+use Illuminate\Support\Facades\Gate;
 ?>
 
 <div class="max-w-2xl mx-auto py-8">
@@ -39,7 +40,7 @@ use App\Actions\Teams\CreateTeam;
 <?php endif; ?>
 <?php $component->withAttributes([]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-<?php echo e(__('Organize team members and projects within')); ?> <?php echo e($organization->name); ?> <?php echo $__env->renderComponent(); ?>
+<?php echo e(__('Organize team members and projects within')); ?> <?php echo e($workspace->name); ?> <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginal43e8c568bbb8b06b9124aad3ccf4ec97)): ?>
 <?php $attributes = $__attributesOriginal43e8c568bbb8b06b9124aad3ccf4ec97; ?>
@@ -99,14 +100,14 @@ use App\Actions\Teams\CreateTeam;
         <div class="flex gap-3 justify-end">
             <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['href' => ''.e(route('organizations.show', $organization)).'','variant' => 'ghost','wire:navigate' => true]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['href' => ''.e(route('workspaces.show', $workspace)).'','variant' => 'ghost','wire:navigate' => true]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['href' => ''.e(route('organizations.show', $organization)).'','variant' => 'ghost','wire:navigate' => true]); ?>
+<?php $component->withAttributes(['href' => ''.e(route('workspaces.show', $workspace)).'','variant' => 'ghost','wire:navigate' => true]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                 <?php echo e(__('Cancel')); ?>

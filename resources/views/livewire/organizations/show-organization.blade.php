@@ -45,10 +45,12 @@ new class extends Component {
             'organizationName' => ['required', 'string', 'max:255'],
         ]);
 
-        app(UpdateOrganizationAction::class)->handle($this->organization, 
-        UpdateOrganizationData::from([
-            'name' => $this->organizationName
-        ]));
+        app(UpdateOrganizationAction::class)->handle(
+            $this->organization,
+            UpdateOrganizationData::from([
+                'name' => $this->organizationName,
+            ]),
+        );
 
         $this->organization->refresh();
 
@@ -72,11 +74,14 @@ new class extends Component {
     {
         Gate::authorize('delete', $this->organization);
 
-        app(DeleteOrganizationAction::class)->handle($this->organization);
+        try {
+            app(DeleteOrganizationAction::class)->handle($this->organization);
+            Flux::toast(text: 'Organization deleted successfully.', variant: 'success');
 
-        Flux::toast(text: 'Organization deleted successfully.', variant: 'success');
-
-        $this->redirectRoute('organizations.index');
+            $this->redirectRoute('organizations.index');
+        } catch (\DomainException $e) {
+            Flux::toast(text: $e->getMessage(), variant: 'danger');
+        }
     }
 
     // workspace modal control

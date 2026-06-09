@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
+use App\Actions\Teams\UpdateMemberAction;
 ?>
 
 <section class="w-full">
@@ -76,6 +77,29 @@ use Livewire\Component;
 <?php if (isset($__componentOriginal26c546557cdc09040c8dd00b2090afd0)): ?>
 <?php $component = $__componentOriginal26c546557cdc09040c8dd00b2090afd0; ?>
 <?php unset($__componentOriginal26c546557cdc09040c8dd00b2090afd0); ?>
+<?php endif; ?>
+
+                                <?php if (isset($component)) { $__componentOriginal0ee30026125d1a66523211147b00e4dc = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal0ee30026125d1a66523211147b00e4dc = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::textarea','data' => ['wire:model' => 'description','label' => 'Team Description']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::textarea'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['wire:model' => 'description','label' => 'Team Description']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal0ee30026125d1a66523211147b00e4dc)): ?>
+<?php $attributes = $__attributesOriginal0ee30026125d1a66523211147b00e4dc; ?>
+<?php unset($__attributesOriginal0ee30026125d1a66523211147b00e4dc); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal0ee30026125d1a66523211147b00e4dc)): ?>
+<?php $component = $__componentOriginal0ee30026125d1a66523211147b00e4dc; ?>
+<?php unset($__componentOriginal0ee30026125d1a66523211147b00e4dc); ?>
 <?php endif; ?>
 
                             <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>

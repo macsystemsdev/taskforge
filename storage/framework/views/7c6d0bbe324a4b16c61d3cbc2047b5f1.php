@@ -15,7 +15,7 @@
         <div class="flex items-center justify-between">
             <div>
                 <div class="flex items-center gap-2 mb-2">
-                    <a href="<?php echo e(route('organizations.show', $organization)); ?>" class="text-sm text-zinc-500 hover:text-zinc-700"><?php echo e($organization->name); ?></a>
+                    <a href="<?php echo e(route('workspaces.show', $workspace)); ?>" class="text-sm text-zinc-500 hover:text-zinc-700"><?php echo e($workspace->name); ?></a>
                     <span class="text-zinc-300">/</span>
                 </div>
                 <?php if (isset($component)) { $__componentOriginale0fd5b6a0986beffac17a0a103dfd7b9 = $component; } ?>
@@ -66,14 +66,14 @@
             <div class="flex gap-2">
                 <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['href' => ''.e(route('organizations.show', $organization)).'','variant' => 'ghost','wire:navigate' => true]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['href' => ''.e(route('workspaces.show', $workspace)).'','variant' => 'ghost','wire:navigate' => true]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['href' => ''.e(route('organizations.show', $organization)).'','variant' => 'ghost','wire:navigate' => true]); ?>
+<?php $component->withAttributes(['href' => ''.e(route('workspaces.show', $workspace)).'','variant' => 'ghost','wire:navigate' => true]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                     <?php echo e(__('Back')); ?>

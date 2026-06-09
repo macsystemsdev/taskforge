@@ -4,7 +4,7 @@
         <div class="flex items-center justify-between">
             <div>
                 <div class="flex items-center gap-2 mb-2">
-                    <a href="{{ route('organizations.show', $organization) }}" class="text-sm text-zinc-500 hover:text-zinc-700">{{ $organization->name }}</a>
+                    <a href="{{ route('workspaces.show', $workspace) }}" class="text-sm text-zinc-500 hover:text-zinc-700">{{ $workspace->name }}</a>
                     <span class="text-zinc-300">/</span>
                 </div>
                 <flux:heading size="xl">{{ $team->name }}</flux:heading>
@@ -13,7 +13,7 @@
                 @endif
             </div>
             <div class="flex gap-2">
-                <flux:button href="{{ route('organizations.show', $organization) }}" variant="ghost" wire:navigate>
+                <flux:button href="{{ route('workspaces.show', $workspace) }}" variant="ghost" wire:navigate>
                     {{ __('Back') }}
                 </flux:button>
             </div>

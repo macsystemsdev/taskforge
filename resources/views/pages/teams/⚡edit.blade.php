@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
+use App\Actions\Teams\UpdateMemberAction;
 
 new class extends Component {
     public Team $teamModel;
@@ -40,6 +41,7 @@ new class extends Component {
 
         $validated = $this->validate([
             'teamName' => ['required', 'string', 'max:255', new TeamName()],
+            'description' => ['nullable', 'string']
         ]);
 
         $team = DB::transaction(function () use ($validated) {
@@ -70,15 +72,15 @@ new class extends Component {
             ],
         )->validate();
 
-        $this->teamModel
-            ->memberships()
-            ->where('user_id', $userId)
-            ->firstOrFail()
-            ->update(['role' => TeamRole::from($validated['role'])]);
+        try {
+            app(UpdateMemberAction::class)->handle(actor: auth()->user(), team: $this->teamModel, memberId: $userId, role: TeamRole::from($validated['role']));
 
-        $this->populateTeamData();
+            $this->populateTeamData();
 
-        Flux::toast(variant: 'success', text: __('Member role updated.'));
+            Flux::toast(variant: 'success', text: __('Member role updated.'));
+        } catch (DomainException $e) {
+            Flux::toast(variant: 'danger', text: $e->getMessage());
+        }
     }
 
     private function populateTeamData(): void
@@ -143,6 +145,8 @@ new class extends Component {
                         <form wire:submit="updateTeam" class="space-y-6">
                             <flux:input wire:model="teamName" :label="__('Team name')" required
                                 data-test="team-name-input" />
+
+                                <flux:textarea wire:model="description" label="Team Description" />
 
                             <flux:button variant="primary" type="submit" data-test="team-save-button">
                                 {{ __('Save') }}

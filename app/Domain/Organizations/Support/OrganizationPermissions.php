@@ -50,19 +50,6 @@ readonly class OrganizationPermissions
         return $role === OrganizationRole::OWNER;
     }
 
-    public static function canCreateTeam(
-        ?OrganizationRole $role
-    ): bool {
-        return in_array(
-            $role,
-            [
-                OrganizationRole::OWNER,
-                OrganizationRole::ADMIN,
-            ],
-            true
-        );
-    }
-
     public static function canCreateWorkspace(
         ?OrganizationRole $role
     ): bool {

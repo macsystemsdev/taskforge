@@ -3,8 +3,8 @@
 namespace App\Actions\Teams;
 
 use App\Data\Teams\CreateTeamData;
-use App\Enums\TeamRole;
-use App\Models\Organization;
+use App\Domain\Teams\Enums\TeamRole;
+use App\Models\Workspace;
 use App\Models\Team;
 use App\Models\User;
 
@@ -14,16 +14,16 @@ class CreateTeam
      * Create a new team and add the user as leader(using owner as variable to store since decision to change owner to leader was made earlier on).
      */
     public function handle(
-        User|Organization $organization,
+        User|Workspace $workspace,
         CreateTeamData|string $data,
         ?User $owner = null,
     ): Team {
-        if ($organization instanceof Organization) {
-            $org = $organization;
+        if ($workspace instanceof Workspace) {
+            $work = $workspace;
             $owner = $owner ?? auth()->user();
         } else {
-            $org = null;
-            $owner = $organization;
+            $work = null;
+            $owner = $workspace;
         }
 
         if (is_string($data)) {
@@ -33,7 +33,7 @@ class CreateTeam
         $team = Team::create([
             'name' => $data->name,
             'description' => $data->description,
-            'organization_id' => $org?->id,
+            'workspace_id' => $work?->id,
         ]);
 
         $team->memberships()->create([

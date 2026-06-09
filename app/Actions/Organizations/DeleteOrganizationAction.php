@@ -23,7 +23,7 @@ class DeleteOrganizationAction
 
         $this->activity->handle(
             event: "{$organization->name} has been deleted",
-            subject: $organization->id,
+            subject: $organization,
             properties: [
                 'organization_name' => $organization->name,
             ]

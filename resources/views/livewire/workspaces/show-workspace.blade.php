@@ -82,13 +82,16 @@ new class extends Component {
 
         $organization = $this->workspace->organization;
 
-        app(DeleteWorkspaceAction::class)->handle($this->workspace);
+        try {
+            app(DeleteWorkspaceAction::class)->handle($this->workspace);
+            $this->showDeleteWorkspaceModal = false;
 
-        $this->showDeleteWorkspaceModal = false;
+            Flux::toast(text: 'Workspace deleted.', variant: 'success');
 
-        Flux::toast(text: 'Workspace deleted.', variant: 'success');
-
-        $this->redirectRoute('organizations.show', $organization);
+            $this->redirectRoute('organizations.show', $organization);
+        } catch (\DomainException $e) {
+            Flux::toast(text: $e->getMessage(), variant: 'danger');
+        }
     }
 };
 
@@ -182,7 +185,7 @@ new class extends Component {
         <div class="grid gap-4 lg:grid-cols-2">
 
             @forelse ($workspace->teams as $team)
-                <a href="{{ route('teams.show', $team) }}"
+                <a href="{{ route('teams.show', ['workspace' => $workspace, 'team' => $team]) }}"
                     class="rounded-lg border border-zinc-200 p-4 transition hover:bg-zinc-50 dark:border-white/10 dark:hover:bg-white/[0.03]"
                     wire:navigate>
 
@@ -278,7 +281,7 @@ new class extends Component {
                 </flux:heading>
 
                 <flux:input wire:model="name" label="Workspace Name" />
-                 <flux:textarea wire:model="description" label="Description" />
+                <flux:textarea wire:model="description" label="Description" />
 
                 <div class="flex justify-end gap-2">
 

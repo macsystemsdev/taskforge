@@ -16,7 +16,7 @@
 $__split = function ($name, $params = []) {
     return [$name, $params];
 };
-[$__name, $__params] = $__split('teams.create-team', ['organization' => $organization]);
+[$__name, $__params] = $__split('teams.create-team', ['workspace' => $workspace]);
 
 $__keyOuter = $__key ?? null;
 

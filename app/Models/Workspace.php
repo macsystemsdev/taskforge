@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Override;
 
 #[Table('workspaces')]
-#[Fillable(['name', 'description', 'organization_id', 'slug'])]
+#[Fillable(['name', 'description', 'organization_id', 'slug', 'is_default'])]
 class Workspace extends Model
 {
 
