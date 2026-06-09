@@ -281,6 +281,7 @@ new class extends Component {
                 </flux:heading>
 
                 <flux:input wire:model="name" label="Workspace Name" />
+                
                 <flux:textarea wire:model="description" label="Description" />
 
                 <div class="flex justify-end gap-2">

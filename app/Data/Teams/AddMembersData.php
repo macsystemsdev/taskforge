@@ -4,7 +4,7 @@ namespace App\Data\Teams;
 
 use Spatie\LaravelData\Data;
 
-class CreateTeamData extends Data
+class AddMembersData extends Data
 {
     /**
      * Create a new class instance.

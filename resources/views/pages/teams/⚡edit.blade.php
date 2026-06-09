@@ -19,6 +19,8 @@ new class extends Component {
 
     public string $teamName = '';
 
+    public ?string $description = null;
+
     public array $teamData = [];
 
     public array $members = [];
@@ -31,6 +33,7 @@ new class extends Component {
     {
         $this->teamModel = $team;
         $this->teamName = $team->name;
+        $this->description = $team->description;
 
         $this->populateTeamData();
     }
@@ -47,7 +50,7 @@ new class extends Component {
         $team = DB::transaction(function () use ($validated) {
             $team = Team::whereKey($this->teamModel->id)->lockForUpdate()->firstOrFail();
 
-            $team->update(['name' => $validated['teamName']]);
+            $team->update(['name' => $validated['teamName'], 'description' => $validated['description']]);
 
             return $team;
         });
@@ -146,7 +149,7 @@ new class extends Component {
                             <flux:input wire:model="teamName" :label="__('Team name')" required
                                 data-test="team-name-input" />
 
-                                <flux:textarea wire:model="description" label="Team Description" />
+                                <flux:textarea wire:model="description" label="Team Description" data-test="team-description-input" />
 
                             <flux:button variant="primary" type="submit" data-test="team-save-button">
                                 {{ __('Save') }}

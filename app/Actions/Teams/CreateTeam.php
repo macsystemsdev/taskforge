@@ -10,36 +10,32 @@ use App\Models\User;
 
 class CreateTeam
 {
-    /**
-     * Create a new team and add the user as leader(using owner as variable to store since decision to change owner to leader was made earlier on).
-     */
-    public function handle(
-        User|Workspace $workspace,
-        CreateTeamData|string $data,
-        ?User $owner = null,
+    
+     public function handle(
+        Workspace $workspace,
+        CreateTeamData $data,
     ): Team {
-        if ($workspace instanceof Workspace) {
-            $work = $workspace;
-            $owner = $owner ?? auth()->user();
-        } else {
-            $work = null;
-            $owner = $workspace;
-        }
-
-        if (is_string($data)) {
-            $data = new CreateTeamData(name: $data);
-        }
 
         $team = Team::create([
             'name' => $data->name,
             'description' => $data->description,
-            'workspace_id' => $work?->id,
+            'workspace_id' => $workspace->id,
         ]);
 
-        $team->memberships()->create([
-            'user_id' => $owner->id,
-            'role' => TeamRole::LEADER,
+        $memberIds = array_unique([
+            ...$data->memberIds,
+            $data->leaderId,
         ]);
+
+        foreach ($memberIds as $memberId) {
+
+            $team->memberships()->create([
+                'user_id' => $memberId,
+                'role' => $memberId === $data->leaderId
+                    ? TeamRole::LEADER
+                    : TeamRole::MEMBER,
+            ]);
+        }
 
         return $team;
     }

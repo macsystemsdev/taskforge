@@ -5,21 +5,36 @@ use App\Rules\TeamName;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use App\Models\Workspace;
+use App\Data\Teams\CreateTeamData;
+use App\Actions\Teams\CreateTeam;
+use Illuminate\Support\Facades\Gate;
 
 new class extends Component {
-    public string $teamName = '';
+    public string $name = '';
+    public string $description = '';
 
-    public function createTeam(CreateTeam $createTeam): void
+    public Workspace $workspace;
+
+    public function mount(Workspace $workspace): void
     {
+        $this->workspace = $workspace;
+    }
+
+    public function createTeam(): void
+    {
+        Gate::authorize('createTeam', $this->workspace);
+
         $validated = $this->validate([
-            'teamName' => ['required', 'string', 'max:255', new TeamName],
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
         ]);
 
-        $team = $createTeam->handle(Auth::user(), $validated['teamName']);
+        $team = app(CreateTeam::class)->handle(workspace: $this->workspace, data: new CreateTeamData(name: $validated['name'], description: $validated['description']), owner: auth()->user());
 
         $this->dispatch('close-modal', name: 'create-team-switcher');
 
-        $this->reset('teamName');
+        $this->reset(['name', 'description']);
 
         Flux::toast(variant: 'success', text: __('Team created.'));
 
@@ -34,7 +49,10 @@ new class extends Component {
             <flux:subheading>{{ __('Give your team a name to get started.') }}</flux:subheading>
         </div>
 
-        <flux:input wire:model="teamName" :label="__('Team name')" type="text" required autofocus data-test="switcher-create-team-name" />
+        <flux:input wire:model="name" :label="__('Team name')" type="text" required autofocus
+            data-test="switcher-create-team-name" />
+
+        <flux:textarea wire:model="description" :label="__('Team Description')" />
 
         <div class="flex justify-end space-x-2 rtl:space-x-reverse">
             <flux:modal.close>
