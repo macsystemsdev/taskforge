@@ -1,15 +1,20 @@
 <x-layouts::app :title="__('Projects')">
     @php
-        $projects = \App\Models\Project::query()
-            ->with(['workspace.organization', 'owner'])
-            ->withCount('tasks')
-            ->where(function ($query) {
-                $query
-                    ->where('owner_id', auth()->id())
-                    ->orWhereHas('workspace.organization.members', fn ($memberQuery) => $memberQuery->where('users.id', auth()->id()));
-            })
-            ->latest()
-            ->get();
+                 $projects = \App\Models\Project::query()
+                    ->with([
+                        'workspace',
+                        'team',
+                    ])
+                    ->withCount('tasks')
+                    ->whereHas(
+                         'workspace.organization.members',
+                      fn ($query) => $query->where(
+                              'users.id',
+                          auth()->id()
+                         )
+                    )
+                    ->latest()
+                    ->get();
     @endphp
 
     <x-ui.page>
@@ -30,6 +35,7 @@
                                 <th>Status</th>
                                 <th>Due</th>
                                 <th>Tasks</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -48,6 +54,27 @@
                                     <td><x-ui.status-badge :status="$project->status ?? 'active'" /></td>
                                     <td>{{ $project->due_date ? \Illuminate\Support\Carbon::parse($project->due_date)->format('M d, Y') : 'No date' }}</td>
                                     <td>{{ $project->tasks_count }}</td>
+                                    <td>
+                                        <div class="flex gap-2">
+
+                                            <a
+                                                href="{{ route('projects.edit', $project) }}"
+                                                wire:navigate
+                                                class="tf-button-secondary"
+                                            >
+                                                Edit
+                                            </a>
+
+                                            <button
+                                                wire:click="deleteProject({{ $project->id }})"
+                                                wire:confirm="Are you sure you want to delete this project?"
+                                                class="tf-button-danger"
+                                            >
+                                                Delete
+                                            </button>
+
+                                        </div>
+                                </td>
                                 </tr>
                             @endforeach
                         </tbody>

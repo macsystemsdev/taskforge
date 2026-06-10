@@ -64,7 +64,7 @@ class UpdateOrganizationMemberRoleAction
         );
         $this->activity->handle(
             subject: $organization,
-            event: 'Updated role of {$member->name} to {$role->value} in organization {$organization->name}"',
+            event: 'Updated role of {$member->name} to {$role->value} in organization {$organization->name}',
             properties: [
                 'member_id' => $member->id,
                 'role' => $role->value,

@@ -6,8 +6,7 @@ use App\Actions\ActivityLogs\CreateActivityLogAction;
 use App\Data\Teams\AddMembersData;
 use App\Domain\Teams\Enums\TeamRole;
 use App\Models\Team;
-use App\Models\User;
-use App\Models\Workspace;
+
 
 class AddMembersAction
 {
@@ -29,7 +28,7 @@ class AddMembersAction
             ])
             ->toArray();
 
-        $team->members()
+        $team->memberships()
             ->syncWithoutDetaching($attachData);
 
         $this->logAction->handle(

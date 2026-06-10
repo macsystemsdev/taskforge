@@ -12,15 +12,38 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('projects', function (Blueprint $table) {
+
             $table->id();
-            $table->foreignId('workspace_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('owner_id')->constrained('users')->cascadeOnDelete();
+
+            $table->foreignId('workspace_id')
+                ->constrained()
+                ->cascadeOnDelete();
+
+            $table->foreignId('team_id')
+                ->constrained()
+                ->cascadeOnDelete();
+
+            $table->foreignId('created_by')
+                ->constrained('users');
+
             $table->string('name');
-            $table->string('slug')->unique();
-            $table->text('description')->nullable();
-            $table->string('status')->default('active');
-            $table->timestamp('due_date')->nullable();
+
+            $table->string('slug');
+
+            $table->text('description')
+                ->nullable();
+
+            $table->string('status');
+
+            $table->date('due_date')
+                ->nullable();
+
             $table->timestamps();
+
+            $table->unique([
+                'workspace_id',
+                'slug',
+            ]);
         });
     }
 

@@ -68,10 +68,14 @@ Route::middleware(['auth'])->group(function () {
         return view('pages.teams.show', compact('workspace', 'team'));
     })->name('teams.show');
 
+    Route::view(
+        '/projects',
+        'pages.projects.index'
+    )->name('projects.index');
+
     Route::get(
         '/workspaces/{workspace}/projects/create',
         function (Workspace $workspace) {
-    
             return view(
                 'pages.projects.create',
                 compact('workspace')
@@ -89,7 +93,15 @@ Route::middleware(['auth'])->group(function () {
         }
     )->name('projects.show');
 
-    Route::view('/projects', 'pages.projects.index')->name('projects.index');
+    Route::get(
+        '/projects/{project}/edit',
+        function (Project $project) {
+            return view(
+                'pages.projects.edit',
+                compact('project')
+            );
+        }
+    )->name('projects.edit');
 
     // create task
     Route::get(

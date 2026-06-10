@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('invitations', function (Blueprint $table) {
 
-            $table->string('rejection_reason')
+            $table->text('rejection_reason')
                 ->nullable();
         });
     }

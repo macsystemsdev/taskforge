@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Domain\Projects\Enums\ProjectStatus;
+use App\Domain\Task\TaskStatus;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Model;
@@ -10,7 +12,18 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 #[Table('projects')]
-#[Fillable(['workspace_id', 'owner_id', 'name', 'slug', 'description', 'status', 'due_date'])]
+
+#[Fillable([
+    'workspace_id',
+    'team_id',
+    'created_by',
+    'name',
+    'slug',
+    'description',
+    'status',
+    'due_date',
+])]
+
 class Project extends Model
 {
     public function workspace(): BelongsTo
@@ -18,9 +31,17 @@ class Project extends Model
         return $this->belongsTo(Workspace::class);
     }
 
-    public function owner(): BelongsTo
+    public function team(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'owner_id');
+        return $this->belongsTo(Team::class);
+    }
+
+      public function creator(): BelongsTo
+    {
+        return $this->belongsTo(
+            User::class,
+            'created_by'
+        );
     }
 
     // Use slug for route model binding
@@ -50,9 +71,15 @@ class Project extends Model
         );
     }
 
-    public function teams()
+        public function hasIncompleteTasks(): bool
     {
-        return $this->belongsToMany(Team::class, 'project_team', 'project_id', 'team_id')
-            ->using(ProjectTeam::class);
+        return $this->tasks()
+            ->whereNot('status', TaskStatus::DONE)
+            ->exists();
     }
+
+       protected $casts = [
+        'status' => ProjectStatus::class,
+        'due_date' => 'date',
+    ];
 }

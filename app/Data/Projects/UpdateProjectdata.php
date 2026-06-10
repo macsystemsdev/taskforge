@@ -4,10 +4,9 @@ namespace App\Data\Projects;
 
 use Spatie\LaravelData\Data;
 
-class CreateProjectData extends Data
+class UpdateProjectData extends Data
 {
     public function __construct(
-        public int $teamId,
         public string $name,
         public ?string $description,
         public ?string $dueDate,

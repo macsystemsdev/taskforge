@@ -8,7 +8,12 @@ new class extends Component {
 
     public function render()
     {
-        $this->project->load(['workspace.organization', 'owner', 'tasks.assignee']);
+        $this->project->load([
+                    'workspace.organization',
+                    'team',
+                    'creator',
+                    'tasks.assignee',
+        ]);
 
         return view('livewire.projects.show-project');
     }
@@ -18,25 +23,25 @@ new class extends Component {
 <x-ui.page>
     @php
         $tasks = $project->tasks;
-        $openTasks = $tasks->whereNotIn('status', [\App\Enums\TaskStatus::DONE])->count();
-        $completedTasks = $tasks->where('status', \App\Enums\TaskStatus::DONE)->count();
+        $openTasks = $tasks->whereNotIn('status', [\App\Domain\Task\TaskStatus::DONE])->count();
+        $completedTasks = $tasks->where('status', \App\Domain\Task\TaskStatus::DONE)->count();
         $dueDate = $project->due_date
-            ? \Illuminate\Support\Carbon::parse($project->due_date)->format('M d, Y')
-            : 'No due date';
+                ? $project->due_date->format('M d, Y')
+                : __('No due date');
     @endphp
 
     <x-ui.page-header :title="$project->name" :description="$project->description ?: __('No project description has been added yet.')" :eyebrow="$project->workspace->organization->name . ' / ' . $project->workspace->name">
         <x-slot:actions>
-            <x-ui.status-badge :status="$project->status ?? 'active'" />
+            <x-ui.status-badge :status="$project->status" />
         </x-slot:actions>
     </x-ui.page-header>
 
     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <x-ui.card class="space-y-2">
-            <p class="tf-muted">Owner</p>
+            <p class="tf-muted">Team</p>
             <div class="flex items-center gap-2">
-                <x-ui.avatar :name="$project->owner->name" size="sm" />
-                <p class="font-semibold text-zinc-950 dark:text-white">{{ $project->owner->name }}</p>
+                <x-ui.icon :name="$project->team->name" size="sm" />
+                <p class="font-semibold text-zinc-950 dark:text-white">{{ $project->team->name }}</p>
             </div>
         </x-ui.card>
 
@@ -66,7 +71,10 @@ new class extends Component {
         </div>
 
         <aside class="space-y-6 md:sticky md:top-20">
-            @livewire('projects.manage-project-teams', ['project' => $project])
+                @livewire(
+                    'projects.project-details',
+                    ['project' => $project]
+                )
         </aside>
     </div>
 </x-ui.page>
