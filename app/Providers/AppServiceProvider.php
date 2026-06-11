@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use App\Models\Project;
+use App\Policies\ProjectPolicy;
+use Illuminate\Support\Facades\Gate;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -29,9 +32,14 @@ class AppServiceProvider extends ServiceProvider
         $this->configureDefaults();
 
         // Use Expose
-        if(str_contains(request()->getHttpHost(), 'sharedwithexpose.com')) {
+        if (str_contains(request()->getHttpHost(), 'sharedwithexpose.com')) {
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
+
+        Gate::policy(
+            Project::class,
+            ProjectPolicy::class
+        );
     }
 
     /**

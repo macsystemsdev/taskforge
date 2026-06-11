@@ -86,4 +86,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(ActivityLog::class);
     }
+
+    public function hasProjectPermission(
+        Project $project,
+        string $permission
+    ): bool {
+        return $this->hasWorkspacePermission(
+            $project->workspace,
+            $permission
+        );
+    }
 }

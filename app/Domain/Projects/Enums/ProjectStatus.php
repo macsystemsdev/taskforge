@@ -12,4 +12,19 @@ enum ProjectStatus: string
     {
         return $this === self::Active;
     }
+
+    public function canBeCompleted(): bool
+    {
+        return $this === self::Active;
+    }
+
+    public function canBeCancelled(): bool
+    {
+        return $this === self::Active;
+    }
+
+    public function canBeEdited(): bool
+    {
+        return $this === self::Active;
+    }
 }

@@ -2,18 +2,46 @@
 
 use App\Models\Project;
 use Livewire\Component;
+use App\Actions\Projects\CancelProjectAction;
+use App\Actions\Projects\CompleteProjectAction;
+use App\Actions\Projects\DeleteProjectAction;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 new class extends Component {
+    use AuthorizesRequests;
     public Project $project;
 
+    public function completeProject(CompleteProjectAction $action): void
+    {
+        $this->authorize('complete', $this->project);
+
+        $action->handle($this->project);
+
+        $this->redirect(route('projects.show', $this->project), navigate: true);
+    }
+
+    public function cancelProject(CancelProjectAction $action): void
+    {
+        $this->authorize('cancel', $this->project);
+
+        $action->handle($this->project);
+
+        $this->redirect(route('projects.show', $this->project), navigate: true);
+    }
+
+    public function deleteProject(DeleteProjectAction $action): void
+    {
+        $this->authorize('delete', $this->project);
+
+        $workspace = $this->project->workspace;
+
+        $action->handle($this->project);
+
+        $this->redirect(route('workspaces.show', $workspace), navigate: true);
+    }
     public function render()
     {
-        $this->project->load([
-                    'workspace.organization',
-                    'team',
-                    'creator',
-                    'tasks.assignee',
-        ]);
+        $this->project->load(['workspace.organization', 'team', 'creator', 'tasks.assignee']);
 
         return view('livewire.projects.show-project');
     }
@@ -25,14 +53,40 @@ new class extends Component {
         $tasks = $project->tasks;
         $openTasks = $tasks->whereNotIn('status', [\App\Domain\Task\TaskStatus::DONE])->count();
         $completedTasks = $tasks->where('status', \App\Domain\Task\TaskStatus::DONE)->count();
-        $dueDate = $project->due_date
-                ? $project->due_date->format('M d, Y')
-                : __('No due date');
+        $dueDate = $project->due_date ? $project->due_date->format('M d, Y') : __('No due date');
     @endphp
 
     <x-ui.page-header :title="$project->name" :description="$project->description ?: __('No project description has been added yet.')" :eyebrow="$project->workspace->organization->name . ' / ' . $project->workspace->name">
         <x-slot:actions>
+
             <x-ui.status-badge :status="$project->status" />
+
+            @if ($project->status->isActive())
+                @can('update', $project)
+                    <a href="{{ route('projects.edit', $project) }}" wire:navigate class="tf-button-secondary">
+                        Edit
+                    </a>
+                @endcan
+
+                @can('complete', $project)
+                    <button wire:click="completeProject" class="tf-button-primary">
+                        Complete
+                    </button>
+                @endcan
+
+                @can('cancel', $project)
+                    <button wire:click="cancelProject" class="tf-button-secondary">
+                        Cancel
+                    </button>
+                @endcan
+            @endif
+
+            @can('delete', $project)
+                <button wire:click="deleteProject" wire:confirm="Delete this project?" class="tf-button-danger">
+                    Delete
+                </button>
+            @endcan
+
         </x-slot:actions>
     </x-ui.page-header>
 
@@ -63,7 +117,11 @@ new class extends Component {
 
     <div class="mt-6 grid gap-4 md:grid-cols-[minmax(0,1fr)_320px]">
         <div class="space-y-6">
-            @livewire('tasks.create-task', ['project' => $project])
+            
+            @can('createTask', $workspace)
+                @livewire('tasks.create-task', ['project' => $project])
+            @endcan
+            
 
             @livewire('comments.comment-section', [
                 'commentable' => $project,
@@ -71,10 +129,7 @@ new class extends Component {
         </div>
 
         <aside class="space-y-6 md:sticky md:top-20">
-                @livewire(
-                    'projects.project-details',
-                    ['project' => $project]
-                )
+            @livewire('projects.project-details', ['project' => $project])
         </aside>
     </div>
 </x-ui.page>

@@ -6,11 +6,12 @@ use App\Actions\Projects\UpdateProjectAction;
 use App\Data\Projects\UpdateProjectData;
 use App\Models\Workspace;
 use Flux\Flux;
-use Illuminate\Support\Facade\Gate;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 
 new class extends Component
 {
+    use AuthorizesRequests;
     public Project $project;
 
     public string $name;
@@ -21,6 +22,9 @@ new class extends Component
 
     public function mount(): void
     {
+
+        $this->authorize('update',$this->project);
+
         $this->name = $this->project->name;
 
         $this->description = $this->project->description;
@@ -30,7 +34,7 @@ new class extends Component
 
         public function updateProject(UpdateProjectAction $action)
     {
-        Gate::authorize('createProject', $organization)
+        $this->authorize('update', $this->project)
         $validated = $this->validate();
 
         // handle function call in CreateprojectAction to create project with DTO data
@@ -77,26 +81,16 @@ new class extends Component
 ?>
 
 <x-ui.page size="3xl">
-    <x-ui.page-header
-        :title="__('Edit Project')"
-        :description="__('Update project information. Team ownership cannot be changed after creation.')"
-    />
+    <x-ui.page-header :title="__('Edit Project')" :description="__('Update project information. Team ownership cannot be changed after creation.')" />
 
     <x-ui.card>
 
-        <form
-            wire:submit="updateProject"
-            class="space-y-6"
-        >
+        <form wire:submit="updateProject" class="space-y-6">
 
             <div class="space-y-2">
                 <label>Project Name</label>
 
-                <input
-                    type="text"
-                    wire:model="name"
-                    class="w-full px-3 py-2.5"
-                >
+                <input type="text" wire:model="name" class="w-full px-3 py-2.5">
 
                 @error('name')
                     <p class="text-sm text-red-600">
@@ -108,12 +102,8 @@ new class extends Component
             <div class="space-y-2">
                 <label>Team</label>
 
-                <input
-                    type="text"
-                    value="{{ $project->team->name }}"
-                    disabled
-                    class="w-full px-3 py-2.5 bg-zinc-100 dark:bg-zinc-800"
-                >
+                <input type="text" value="{{ $project->team->name }}" disabled
+                    class="w-full px-3 py-2.5 bg-zinc-100 dark:bg-zinc-800">
 
                 <p class="text-xs text-zinc-500">
                     Team ownership cannot be changed after project creation.
@@ -123,28 +113,17 @@ new class extends Component
             <div class="space-y-2">
                 <label>Description</label>
 
-                <textarea
-                    wire:model="description"
-                    rows="5"
-                    class="w-full px-3 py-2.5"
-                ></textarea>
+                <textarea wire:model="description" rows="5" class="w-full px-3 py-2.5"></textarea>
             </div>
 
             <div class="space-y-2">
                 <label>Due Date</label>
 
-                <input
-                    type="date"
-                    wire:model="dueDate"
-                    class="w-full px-3 py-2.5"
-                >
+                <input type="date" wire:model="dueDate" class="w-full px-3 py-2.5">
             </div>
 
             <div class="flex justify-end">
-                <button
-                    type="submit"
-                    class="tf-button-primary"
-                >
+                <button type="submit" class="tf-button-primary">
                     Save Changes
                 </button>
             </div>
@@ -152,5 +131,5 @@ new class extends Component
         </form>
 
     </x-ui.card>
-    
+
 </x-ui.page>
