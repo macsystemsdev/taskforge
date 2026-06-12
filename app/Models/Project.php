@@ -36,7 +36,7 @@ class Project extends Model
         return $this->belongsTo(Team::class);
     }
 
-      public function creator(): BelongsTo
+    public function creator(): BelongsTo
     {
         return $this->belongsTo(
             User::class,
@@ -71,15 +71,43 @@ class Project extends Model
         );
     }
 
-        public function hasIncompleteTasks(): bool
+    public function hasIncompleteTasks(): bool
     {
         return $this->tasks()
             ->whereNot('status', TaskStatus::DONE)
             ->exists();
     }
 
-       protected $casts = [
+    protected $casts = [
         'status' => ProjectStatus::class,
         'due_date' => 'date',
     ];
+
+    public function activeTaskCount(): int
+    {
+        return $this->tasks()
+            ->open()
+            ->count();
+    }
+
+    public function cancelledTaskCount(): int
+    {
+        return $this->tasks()
+            ->cancelled()
+            ->count();
+    }
+
+    public function overdueTaskCount(): int
+    {
+        return $this->tasks()
+            ->overdue()
+            ->count();
+    }
+
+    public function dueSoonTaskCount(): int
+    {
+        return $this->tasks()
+            ->dueSoon()
+            ->count();
+    }
 }

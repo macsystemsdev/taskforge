@@ -22,7 +22,7 @@ class Task extends Model
 
     public function assignee(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'assigned_id');
+        return $this->belongsTo(User::class, 'assignee_id');
     }
 
     public function creator(): BelongsTo
@@ -62,15 +62,10 @@ class Task extends Model
 
     public function isOverdue(): bool
     {
-        return $this->due_date !== null
-            && ! in_array(
-                $this->status,
-                [
-                    TaskStatus::DONE,
-                    TaskStatus::CANCELLED,
-                ]
-            )
-            && now()->isAfter($this->due_date);
+        return $this->status !== TaskStatus::DONE
+            && $this->status !== TaskStatus::CANCELLED
+            && $this->due_date !== null
+            && now()->greaterThan($this->due_date);
     }
 
     public function canBeAssignedTo(
@@ -86,48 +81,78 @@ class Task extends Model
             ->exists();
     }
 
-    // Scopes for filtering tasks
-    // public function scopeTodo($query)
-    // {
-    //     return $query->where(
-    //         'status',
-    //         TaskStatus::TODO
-    //     );
-    // }
+    public function isDueSoon(
+        int $days = 3
+    ): bool {
 
-    // public function scopeInProgress($query)
-    // {
-    //     return $query->where(
-    //         'status',
-    //         TaskStatus::IN_PROGRESS
-    //     );
-    // }
+        return $this->status !== TaskStatus::DONE
+            && $this->status !== TaskStatus::CANCELLED
+            && $this->due_date !== null
+            && now()->diffInDays(
+                $this->due_date,
+                false
+            ) <= $days
+            && now()->lessThanOrEqualTo(
+                $this->due_date
+            );
+    }
 
-    // public function scopeCompleted($query)
-    // {
-    //     return $query->whereNotNull(
-    //         'completed_at'
-    //     );
-    // }
+    public function scopeOpen(
+        $query
+    ) {
+        return $query->whereNotIn(
+            'status',
+            [
+                TaskStatus::DONE,
+                TaskStatus::CANCELLED,
+            ]
+        );
+    }
 
-    // public function scopeHighPriority($query)
-    // {
-    //     return $query->whereIn(
-    //         'priority',
-    //         [
-    //             TaskPriority::HIGH,
-    //             TaskPriority::URGENT,
-    //         ]
-    //     );
-    // }
+    public function scopeCompleted(
+        $query
+    ) {
+        return $query->where(
+            'status',
+            TaskStatus::DONE
+        );
+    }
 
-    // public function scopeAssignedTo($query, int $userId)
-    // {
-    //     return $query->where(
-    //         'assigned_to',
-    //         $userId
-    //     );
-    // }
+    public function scopeCancelled(
+        $query
+    ) {
+        return $query->where(
+            'status',
+            TaskStatus::CANCELLED
+        );
+    }
 
+    public function scopeOverdue(
+        $query
+    ) {
+        return $query
+            ->open()
+            ->whereNotNull('due_date')
+            ->where(
+                'due_date',
+                '<',
+                now()
+            );
+    }
 
+    public function scopeDueSoon(
+        $query,
+        int $days = 3
+    ) {
+        return $query
+            ->open()
+            ->whereNotNull('due_date')
+            ->whereBetween(
+                'due_date',
+                [
+                    now(),
+                    now()->addDays($days),
+                ]
+            );
+    }
 }

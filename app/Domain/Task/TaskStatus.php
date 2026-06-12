@@ -61,4 +61,15 @@ enum TaskStatus: string
     {
         return $this === self::TODO;
     }
+
+    public function canDelete(): bool
+    {
+        return in_array(
+            $this,
+            [
+                TaskStatus::TODO,
+                TaskStatus::CANCELLED,
+            ]
+        );
+    }
 }

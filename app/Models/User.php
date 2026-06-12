@@ -70,7 +70,7 @@ class User extends Authenticatable
     {
         return $this->hasMany(
             Task::class,
-            'assigned_to'
+            'assignee_id'
         );
     }
 
@@ -78,7 +78,7 @@ class User extends Authenticatable
     {
         return $this->hasMany(
             Task::class,
-            'created_by'
+            'creator_id'
         );
     }
 

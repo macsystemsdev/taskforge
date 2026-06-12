@@ -6,6 +6,7 @@ use App\Models\Project;
 use Flux\Flux;
 use Livewire\Component;
 use Illuminate\Support\Facades\Gate;
+use Livewire\Attributes\Computed;
 
 new class extends Component {
     public Project $project;

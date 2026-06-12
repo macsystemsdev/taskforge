@@ -9,6 +9,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 new class extends Component {
     use AuthorizesRequests;
+
     public Project $project;
 
     public function completeProject(CompleteProjectAction $action): void
@@ -51,8 +52,8 @@ new class extends Component {
 <x-ui.page>
     @php
         $tasks = $project->tasks;
-        $openTasks = $tasks->whereNotIn('status', [\App\Domain\Task\TaskStatus::DONE])->count();
-        $completedTasks = $tasks->where('status', \App\Domain\Task\TaskStatus::DONE)->count();
+        $openTasks = $project->activeTaskCount();
+        $completedTasks = $project->completedTaskCount();
         $dueDate = $project->due_date ? $project->due_date->format('M d, Y') : __('No due date');
     @endphp
 
@@ -117,11 +118,6 @@ new class extends Component {
 
     <div class="mt-6 grid gap-4 md:grid-cols-[minmax(0,1fr)_320px]">
         <div class="space-y-6">
-            
-            @can('createTask', $workspace)
-                @livewire('tasks.create-task', ['project' => $project])
-            @endcan
-            
 
             @livewire('comments.comment-section', [
                 'commentable' => $project,
