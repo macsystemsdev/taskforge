@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 #[Table('tasks')]
-#[Fillable(['project_id', 'slug', 'assigned_to', 'created_by', 'title', 'description', 'status', 'priority', 'due_date', 'completed_at'])]
+#[Fillable(['project_id', 'slug', 'assignee_id', 'creator_id', 'title', 'description', 'status', 'due_date', 'completed_at'])]
 class Task extends Model
 {
     // Relationships
@@ -22,65 +22,21 @@ class Task extends Model
 
     public function assignee(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'assigned_to');
+        return $this->belongsTo(User::class, 'assigned_id');
     }
 
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(User::class, 'creator_id');
     }
 
     protected function casts(): array
     {
         return [
             'status' => TaskStatus::class,
-            'priority' => TaskPriority::class,
             'due_date' => 'datetime',
             'completed_at' => 'datetime',
         ];
-    }
-
-    // Scopes for filtering tasks
-    public function scopeTodo($query)
-    {
-        return $query->where(
-            'status',
-            TaskStatus::TODO
-        );
-    }
-
-    public function scopeInProgress($query)
-    {
-        return $query->where(
-            'status',
-            TaskStatus::IN_PROGRESS
-        );
-    }
-
-    public function scopeCompleted($query)
-    {
-        return $query->whereNotNull(
-            'completed_at'
-        );
-    }
-
-    public function scopeHighPriority($query)
-    {
-        return $query->whereIn(
-            'priority',
-            [
-                TaskPriority::HIGH,
-                TaskPriority::URGENT,
-            ]
-        );
-    }
-
-    public function scopeAssignedTo($query, int $userId)
-    {
-        return $query->where(
-            'assigned_to',
-            $userId
-        );
     }
 
     public function comments(): MorphMany
@@ -103,4 +59,75 @@ class Task extends Model
             'subject'
         );
     }
+
+    public function isOverdue(): bool
+    {
+        return $this->due_date !== null
+            && ! in_array(
+                $this->status,
+                [
+                    TaskStatus::DONE,
+                    TaskStatus::CANCELLED,
+                ]
+            )
+            && now()->isAfter($this->due_date);
+    }
+
+    public function canBeAssignedTo(
+        User $user
+    ): bool {
+        return $this->project
+            ->team
+            ->members()
+            ->where(
+                'users.id',
+                $user->id
+            )
+            ->exists();
+    }
+
+    // Scopes for filtering tasks
+    // public function scopeTodo($query)
+    // {
+    //     return $query->where(
+    //         'status',
+    //         TaskStatus::TODO
+    //     );
+    // }
+
+    // public function scopeInProgress($query)
+    // {
+    //     return $query->where(
+    //         'status',
+    //         TaskStatus::IN_PROGRESS
+    //     );
+    // }
+
+    // public function scopeCompleted($query)
+    // {
+    //     return $query->whereNotNull(
+    //         'completed_at'
+    //     );
+    // }
+
+    // public function scopeHighPriority($query)
+    // {
+    //     return $query->whereIn(
+    //         'priority',
+    //         [
+    //             TaskPriority::HIGH,
+    //             TaskPriority::URGENT,
+    //         ]
+    //     );
+    // }
+
+    // public function scopeAssignedTo($query, int $userId)
+    // {
+    //     return $query->where(
+    //         'assigned_to',
+    //         $userId
+    //     );
+    // }
+
+
 }

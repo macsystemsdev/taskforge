@@ -2,8 +2,10 @@
 
 namespace App\Actions\Tasks;
 
-use App\Actions\ActivityLogs\CreateActivityLogAction;;
-use App\Enums\TaskStatus;
+use App\Actions\ActivityLogs\CreateActivityLogAction;
+use App\Domain\Task\TaskStatus;
+
+
 use App\Models\Task;
 
 class UpdateTaskStatusAction

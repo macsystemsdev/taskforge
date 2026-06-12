@@ -4,58 +4,62 @@ namespace App\Actions\Tasks;
 
 use App\Actions\ActivityLogs\CreateActivityLogAction;
 use App\Data\Tasks\CreateTaskData;
+use App\Domain\Task\TaskStatus;
 use App\Models\Project;
+use App\Models\Task;
 use App\Notifications\TaskAssignedNotification;
 use Illuminate\Support\Facades\Auth;
-use App\Enums\TaskStatus;
+
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class CreateTaskAction
 {
     public function __construct(
         protected CreateActivityLogAction $activity
     ) {}
+
     public function handle(
-        CreateTaskData $data,
         Project $project,
-        
-    ) {
+        CreateTaskData $data
+    ): Task {
+
+        if (
+            $data->assigneeId &&
+            ! $project->team
+                ->members()
+                ->where(
+                    'users.id',
+                    $data->assigneeId
+                )
+                ->exists()
+        ) {
+            throw ValidationException::withMessages([
+                'assigneeId' => __(
+                    'Selected user does not belong to the project team.'
+                ),
+            ]);
+        }
+
+        $slug = Str::slug($data->title);
 
         $task = $project->tasks()->create([
-            'created_by' => Auth::id(),
-
-            'assigned_to' => $data->assigned_to,
-
+            'creator_id' => auth()->id(),
+            'assignee_id' => $data->assigneeId,
             'title' => $data->title,
-
+            'slug' => $slug,
             'description' => $data->description,
-
-            'priority' => $data->priority,
-
-            'slug' => Str::slug($data->title) . '-' . Str::random(5),
-
             'status' => TaskStatus::TODO,
-
-            'due_date' => $data->due_date,
+            'due_date' => $data->dueDate,
         ]);
 
         $this->activity->handle(
             event: 'task_created',
-
-            subject: $task,
-
             properties: [
-                'title' => $task->title,
-                'assigned_to' => $task->assigned_to,
-            ]
+                'task_title' => $task->title,
+            ],
+            subject: $task,
         );
-
-        if ($task->assignee) {
-
-            $task->assignee->notify(
-                new TaskAssignedNotification($task)
-            );
-        }
 
         return $task;
     }

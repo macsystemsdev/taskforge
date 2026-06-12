@@ -12,13 +12,9 @@
 
     <?php
         $projects = \App\Models\Project::query()
-            ->with(['workspace.organization', 'owner'])
+            ->with(['workspace', 'team'])
             ->withCount('tasks')
-            ->where(function ($query) {
-                $query
-                    ->where('owner_id', auth()->id())
-                    ->orWhereHas('workspace.organization.members', fn ($memberQuery) => $memberQuery->where('users.id', auth()->id()));
-            })
+            ->whereHas('team.members', fn($query) => $query->where('users.id', auth()->id()))
             ->latest()
             ->get();
     ?>
@@ -37,14 +33,18 @@
 
         <?php if (isset($component)) { $__componentOriginal91a231a9270579fa1ae9246bd51fb785 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal91a231a9270579fa1ae9246bd51fb785 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.page-header','data' => ['title' => __('Projects'),'description' => __('Scan active project ownership, workspace context, dates, and task volume from one operational list.')]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.page-header','data' => ['title' => __('Projects'),'description' => __(
+            'Scan active project ownership, workspace context, dates, and task volume from one operational list.',
+        )]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('ui.page-header'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['title' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(__('Projects')),'description' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(__('Scan active project ownership, workspace context, dates, and task volume from one operational list.'))]); ?>
+<?php $component->withAttributes(['title' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(__('Projects')),'description' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(__(
+            'Scan active project ownership, workspace context, dates, and task volume from one operational list.',
+        ))]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
 <?php echo $__env->renderComponent(); ?>
@@ -87,12 +87,15 @@
                             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $projects; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $project): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
                                 <tr class="tf-row-link">
                                     <td>
-                                        <a href="<?php echo e(route('projects.show', $project)); ?>" class="font-medium text-zinc-950 hover:underline dark:text-white" wire:navigate>
+                                        <a href="<?php echo e(route('projects.show', $project)); ?>"
+                                            class="font-medium text-zinc-950 hover:underline dark:text-white"
+                                            wire:navigate>
                                             <?php echo e($project->name); ?>
 
                                         </a>
                                         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($project->description): ?>
-                                            <p class="mt-1 max-w-lg truncate text-sm text-zinc-500 dark:text-zinc-400"><?php echo e($project->description); ?></p>
+                                            <p class="mt-1 max-w-lg truncate text-sm text-zinc-500 dark:text-zinc-400">
+                                                <?php echo e($project->description); ?></p>
                                         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                     </td>
                                     <td><?php echo e($project->workspace->name); ?></td>
@@ -119,7 +122,9 @@
 <?php $component = $__componentOriginaldf5a194c1ccdd1698e9a89f0cb5bf2c8; ?>
 <?php unset($__componentOriginaldf5a194c1ccdd1698e9a89f0cb5bf2c8); ?>
 <?php endif; ?></td>
-                                    <td><?php echo e($project->due_date ? \Illuminate\Support\Carbon::parse($project->due_date)->format('M d, Y') : 'No date'); ?></td>
+                                    <td><?php echo e($project->due_date ? \Illuminate\Support\Carbon::parse($project->due_date)->format('M d, Y') : 'No date'); ?>
+
+                                    </td>
                                     <td><?php echo e($project->tasks_count); ?></td>
                                 </tr>
                             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>

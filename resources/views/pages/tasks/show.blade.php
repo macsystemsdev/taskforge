@@ -1,18 +1,14 @@
 <x-layouts::app :title="$task->title">
     @php
-        $task->loadMissing(['project.workspace.organization', 'assignee', 'creator', 'activityLogs.user']);
+        $task->loadMissing(['project.team.workspace', 'assignee', 'creator', 'activityLogs.user']);
         $activityLogs = $task->activityLogs->sortByDesc('created_at');
     @endphp
 
     <x-ui.page>
-        <x-ui.page-header
-            :title="$task->title"
-            :description="$task->description ?: __('No task description has been added yet.')"
-            :eyebrow="$task->project->workspace->organization->name.' / '.$task->project->name"
-        >
+        <x-ui.page-header :title="$task->title" :description="$task->description ?: __('No task description has been added yet.')" :eyebrow="$task->project->workspace->name . ' / ' . $task->project->team->name . ' / ' . $task->project->name">
             <x-slot:actions>
                 <x-ui.status-badge :status="$task->status" />
-                <x-ui.priority-badge :priority="$task->priority" />
+
             </x-slot:actions>
         </x-ui.page-header>
 
@@ -35,6 +31,12 @@
                             <p class="mt-2 font-medium text-zinc-950 dark:text-white">
                                 {{ $task->due_date?->format('M d, Y') ?? 'No date' }}
                             </p>
+
+                            @if ($task->isOverdue())
+                                <p class="mt-1 text-sm font-medium text-red-600">
+                                    Overdue
+                                </p>
+                            @endif
                         </div>
 
                         <div>
@@ -58,33 +60,50 @@
                         <div class="flex items-center justify-between gap-4">
                             <dt class="text-zinc-500 dark:text-zinc-400">Project</dt>
                             <dd class="text-right font-medium text-zinc-950 dark:text-white">
-                                <a href="{{ route('projects.show', $task->project) }}" class="hover:underline" wire:navigate>
+                                <a href="{{ route('projects.show', $task->project) }}" class="hover:underline"
+                                    wire:navigate>
                                     {{ $task->project->name }}
                                 </a>
                             </dd>
                         </div>
+                        
+                         <div class="flex items-center justify-between gap-4">
+                            <dt class="text-zinc-500 dark:text-zinc-400">
+                                Team
+                            </dt>
+
+                            <dd class="text-right font-medium text-zinc-950 dark:text-white">
+                                {{ $task->project->team->name }}
+                            </dd>
+                        </div>
+
                         <div class="flex items-center justify-between gap-4">
                             <dt class="text-zinc-500 dark:text-zinc-400">Workspace</dt>
-                            <dd class="text-right font-medium text-zinc-950 dark:text-white">{{ $task->project->workspace->name }}</dd>
+                            <dd class="text-right font-medium text-zinc-950 dark:text-white">
+                                {{ $task->project->workspace->name }}</dd>
                         </div>
+                       
                         <div class="flex items-center justify-between gap-4">
                             <dt class="text-zinc-500 dark:text-zinc-400">Created</dt>
-                            <dd class="text-right font-medium text-zinc-950 dark:text-white">{{ $task->created_at->format('M d, Y') }}</dd>
+                            <dd class="text-right font-medium text-zinc-950 dark:text-white">
+                                {{ $task->created_at->format('M d, Y') }}</dd>
                         </div>
                         <div class="flex items-center justify-between gap-4">
                             <dt class="text-zinc-500 dark:text-zinc-400">Updated</dt>
-                            <dd class="text-right font-medium text-zinc-950 dark:text-white">{{ $task->updated_at->diffForHumans() }}</dd>
+                            <dd class="text-right font-medium text-zinc-950 dark:text-white">
+                                {{ $task->updated_at->diffForHumans() }}</dd>
                         </div>
                     </dl>
                 </x-ui.card>
 
-                
-                    <x-ui.card>
+
+                <x-ui.card>
                     <h2 class="tf-panel-title">Activity</h2>
                     <div class="mt-5 space-y-4">
                         @forelse ($activityLogs as $log)
                             <div class="relative border-l border-zinc-200 pl-4 dark:border-white/10">
-                                <span class="absolute -left-1.5 top-1.5 size-3 rounded-full border-2 border-white bg-zinc-400 dark:border-zinc-900 dark:bg-zinc-500"></span>
+                                <span
+                                    class="absolute -left-1.5 top-1.5 size-3 rounded-full border-2 border-white bg-zinc-400 dark:border-zinc-900 dark:bg-zinc-500"></span>
                                 <p class="text-sm font-medium text-zinc-950 dark:text-white">
                                     {{ str($log->event)->headline() }}
                                 </p>
@@ -93,12 +112,13 @@
                                 </p>
                             </div>
                         @empty
-                            <x-ui.empty-state title="No activity yet" description="Task events will appear here as work changes." class="py-8" />
+                            <x-ui.empty-state title="No activity yet"
+                                description="Task events will appear here as work changes." class="py-8" />
                         @endforelse
                     </div>
                 </x-ui.card>
-               
-                
+
+
             </aside>
         </div>
     </x-ui.page>

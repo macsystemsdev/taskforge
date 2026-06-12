@@ -6,7 +6,7 @@ use App\Models\Project;
 use App\Models\Workspace;
 use Flux\Flux;
 use Livewire\Component;
-use Illuminate\Support\Facade\Gate;
+use Illuminate\Support\Facades\Gate;
 
 new class extends Component
 {
@@ -30,7 +30,8 @@ new class extends Component
 
     public function createProject(CreateProjectAction $action)
     {
-        Gate::authorize('createProject', $organization)
+        Gate::authorize('createProject', $this->workspace);
+
         $validated = $this->validate();
 
         // handle function call in CreateprojectAction to create project with DTO data
