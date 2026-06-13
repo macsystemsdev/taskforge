@@ -91,6 +91,19 @@ new class extends Component {
         </x-slot:actions>
     </x-ui.page-header>
 
+    @if ($project->isOverdue())
+        <x-ui.alert variant="danger">
+            This project is overdue.
+        </x-ui.alert>
+    @endif
+
+    @if ($project->hasUpcomingDeadlines())
+        <x-ui.alert variant="warning">
+            Some tasks are approaching their deadlines.
+        </x-ui.alert>
+    @endif
+
+
     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <x-ui.card class="space-y-2">
             <p class="tf-muted">Team</p>

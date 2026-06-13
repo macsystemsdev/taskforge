@@ -2,7 +2,7 @@
 
 namespace App\Notifications\Teams;
 
-use App\Enums\TeamRole;
+use App\Domain\Teams\Enums\TeamRole;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
@@ -15,7 +15,7 @@ class TeamMemberAdded extends Notification implements ShouldQueue
 
     public function __construct(
         public Team $team,
-        public TeamRole $role,
+        public  TeamRole $role,
         public ?User $addedBy,
     ) {
         //

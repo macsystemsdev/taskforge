@@ -8,14 +8,14 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class TaskAssignedNotification extends Notification implements ShouldQueue
+class TaskReassignedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct(public Task $task)
+    public function __construct( public Task $task)
     {
         //
     }
@@ -48,16 +48,11 @@ class TaskAssignedNotification extends Notification implements ShouldQueue
      */
     public function toArray(object $notifiable): array
     {
-                return [
+        return [
             'task_id' => $this->task->id,
-
             'task_title' => $this->task->title,
-
-            'project_name' => $this->task
-                ->project
-                ->name,
-
-            'message' => 'You were assigned a task.',
+            'project_name' => $this->task->project->name,
+            'message' => 'A task was reassigned to you.',
         ];
     }
 }

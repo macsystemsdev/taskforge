@@ -1,20 +1,16 @@
 <?php
 
-
 use App\Models\Project;
 use Livewire\Component;
 
-new class extends Component
-{
+new class extends Component {
     public Project $project;
 
     public function render()
     {
-        return view(
-            'livewire.projects.project-details'
-        );
+        return view('livewire.projects.project-details');
     }
-}
+};
 
 ?>
 
@@ -26,6 +22,45 @@ new class extends Component
 
     <div class="mt-4 space-y-4">
 
+        <x-ui.card class="space-y-2">
+            
+            <p class="tf-muted">Health</p>
+
+            @if ($project->hasOverdueTasks())
+                <p class="font-semibold text-red-600">
+                    At Risk
+                </p>
+            @elseif ($project->hasUpcomingDeadlines())
+                <p class="font-semibold text-amber-600">
+                    Attention Needed
+                </p>
+            @else
+                <p class="font-semibold text-green-600">
+                    Healthy
+                </p>
+            @endif
+        </x-ui.card>
+
+        <div>
+            <p class="tf-muted">
+                Overdue Tasks
+            </p>
+
+            <p class="font-medium text-red-600">
+                {{ $project->overdueTaskCount() }}
+            </p>
+        </div>
+
+        <div>
+            <p class="tf-muted">
+                Due Soon
+            </p>
+
+            <p class="font-medium text-amber-600">
+                {{ $project->dueSoonTaskCount() }}
+            </p>
+        </div>
+
         <div>
             <p class="tf-muted">
                 Project Team
@@ -35,15 +70,6 @@ new class extends Component
                 {{ $project->team->name }}
             </p>
         </div>
-        {{-- <div>
-            <p class="tf-muted">
-                Leader:
-            </p>
-
-            <p class="font-medium">
-                {{ $project->team->leader->name }}
-            </p>
-        </div> --}}
 
         <div>
             <p class="tf-muted">
@@ -60,9 +86,7 @@ new class extends Component
                 Status
             </p>
 
-            <x-ui.status-badge
-                :status="$project->status"
-            />
+            <x-ui.status-badge :status="$project->status" />
         </div>
 
         <div>

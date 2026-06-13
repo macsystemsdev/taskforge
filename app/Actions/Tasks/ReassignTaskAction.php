@@ -46,6 +46,10 @@ class ReassignTaskAction
             'assignee_id' => $assignee->id,
         ]);
 
+        $assignee->notify(
+            new \App\Notifications\TaskReassignedNotification($task)
+        );
+        
         $this->activity->handle(
             event: 'task_reassigned',
             properties: [

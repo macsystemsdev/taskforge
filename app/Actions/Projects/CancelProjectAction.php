@@ -5,6 +5,7 @@ namespace App\Actions\Projects;
 use App\Actions\ActivityLogs\CreateActivityLogAction;
 use App\Domain\Projects\Enums\ProjectStatus;
 use App\Models\Project;
+use App\Notifications\ProjectCancelledNotification;
 use Illuminate\Validation\ValidationException;
 
 class CancelProjectAction
@@ -28,6 +29,10 @@ class CancelProjectAction
         $project->update([
             'status' => ProjectStatus::Cancelled,
         ]);
+
+        $project->creator?->notify(
+            new ProjectCancelledNotification($project)
+        );
 
         $this->activity->handle(
             event: 'project_cancelled',

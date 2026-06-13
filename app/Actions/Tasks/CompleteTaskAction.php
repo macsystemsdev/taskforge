@@ -5,6 +5,7 @@ namespace App\Actions\Tasks;
 use App\Actions\ActivityLogs\CreateActivityLogAction;
 use App\Domain\Task\TaskStatus;
 use App\Models\Task;
+use App\Notifications\TaskCompletedNotification;
 use DomainException;
 
 class CompleteTaskAction
@@ -31,6 +32,10 @@ class CompleteTaskAction
             'status' => TaskStatus::DONE,
             'completed_at' => now(),
         ]);
+
+        $task->creator?->notify(
+            new TaskCompletedNotification($task)
+        );
 
         $this->activity->handle(
             event: 'task_completed',

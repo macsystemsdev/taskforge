@@ -265,6 +265,8 @@ new class extends Component {
                 @endif
 
             </x-ui.card>
+
+            
             @can('reassign', $task)
 
                 @if (!$task->status->isDone() && !$task->status->isCancelled())

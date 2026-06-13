@@ -8,10 +8,9 @@ use App\Domain\Task\TaskStatus;
 use App\Models\Project;
 use App\Models\Task;
 use App\Notifications\TaskAssignedNotification;
-use Illuminate\Support\Facades\Auth;
-
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+
 
 class CreateTaskAction
 {
@@ -52,6 +51,12 @@ class CreateTaskAction
             'status' => TaskStatus::TODO,
             'due_date' => $data->dueDate,
         ]);
+
+        if ($task->assignee) {
+            $task->assignee->notify(
+                new TaskAssignedNotification($task)
+            );
+        }
 
         $this->activity->handle(
             event: 'task_created',

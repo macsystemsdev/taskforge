@@ -100,14 +100,67 @@ class Project extends Model
     public function overdueTaskCount(): int
     {
         return $this->tasks()
-            ->overdue()
+            ->whereNotIn('status', [
+                TaskStatus::DONE,
+                TaskStatus::CANCELLED,
+            ])
+            ->where('due_date', '<', now())
+            ->count();
+    }
+
+    public function completedTaskCount(): int
+    {
+        return $this->tasks()
+            ->where('status', TaskStatus::DONE)
             ->count();
     }
 
     public function dueSoonTaskCount(): int
     {
         return $this->tasks()
-            ->dueSoon()
+            ->whereNotIn('status', [
+                TaskStatus::DONE,
+                TaskStatus::CANCELLED,
+            ])
+            ->whereBetween('due_date', [
+                now(),
+                now()->addDays(3),
+            ])
             ->count();
+    }
+
+    public function hasOverdueTasks(): bool
+    {
+        return $this->tasks()
+            ->whereNotIn('status', [
+                TaskStatus::DONE,
+                TaskStatus::CANCELLED,
+            ])
+            ->where('due_date', '<', now())
+            ->exists();
+    }
+
+    public function hasUpcomingDeadlines(): bool
+    {
+        return $this->tasks()
+            ->whereNotIn('status', [
+                TaskStatus::DONE,
+                TaskStatus::CANCELLED,
+            ])
+            ->whereBetween('due_date', [
+                now(),
+                now()->addDays(3),
+            ])
+            ->exists();
+    }
+
+    public function isOverdue(): bool
+    {
+        if (! $this->due_date) {
+            return false;
+        }
+
+        return $this->status->isActive()
+            && $this->due_date->isPast();
     }
 }

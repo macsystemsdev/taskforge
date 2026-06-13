@@ -8,7 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class TaskAssignedNotification extends Notification implements ShouldQueue
+class TaskOverdueNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -48,16 +48,10 @@ class TaskAssignedNotification extends Notification implements ShouldQueue
      */
     public function toArray(object $notifiable): array
     {
-                return [
+        return [
             'task_id' => $this->task->id,
-
             'task_title' => $this->task->title,
-
-            'project_name' => $this->task
-                ->project
-                ->name,
-
-            'message' => 'You were assigned a task.',
+            'message' => 'Task is overdue.',
         ];
     }
 }

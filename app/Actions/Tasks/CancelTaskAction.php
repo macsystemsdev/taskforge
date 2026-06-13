@@ -5,6 +5,7 @@ namespace App\Actions\Tasks;
 use App\Actions\ActivityLogs\CreateActivityLogAction;
 use App\Domain\Task\TaskStatus;
 use App\Models\Task;
+use App\Notifications\TaskCancelledNotification;
 use DomainException;
 
 class CancelTaskAction
@@ -31,6 +32,10 @@ class CancelTaskAction
             'status' => TaskStatus::CANCELLED,
             'completed_at' => null,
         ]);
+
+        $task->creator?->notify(
+            new TaskCancelledNotification($task)
+        );
 
         $this->activity->handle(
             event: 'task_cancelled',

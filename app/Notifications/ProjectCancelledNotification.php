@@ -2,20 +2,20 @@
 
 namespace App\Notifications;
 
-use App\Models\Task;
+use App\Models\Project;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class TaskAssignedNotification extends Notification implements ShouldQueue
+class ProjectCancelledNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct(public Task $task)
+    public function __construct(public Project $project)
     {
         //
     }
@@ -48,16 +48,10 @@ class TaskAssignedNotification extends Notification implements ShouldQueue
      */
     public function toArray(object $notifiable): array
     {
-                return [
-            'task_id' => $this->task->id,
-
-            'task_title' => $this->task->title,
-
-            'project_name' => $this->task
-                ->project
-                ->name,
-
-            'message' => 'You were assigned a task.',
+        return [
+            'project_id' => $this->project->id,
+            'project_title' => $this->project->title,
+            'message' => 'Project cancelled.',
         ];
     }
 }
