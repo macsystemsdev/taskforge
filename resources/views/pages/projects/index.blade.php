@@ -42,7 +42,7 @@
                                         @endif
                                     </td>
                                     <td>{{ $project->workspace->name }}</td>
-                                    <td>{{ $project->owner->name }}</td>
+                                    
                                     <td><x-ui.status-badge :status="$project->status ?? 'active'" /></td>
                                     <td>{{ $project->due_date ? \Illuminate\Support\Carbon::parse($project->due_date)->format('M d, Y') : 'No date' }}
                                     </td>

@@ -31,6 +31,7 @@ class Project extends Model
         return $this->belongsTo(Workspace::class);
     }
 
+
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
@@ -89,6 +90,7 @@ class Project extends Model
             ->open()
             ->count();
     }
+
 
     public function cancelledTaskCount(): int
     {

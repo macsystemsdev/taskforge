@@ -150,7 +150,7 @@ new class extends Component {
 
     public function inviteMember(InviteMemberAction $inviteMemberAction): void
     {
-        Gate::authorize('inviteMembers', $organization);
+        Gate::authorize('inviteMembers', $this->organization);
 
         $validated = $this->validate([
             'inviteEmail' => ['required', 'email'],

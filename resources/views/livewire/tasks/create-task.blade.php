@@ -169,7 +169,7 @@ new class extends Component {
                         class="{{ $statusFilter === null ? 'tf-button-primary' : 'tf-button-secondary' }} px-3 py-2">
                         All
                     </button>
-                    @foreach (\App\Domain\Tasks\TaskStatus::cases() as $status)
+                    @foreach (\App\Domain\Task\TaskStatus::cases() as $status)
                         <button type="button" wire:click="$set('statusFilter', '{{ $status->value }}')"
                             class="{{ $statusFilter === $status->value ? 'tf-button-primary' : 'tf-button-secondary' }} px-3 py-2">
                             {{ str($status->value)->headline() }}
@@ -179,56 +179,59 @@ new class extends Component {
             </div>
 
             @if ($this->tasks->isNotEmpty())
-                <div class="overflow-x-auto">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Task</th>
-                                <th>Status</th>
-                                <th>Assignee</th>
-                                <th>Due</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($this->tasks as $task)
+                <div class="max-h-[500px] overflow-y-auto">
+
+                    <div class="overflow-x-auto">
+                        <table>
+                            <thead>
                                 <tr>
-                                    <td>
-                                        <a href="{{ route('tasks.show', $task) }}"
-                                            class="font-medium text-zinc-950 hover:underline dark:text-white"
-                                            wire:navigate>
-                                            {{ $task->title }}
-                                        </a>
-
-                                    </td>
-                                    <td><x-ui.status-badge :status="$task->status" /></td>
-
-                                    <td>
-                                        <div class="flex items-center gap-2">
-                                            <x-ui.avatar :name="$task->assignee?->name ?? 'Unassigned'" size="sm" />
-                                            <span>{{ $task->assignee?->name ?? 'Unassigned' }}</span>
-                                        </div>
-                                    </td>
-                                    <td>
-
-                                        <div class="flex flex-col">
-
-                                            <span>
-                                                {{ $task->due_date?->format('M d, Y') ?? 'No date' }}
-                                            </span>
-
-                                            @if ($task->isOverdue())
-                                                <span class="text-xs font-medium text-red-600">
-                                                    Overdue
-                                                </span>
-                                            @endif
-
-                                        </div>
-
-                                    </td>
+                                    <th>Task</th>
+                                    <th>Status</th>
+                                    <th>Assignee</th>
+                                    <th>Due</th>
                                 </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @foreach ($this->tasks as $task)
+                                    <tr>
+                                        <td>
+                                            <a href="{{ route('tasks.show', $task) }}"
+                                                class="font-medium text-zinc-950 hover:underline dark:text-white"
+                                                wire:navigate>
+                                                {{ $task->title }}
+                                            </a>
+
+                                        </td>
+                                        <td><x-ui.status-badge :status="$task->status" /></td>
+
+                                        <td>
+                                            <div class="flex items-center gap-2">
+                                                <x-ui.avatar :name="$task->assignee?->name ?? 'Unassigned'" size="sm" />
+                                                <span>{{ $task->assignee?->name ?? 'Unassigned' }}</span>
+                                            </div>
+                                        </td>
+                                        <td>
+
+                                            <div class="flex flex-col">
+
+                                                <span>
+                                                    {{ $task->due_date?->format('M d, Y') ?? 'No date' }}
+                                                </span>
+
+                                                @if ($task->isOverdue())
+                                                    <span class="text-xs font-medium text-red-600">
+                                                        Overdue
+                                                    </span>
+                                                @endif
+
+                                            </div>
+
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             @else
                 <div class="p-5">

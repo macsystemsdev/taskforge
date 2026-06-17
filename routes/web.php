@@ -8,8 +8,6 @@ use App\Models\Project;
 use App\Models\Task;
 use App\Models\Workspace;
 use Illuminate\Support\Facades\Gate;
-use Livewire\Volt\Volt;
-
 
 
 Route::get('/invitations/{token}/accept', [OrganizationInvitationController::class, 'accept'])
@@ -39,12 +37,9 @@ Route::middleware(['auth'])->group(function () {
         '/organizations/{organization}',
         function (Organization $organization) {
 
-        Gate::authorize('view', $organization);
+            Gate::authorize('view', $organization);
 
-            return view(
-                'pages.organizations.show',
-                compact('organization')
-            );
+            return view('pages.organizations.show', compact('organization'));
         }
     )->name('organizations.show');
 

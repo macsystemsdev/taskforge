@@ -153,7 +153,7 @@ new class extends Component {
             <p class="tf-muted">Projects</p>
 
             <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
-                {{ $workspace->projects->activeProjectsCount() }}
+                {{ $workspace->projects->count() }}
             </p>
         </x-ui.card>
 

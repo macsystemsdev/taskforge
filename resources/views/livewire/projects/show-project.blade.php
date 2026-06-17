@@ -2,6 +2,7 @@
 
 use App\Models\Project;
 use Livewire\Component;
+use Flux\Flux;
 use App\Actions\Projects\CancelProjectAction;
 use App\Actions\Projects\CompleteProjectAction;
 use App\Actions\Projects\DeleteProjectAction;
@@ -40,12 +41,6 @@ new class extends Component {
 
         $this->redirect(route('workspaces.show', $workspace), navigate: true);
     }
-    public function render()
-    {
-        $this->project->load(['workspace.organization', 'team', 'creator', 'tasks.assignee']);
-
-        return view('livewire.projects.show-project');
-    }
 };
 ?>
 
@@ -61,6 +56,7 @@ new class extends Component {
         <x-slot:actions>
 
             <x-ui.status-badge :status="$project->status" />
+
 
             @if ($project->status->isActive())
                 @can('update', $project)
@@ -92,15 +88,15 @@ new class extends Component {
     </x-ui.page-header>
 
     @if ($project->isOverdue())
-        <x-ui.alert variant="danger">
+        <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             This project is overdue.
-        </x-ui.alert>
+        </div>
     @endif
 
     @if ($project->hasUpcomingDeadlines())
-        <x-ui.alert variant="warning">
+        <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             Some tasks are approaching their deadlines.
-        </x-ui.alert>
+        </div>
     @endif
 
 
@@ -108,7 +104,6 @@ new class extends Component {
         <x-ui.card class="space-y-2">
             <p class="tf-muted">Team</p>
             <div class="flex items-center gap-2">
-                <x-ui.icon :name="$project->team->name" size="sm" />
                 <p class="font-semibold text-zinc-950 dark:text-white">{{ $project->team->name }}</p>
             </div>
         </x-ui.card>
@@ -130,15 +125,22 @@ new class extends Component {
     </div>
 
     <div class="mt-6 grid gap-4 md:grid-cols-[minmax(0,1fr)_320px]">
+
         <div class="space-y-6">
+
+            @can('createTask', $project)
+                @livewire('tasks.create-task', ['project' => $project])
+            @endcan
 
             @livewire('comments.comment-section', [
                 'commentable' => $project,
             ])
+
         </div>
 
         <aside class="space-y-6 md:sticky md:top-20">
             @livewire('projects.project-details', ['project' => $project])
         </aside>
+
     </div>
 </x-ui.page>

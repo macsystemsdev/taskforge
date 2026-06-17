@@ -5,45 +5,52 @@ use App\Data\Tasks\CreateTaskData;
 use App\Models\Project;
 use Flux\Flux;
 use Livewire\Component;
+use Illuminate\Support\Facades\Gate;
+use Livewire\Attributes\Computed;
 
 new class extends Component {
     public Project $project;
 
-    public ?string $statusFilter = null;
-
     public string $title = '';
 
-    public string $description = '';
+    public ?string $statusFilter = null;
 
-    public ?int $assigned_to = null;
+    public ?string $description = null;
 
-    public string $priority = 'medium';
+    public ?int $assigneeId = null;
 
-    public ?string $due_date = null;
+    public ?string $dueDate = null;
 
-    public function createTask(CreateTaskAction $action)
+    #[Computed]
+    public function teamMembers()
     {
-        $validated = $this->validate([
-            'title' => ['required', 'string', 'max:255'],
+        return $this->project->team->members->sortBy('name');
+    }
 
-            'description' => ['nullable', 'string'],
+    #[Computed]
+    public function tasks()
+    {
+        return $this->project->tasks()->with('assignee')->when($this->statusFilter, fn($query) => $query->where('status', $this->statusFilter))->latest()->get();
+    }
 
-            'assigned_to' => ['nullable', 'exists:users,id'],
+    public function mount(Project $project): void
+    {
+        $this->project = $project;
 
-            'priority' => ['required', 'in:low,medium,high,urgent'],
+        $this->project->loadCount('tasks');
+    }
 
-            'due_date' => ['nullable', 'date'],
-        ]);
+    public function createTask(CreateTaskAction $action): void
+    {
+        Gate::authorize('createTask', $this->project);
 
-        $data = new CreateTaskData(title: $validated['title'], description: $validated['description'] ?? null, assigned_to: $validated['assigned_to'] ?? null, priority: $validated['priority'], due_date: $validated['due_date'] ?? null);
+        $validated = $this->validate();
 
-        $action->handle(project: $this->project, data: $data);
+        $task = $action->handle($this->project, CreateTaskData::from($validated));
 
-        $this->reset(['title', 'description', 'assigned_to', 'priority', 'due_date']);
+        $this->reset(['title', 'description', 'assigneeId', 'dueDate']);
 
-        Flux::toast(variant: 'success', text: __('Task created successfully.'));
-
-        $this->dispatch('task-created');
+        $this->dispatch('task-created', taskId: $task->id);
     }
 
     public function render()
@@ -52,12 +59,21 @@ new class extends Component {
 
         return view('livewire.tasks.create-task', [
             'members' => $this->project->workspace->organization->members,
-            'tasks' => $this->project->tasks()
-                ->with('assignee')
-                ->when($this->statusFilter, fn($query) => $query->where('status', $this->statusFilter))
-                ->latest()
-                ->get(),
+            'tasks' => $this->project->tasks()->with('assignee')->when($this->statusFilter, fn($query) => $query->where('status', $this->statusFilter))->latest()->get(),
         ]);
+    }
+
+    protected function rules(): array
+    {
+        return [
+            'title' => ['required', 'string', 'max:255'],
+
+            'description' => ['nullable', 'string'],
+
+            'assigneeId' => ['nullable', 'integer'],
+
+            'dueDate' => ['nullable', 'date', 'after_or_equal:today'],
+        ];
     }
 };
 ?>
@@ -86,7 +102,8 @@ new class extends Component {
             </div>
 
             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(session('success')): ?>
-                <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-200">
+                <div
+                    class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-200">
                     <?php echo e(session('success')); ?>
 
                 </div>
@@ -95,12 +112,9 @@ new class extends Component {
             <form wire:submit="createTask" class="space-y-5">
 
                 <div class="space-y-2">
-                    <label for="task-title">
-                        Title
-                    </label>
+                    <label>Task</label>
 
-                    <input id="task-title" type="text" wire:model="title" class="w-full px-3 py-2.5">
-
+                    <input type="text" wire:model="title" class="w-full px-3 py-2.5">
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['title'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
@@ -117,57 +131,41 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
                 </div>
 
                 <div class="space-y-2">
-                    <label for="task-description">
-                        Description
-                    </label>
+                    <label>Description</label>
 
-                    <textarea id="task-description" wire:model="description" rows="4" class="w-full px-3 py-2.5"></textarea>
+                    <textarea rows="4" wire:model="description" class="w-full px-3 py-2.5"></textarea>
                 </div>
 
-                <div class="space-y-2">
-                    <label for="task-assignee">
-                        Assign To
-                    </label>
 
-                    <select id="task-assignee" wire:model="assigned_to" class="w-full px-3 py-2.5">
+                <div class="space-y-2">
+                    <label>Assignee</label>
+
+                    <select wire:model="assigneeId" class="w-full px-3 py-2.5">
                         <option value="">
                             Unassigned
                         </option>
 
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $members; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $member): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $this->teamMembers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $member): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
                             <option value="<?php echo e($member->id); ?>">
                                 <?php echo e($member->name); ?>
 
                             </option>
                         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-
                     </select>
                 </div>
 
-                <div class="space-y-2">
-                    <label for="task-priority">
-                        Priority
-                    </label>
-
-                    <select id="task-priority" wire:model="priority" class="w-full px-3 py-2.5">
-                        <option value="low">Low</option>
-                        <option value="medium">Medium</option>
-                        <option value="high">High</option>
-                        <option value="urgent">Urgent</option>
-                    </select>
-                </div>
 
                 <div class="space-y-2">
-                    <label for="task-due-date">
-                        Due Date
-                    </label>
+                    <label>Due Date</label>
 
-                    <input id="task-due-date" type="date" wire:model="due_date" class="w-full px-3 py-2.5">
+                    <input type="date" wire:model="dueDate" class="w-full px-3 py-2.5">
                 </div>
 
-                <button type="submit" class="tf-button-primary w-full">
-                    Create Task
-                </button>
+                <div class="flex justify-end">
+                    <button type="submit" class="tf-button-primary">
+                        Create Task
+                    </button>
+                </div>
 
             </form>
 
@@ -200,18 +198,21 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
 
-            <div class="flex flex-col gap-4 border-b border-zinc-200 px-5 py-4 dark:border-white/10 lg:flex-row lg:items-center lg:justify-between">
+            <div
+                class="flex flex-col gap-4 border-b border-zinc-200 px-5 py-4 dark:border-white/10 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                     <h2 class="tf-panel-title">Project Tasks</h2>
-                    <p class="tf-panel-subtitle"><?php echo e($project->tasks->count()); ?> tasks in this project.</p>
+                    <p class="tf-panel-subtitle"><?php echo e($project->tasks_count); ?> tasks in this project.</p>
                 </div>
 
                 <div class="flex flex-wrap gap-2">
-                    <button type="button" wire:click="$set('statusFilter', null)" class="<?php echo e($statusFilter === null ? 'tf-button-primary' : 'tf-button-secondary'); ?> px-3 py-2">
+                    <button type="button" wire:click="$set('statusFilter', null)"
+                        class="<?php echo e($statusFilter === null ? 'tf-button-primary' : 'tf-button-secondary'); ?> px-3 py-2">
                         All
                     </button>
-                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = \App\Enums\TaskStatus::cases(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $status): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                        <button type="button" wire:click="$set('statusFilter', '<?php echo e($status->value); ?>')" class="<?php echo e($statusFilter === $status->value ? 'tf-button-primary' : 'tf-button-secondary'); ?> px-3 py-2">
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = \App\Domain\Task\TaskStatus::cases(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $status): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                        <button type="button" wire:click="$set('statusFilter', '<?php echo e($status->value); ?>')"
+                            class="<?php echo e($statusFilter === $status->value ? 'tf-button-primary' : 'tf-button-secondary'); ?> px-3 py-2">
                             <?php echo e(str($status->value)->headline()); ?>
 
                         </button>
@@ -219,34 +220,32 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
                 </div>
             </div>
 
-            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($tasks->isNotEmpty()): ?>
-                <div class="overflow-x-auto">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Task</th>
-                                <th>Status</th>
-                                <th>Priority</th>
-                                <th>Assignee</th>
-                                <th>Due</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $tasks; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $task): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                                <tr class="tf-row-link cursor-pointer" onclick="window.location.href='<?php echo e(route('tasks.show', $task)); ?>'">
-                                    <td>
-                                        <a href="<?php echo e(route('tasks.show', $task)); ?>" class="font-medium text-zinc-950 hover:underline dark:text-white" wire:navigate>
-                                            <?php echo e($task->title); ?>
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($this->tasks->isNotEmpty()): ?>
+                <div class="max-h-[500px] overflow-y-auto">
 
-                                        </a>
-                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($task->description): ?>
-                                            <p class="mt-1 max-w-xl truncate text-sm text-zinc-500 dark:text-zinc-400">
-                                                <?php echo e($task->description); ?>
+                    <div class="overflow-x-auto">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Task</th>
+                                    <th>Status</th>
+                                    <th>Assignee</th>
+                                    <th>Due</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $this->tasks; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $task): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                    <tr>
+                                        <td>
+                                            <a href="<?php echo e(route('tasks.show', $task)); ?>"
+                                                class="font-medium text-zinc-950 hover:underline dark:text-white"
+                                                wire:navigate>
+                                                <?php echo e($task->title); ?>
 
-                                            </p>
-                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                                    </td>
-                                    <td><?php if (isset($component)) { $__componentOriginaldf5a194c1ccdd1698e9a89f0cb5bf2c8 = $component; } ?>
+                                            </a>
+
+                                        </td>
+                                        <td><?php if (isset($component)) { $__componentOriginaldf5a194c1ccdd1698e9a89f0cb5bf2c8 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginaldf5a194c1ccdd1698e9a89f0cb5bf2c8 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.status-badge','data' => ['status' => $task->status]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('ui.status-badge'); ?>
@@ -268,31 +267,10 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
 <?php $component = $__componentOriginaldf5a194c1ccdd1698e9a89f0cb5bf2c8; ?>
 <?php unset($__componentOriginaldf5a194c1ccdd1698e9a89f0cb5bf2c8); ?>
 <?php endif; ?></td>
-                                    <td><?php if (isset($component)) { $__componentOriginal5ea2e86292230ce7e0ef1e38c0291982 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal5ea2e86292230ce7e0ef1e38c0291982 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.priority-badge','data' => ['priority' => $task->priority]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('ui.priority-badge'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['priority' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($task->priority)]); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginal5ea2e86292230ce7e0ef1e38c0291982)): ?>
-<?php $attributes = $__attributesOriginal5ea2e86292230ce7e0ef1e38c0291982; ?>
-<?php unset($__attributesOriginal5ea2e86292230ce7e0ef1e38c0291982); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginal5ea2e86292230ce7e0ef1e38c0291982)): ?>
-<?php $component = $__componentOriginal5ea2e86292230ce7e0ef1e38c0291982; ?>
-<?php unset($__componentOriginal5ea2e86292230ce7e0ef1e38c0291982); ?>
-<?php endif; ?></td>
-                                    <td>
-                                        <div class="flex items-center gap-2">
-                                            <?php if (isset($component)) { $__componentOriginald04dd79f9e235eb8e58dee4526a2f3c2 = $component; } ?>
+                                        <td>
+                                            <div class="flex items-center gap-2">
+                                                <?php if (isset($component)) { $__componentOriginald04dd79f9e235eb8e58dee4526a2f3c2 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginald04dd79f9e235eb8e58dee4526a2f3c2 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.avatar','data' => ['name' => $task->assignee?->name ?? 'Unassigned','size' => 'sm']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('ui.avatar'); ?>
@@ -314,14 +292,32 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
 <?php $component = $__componentOriginald04dd79f9e235eb8e58dee4526a2f3c2; ?>
 <?php unset($__componentOriginald04dd79f9e235eb8e58dee4526a2f3c2); ?>
 <?php endif; ?>
-                                            <span><?php echo e($task->assignee?->name ?? 'Unassigned'); ?></span>
-                                        </div>
-                                    </td>
-                                    <td><?php echo e($task->due_date?->format('M d, Y') ?? 'No date'); ?></td>
-                                </tr>
-                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                        </tbody>
-                    </table>
+                                                <span><?php echo e($task->assignee?->name ?? 'Unassigned'); ?></span>
+                                            </div>
+                                        </td>
+                                        <td>
+
+                                            <div class="flex flex-col">
+
+                                                <span>
+                                                    <?php echo e($task->due_date?->format('M d, Y') ?? 'No date'); ?>
+
+                                                </span>
+
+                                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($task->isOverdue()): ?>
+                                                    <span class="text-xs font-medium text-red-600">
+                                                        Overdue
+                                                    </span>
+                                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+                                            </div>
+
+                                        </td>
+                                    </tr>
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             <?php else: ?>
                 <div class="p-5">

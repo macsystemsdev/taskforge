@@ -14,6 +14,8 @@ new class extends Component
     use AuthorizesRequests;
     public Project $project;
 
+    public Workspace $workspace;
+
     public string $name;
 
     public ?string $description;
@@ -34,12 +36,12 @@ new class extends Component
 
         public function updateProject(UpdateProjectAction $action)
     {
-        $this->authorize('update', $this->project)
+        $this->authorize('update', $this->project);
         $validated = $this->validate();
 
-        // handle function call in CreateprojectAction to create project with DTO data
+        // handle function call in CreateprojectAction to update project with DTO data
          $project = $action->handle(
-            $this->workspace,
+            $this->project,
             new UpdateProjectData(
                 name: $this->name,
                 description: $this->description,
@@ -52,8 +54,7 @@ new class extends Component
           return redirect()->route(
             'projects.show',
             [
-                'workspace' => $this->workspace,
-                'project' => $project,
+                'project' => $this->project,
             ]
         );
     }

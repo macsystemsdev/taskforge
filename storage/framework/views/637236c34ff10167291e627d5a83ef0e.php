@@ -1,6 +1,7 @@
 <?php
-use App\Enums\TeamRole;
+use App\Domain\Teams\Enums\TeamRole;
 use App\Models\Team;
+use App\Models\Organization;
 use App\Models\Membership;
 use App\Models\User;
 use App\Notifications\Teams\TeamMemberAdded;

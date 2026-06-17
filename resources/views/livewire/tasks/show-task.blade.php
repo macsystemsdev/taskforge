@@ -1,11 +1,13 @@
 <?php
 
 use App\Models\Task;
+use App\Models\User;
 use Livewire\Component;
 use App\Actions\Tasks\StartTaskAction;
 use App\Actions\Tasks\CompleteTaskAction;
 use App\Actions\Tasks\CancelTaskAction;
 use App\Actions\Tasks\DeleteTaskAction;
+use App\Actions\Tasks\ReassignTaskAction;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Computed;
 
@@ -104,7 +106,7 @@ new class extends Component {
         </x-slot:actions>
     </x-ui.page-header>
 
-    <div class="grid gap-6 xl:grid-cols-[1fr_360px]">
+    <div class="grid gap-5 xl:grid-cols-[1fr_360px]">
         <div class="space-y-6">
             <x-ui.card>
                 <div class="grid gap-5 sm:grid-cols-3">
@@ -144,21 +146,9 @@ new class extends Component {
                             {{ $task->creator?->name ?? 'Unknown' }}
                         </p>
                     </div>
-                    <div>
-                        <p class="tf-muted">
-                            Status
-                        </p>
 
-                        <div class="mt-2">
-                            <x-ui.status-badge :status="$task->status" />
-                        </div>
-                    </div>
                 </div>
             </x-ui.card>
-
-            @livewire('comments.comment-section', [
-                'commentable' => $task,
-            ])
         </div>
 
         <aside class="space-y-6 md:sticky md:top-20">
@@ -275,6 +265,11 @@ new class extends Component {
                         <h2 class="tf-panel-title">
                             Reassign Task
                         </h2>
+
+                        <p class="mt-2 text-sm text-zinc-500">
+                            Current assignee:
+                            {{ $task->assignee?->name ?? 'Unassigned' }}
+                        </p>
 
                         <div class="mt-4 space-y-3">
 

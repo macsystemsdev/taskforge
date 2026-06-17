@@ -1,35 +1,147 @@
-| Entity A         | Relationship Type       | Entity B                          | Why Relationship Exists                  | Pivot / Special Structure   |
-| ---------------- | ----------------------- | --------------------------------- | ---------------------------------------- | --------------------------- |
-| User             | One-to-Many             | Organization (ownedOrganizations) | User creates/owns organizations          | `owner_id` on organizations |
-| User             | Many-to-Many            | Organization (memberships)        | Users participate inside organizations   | `organization_user`         |
-| Organization     | One-to-Many             | Workspace                         | Organizations contain operational spaces | direct FK                   |
-| Organization     | One-to-Many             | Team                              | Organizations contain teams/departments  | direct FK                   |
-| User             | Many-to-Many            | Team                              | Users belong to organizational subgroups | `team_user`                 |
-| Workspace        | One-to-Many             | Project                           | Projects belong to operational spaces    | direct FK                   |
-| Team             | Many-to-Many            | Project                           | Multiple teams collaborate on projects   | `project_team`              |
-| User             | One-to-Many             | Task (assigned tasks)             | Users are responsible for tasks          | `assignee_id`               |
-| User             | One-to-Many             | Task (created tasks)              | User created operational task            | `creator_id`                |
-| Project          | One-to-Many             | Task                              | Projects contain tasks                   | direct FK                   |
-| Task             | Polymorphic One-to-Many | Comment                           | Tasks can receive comments               | `commentable_type/id`       |
-| Project          | Polymorphic One-to-Many | Comment                           | Projects can receive comments            | `commentable_type/id`       |
-| Task             | Polymorphic One-to-Many | Attachment                        | Tasks can contain files                  | `attachable_type/id`        |
-| Project          | Polymorphic One-to-Many | Attachment                        | Projects can contain files               | `attachable_type/id`        |
-| User             | One-to-Many             | Comment                           | User authors comments                    | direct FK                   |
-| User             | One-to-Many             | Notification                      | Notifications belong to users            | direct FK                   |
-| User             | One-to-Many             | ActivityLog (actor)               | User performs system actions             | `actor_id`                  |
-| Task             | Polymorphic One-to-Many | ActivityLog                       | Tasks generate activities                | `subject_type/id`           |
-| Project          | Polymorphic One-to-Many | ActivityLog                       | Projects generate activities             | `subject_type/id`           |
-| Organization     | One-to-Many             | Subscription                      | Organization owns billing subscription   | direct FK                   |
-| SubscriptionPlan | One-to-Many             | Subscription                      | Plans define organization capabilities   | direct FK                   |
+# Current Relationship Architecture
 
+## Core Domain Relationships
 
-Users ↔ Teams:team_user
-team_id
-user_id
-role
-joined_at
+| Entity A     | Relationship Type       | Entity B                          | Why Relationship Exists                | Structure             |
+| ------------ | ----------------------- | --------------------------------- | -------------------------------------- | --------------------- |
+| User         | One-to-Many             | Organization (ownedOrganizations) | User creates and owns organizations    | `owner_id`            |
+| User         | Many-to-Many            | Organization                      | Users participate inside organizations | `organization_user`   |
+| Organization | One-to-Many             | Workspace                         | Organizations contain workspaces       | direct FK             |
+| Workspace    | One-to-Many             | Team                              | Workspaces contain teams               | direct FK             |
+| Team         | One-to-Many             | Project                           | Teams own projects                     | direct FK             |
+| Project      | One-to-Many             | Task                              | Projects contain tasks                 | direct FK             |
+| User         | One-to-Many             | Task (creator)                    | User creates tasks                     | `creator_id`          |
+| User         | One-to-Many             | Task (assignee)                   | User is responsible for execution      | `assignee_id`         |
+| User         | One-to-Many             | Comment                           | User authors comments                  | direct FK             |
+| User         | One-to-Many             | Notification                      | Notifications belong to users          | direct FK             |
+| User         | One-to-Many             | ActivityLog                       | User performs actions                  | `user_id`             |
+| Task         | Polymorphic One-to-Many | Comment                           | Tasks support discussions              | `commentable_type/id` |
+| Project      | Polymorphic One-to-Many | Comment                           | Projects support discussions           | `commentable_type/id` |
+| Task         | Polymorphic One-to-Many | ActivityLog                       | Tasks generate activity history        | `subject_type/id`     |
+| Project      | Polymorphic One-to-Many | ActivityLog                       | Projects generate activity history     | `subject_type/id`     |
+| Task         | Polymorphic One-to-Many | Attachment                        | Tasks can contain files                | `attachable_type/id`  |
+| Project      | Polymorphic One-to-Many | Attachment                        | Projects can contain files             | `attachable_type/id`  |
 
-Projects ↔ Teams:project_team
-project_id
-team_id
-assigned_at
+---
+
+# Membership Relationships
+
+## Organization Membership
+
+Users participate in organizations through memberships.
+
+### organization_user
+
+| Column          |
+| --------------- |
+| organization_id |
+| user_id         |
+| role            |
+| joined_at       |
+
+---
+
+## Team Membership
+
+Users participate in teams through memberships.
+
+Leadership is determined from membership records rather than the Team model itself.
+
+### team_user
+
+| Column    |
+| --------- |
+| team_id   |
+| user_id   |
+| role      |
+| joined_at |
+
+Possible roles:
+
+* Leader
+* Member
+
+---
+
+# Hierarchy
+
+Organization
+└── Workspace
+└── Team
+└── Project
+└── Task
+
+---
+
+# Ownership Flow
+
+Organization Owner
+↓
+Workspace
+↓
+Team Leader
+↓
+Project
+↓
+Task Assignee
+
+---
+
+# Authorization Flow
+
+## Organization Level
+
+Can:
+
+* Manage organization
+* Manage workspaces
+* Manage teams
+* Override project administration
+* Override task administration
+
+## Team Level
+
+Can:
+
+* Manage team members
+* Manage projects
+* Reassign tasks
+* Cancel tasks
+
+## Task Level
+
+Assignees can:
+
+* Start tasks
+* Complete tasks
+
+---
+
+# Future Relationships (Not Yet Implemented)
+
+These entities are planned but not yet active in the production domain model:
+
+## Billing
+
+Organization
+└── Subscription
+
+SubscriptionPlan
+└── Subscription
+
+## Reporting
+
+Organization
+└── Reports
+
+## Notifications
+
+User
+└── Notification
+
+## Audit Expansion
+
+Additional activity subjects may be introduced beyond:
+
+* Projects
+* Tasks

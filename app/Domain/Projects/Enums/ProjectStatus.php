@@ -27,4 +27,9 @@ enum ProjectStatus: string
     {
         return $this === self::Active;
     }
+
+    public function isCompleted(): bool
+    {
+        return $this === self::Completed;
+    }
 }

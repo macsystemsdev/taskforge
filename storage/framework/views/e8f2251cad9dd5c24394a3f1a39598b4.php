@@ -10,11 +10,12 @@
 <?php $component->withAttributes([]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-   <?php
+    <?php
 $__split = function ($name, $params = []) {
     return [$name, $params];
 };
-[$__name, $__params] = $__split('projects.show-project', ['project' => $project]);
+[$__name, $__params] = $__split('projects.show-project',
+        ['project' => $project]);
 
 $__keyOuter = $__key ?? null;
 

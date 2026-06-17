@@ -42,7 +42,7 @@ enum TaskStatus: string
         };
     }
 
-    public function isCompleted(): bool
+    public function isDone(): bool
     {
         return $this === self::DONE;
     }

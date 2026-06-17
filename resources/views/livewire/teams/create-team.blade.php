@@ -48,7 +48,7 @@ new class extends Component {
             'memberIds.*' => ['integer', new BelongsToOrganization($this->workspace->organization)],
         ]);
 
-        $team = $action->handle(workspace: $this->workspace, data: new CreateTeamData(name: $validated['name'], description: $validated['description'], leaderId: $validated['leaderId'], memberIds: $validated['memberIds'] ?? []), owner: auth()->user());
+        $team = $action->handle(workspace: $this->workspace, data: new CreateTeamData(name: $validated['name'], description: $validated['description'], leaderId: $validated['leaderId'], memberIds: $validated['memberIds'] ?? []));
 
         return redirect()->route('teams.show', ['workspace' => $this->workspace, 'team' => $team]);
     }

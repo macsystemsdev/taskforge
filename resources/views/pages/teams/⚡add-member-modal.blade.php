@@ -1,7 +1,8 @@
 <?php
 
-use App\Enums\TeamRole;
+use App\Domain\Teams\Enums\TeamRole;
 use App\Models\Team;
+use App\Models\Organization;
 use App\Models\Membership;
 use App\Models\User;
 use App\Notifications\Teams\TeamMemberAdded;
@@ -16,6 +17,7 @@ use Livewire\Component;
 new class extends Component {
     public Team $team;
 
+    public Organization $org;
 
     public array $candidates = [];
 
@@ -33,7 +35,7 @@ new class extends Component {
 
     private function loadCandidates(): void
     {
-        $org = $this->team->organization;
+        $org = $this->team->workspace->organization;
 
         if (! $org) {
             $this->candidates = [];
@@ -69,7 +71,7 @@ new class extends Component {
     {
         Gate::authorize('addMember', $this->team);
 
-        $roleValue = $this->roles[$userId] ?? TeamRole::Member->value;
+        $roleValue = $this->roles[$userId] ?? TeamRole::MEMBER->value;
 
         $validated = Validator::make(['role' => $roleValue], [
             'role' => ['required', 'string', Rule::enum(TeamRole::class)],

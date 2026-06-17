@@ -5,7 +5,6 @@ use Illuminate\Database\Eloquent\Model;
 use Livewire\Component;
 
 new class extends Component {
-    
     public Model $commentable;
 
     public string $content = '';
@@ -37,7 +36,8 @@ new class extends Component {
     </div>
 
     {{-- COMMENT FORM --}}
-    <form wire:submit="createComment" class="space-y-4 rounded-lg border border-zinc-200 bg-zinc-50/80 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+    <form wire:submit="createComment"
+        class="space-y-4 rounded-lg border border-zinc-200 bg-zinc-50/80 p-4 dark:border-white/10 dark:bg-white/[0.03]">
 
         <textarea wire:model="content" rows="4" class="w-full px-3 py-2.5" placeholder="Write a comment..."></textarea>
 
@@ -58,42 +58,41 @@ new class extends Component {
     </form>
 
     {{-- COMMENTS --}}
-    <div class="space-y-4">
+    <x-ui.card>
+        <div class="max-h-[600px] overflow-y-auto space-y-4 pr-2">
 
-        @forelse ($comments as $comment)
-            <div class="flex gap-3">
-                <x-ui.avatar :name="$comment->user->name" size="lg" />
+            @forelse ($comments as $comment)
+                <div class="flex gap-3">
+                    <x-ui.avatar :name="$comment->user->name" size="lg" />
 
-                <div class="flex-1">
+                    <div class="flex-1">
+                        <div
+                            class="rounded-lg border border-zinc-200 bg-white p-4 dark:border-white/10 dark:bg-zinc-950/60">
 
-                    <div class="rounded-lg border border-zinc-200 bg-white p-4 dark:border-white/10 dark:bg-zinc-950/60">
+                            <div class="mb-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                <h3 class="font-semibold text-zinc-950 dark:text-white">
+                                    {{ $comment->user->name }}
+                                </h3>
 
-                        <div class="mb-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                <span class="text-xs text-zinc-500">
+                                    {{ $comment->created_at->diffForHumans() }}
+                                </span>
+                            </div>
 
-                            <h3 class="font-semibold text-zinc-950 dark:text-white">
-                                {{ $comment->user->name }}
-                            </h3>
-
-                            <span class="text-xs text-zinc-500">
-                                {{ $comment->created_at->diffForHumans() }}
-                            </span>
+                            <p class="whitespace-pre-line text-sm leading-6 text-zinc-700 dark:text-zinc-300">
+                                {{ $comment->content }}
+                            </p>
 
                         </div>
-
-                        <p class="whitespace-pre-line text-sm leading-6 text-zinc-700 dark:text-zinc-300">
-                            {{ $comment->content }}
-                        </p>
-
                     </div>
-
                 </div>
 
-            </div>
+            @empty
+                <x-ui.empty-state title="No comments yet"
+                    description="Start the discussion by adding the first update or decision note." />
+            @endforelse
 
-        @empty
-            <x-ui.empty-state title="No comments yet" description="Start the discussion by adding the first update or decision note." />
-        @endforelse
-
-    </div>
+        </div>
+    </x-ui.card>
 
 </x-ui.card>
