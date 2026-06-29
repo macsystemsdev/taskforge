@@ -57,7 +57,7 @@ class Organization extends Model
         return $this->morphMany(ActivityLog::class, 'subject');
     }
 
-   
+
 
     // Role-based access control for organization members
 
@@ -93,5 +93,12 @@ class Organization extends Model
     ): bool {
         return $this->roleFor($user)
             === OrganizationRole::ADMIN;
+    }
+
+    // Organization  subscription  relationship
+
+    public function subscription()
+    {
+        return $this->hasOne(Subscription::class);
     }
 }
