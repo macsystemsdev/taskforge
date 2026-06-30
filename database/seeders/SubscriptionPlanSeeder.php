@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Domain\Billing\BillingInterval;
 use App\Models\SubscriptionPlan;
 use Illuminate\Database\Seeder;
 
@@ -13,33 +14,66 @@ class SubscriptionPlanSeeder extends Seeder
 
     public function run(): void
     {
-        SubscriptionPlan::create([
-            'name' => 'Free',
-            'slug' => 'free',
-            'price' => 0,
-            'billing_interval' => 'monthly',
-            'max_members' => 5,
-            'max_workspaces' => 1,
-            'max_projects' => 5,
-        ]);
-        SubscriptionPlan::create([
-            'name' => 'Pro',
-            'slug' => 'pro',
-            'price' => 19.99,
-            'billing_interval' => 'monthly',
-            'max_members' => 25,
-            'max_workspaces' => 10,
-            'max_projects' => null,
-        ]);
+        SubscriptionPlan::insert([
+            [
+                'name' => 'Free',
+                'slug' => 'free',
+                'price' => 0,
+                'currency' => 'USD',
+                'billing_interval' => BillingInterval::NONE,
+                'max_workspaces' => 1,
+                'max_projects' => 5,
+                'max_members' => 5,
+                'is_active' => true,
+            ],
 
-        SubscriptionPlan::create([
-            'name' => 'Enterprise',
-            'slug' => 'enterprise',
-            'price' => 99.99,
-            'billing_interval' => 'monthly',
-            'max_members' => null,
-            'max_workspaces' => null,
-            'max_projects' => null,
+            [
+                'name' => 'Pro',
+                'slug' => 'pro-monthly',
+                'price' => 19.99,
+                'currency' => 'USD',
+                'billing_interval' => BillingInterval::MONTHLY,
+                'max_workspaces' => 10,
+                'max_projects' => 100,
+                'max_members' => 50,
+                'is_active' => true,
+            ],
+
+            [
+                'name' => 'Pro',
+                'slug' => 'pro-yearly',
+                'price' => 199.99,
+                'currency' => 'USD',
+                'billing_interval' => BillingInterval::YEARLY,
+                'max_workspaces' => 10,
+                'max_projects' => 100,
+                'max_members' => 50,
+                'is_active' => true,
+            ],
+
+            [
+                'name' => 'Enterprise',
+                'slug' => 'enterprise-monthly',
+                'price' => 99.99,
+                'currency' => 'USD',
+                'billing_interval' => BillingInterval::MONTHLY,
+                'max_workspaces' => PHP_INT_MAX,
+                'max_projects' => PHP_INT_MAX,
+                'max_members' => PHP_INT_MAX,
+                'is_active' => true,
+            ],
+
+            [
+                'name' => 'Enterprise',
+                'slug' => 'enterprise-yearly',
+                'price' => 999.99,
+                'currency' => 'USD',
+                'billing_interval' => BillingInterval::YEARLY,
+                'max_workspaces' => PHP_INT_MAX,
+                'max_projects' => PHP_INT_MAX,
+                'max_members' => PHP_INT_MAX,
+                'is_active' => true,
+            ],
         ]);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Actions\Organizations;
 
 use App\Actions\ActivityLogs\CreateActivityLogAction;
 use App\Data\Invitations\InviteMemberData;
+use App\Exceptions\FeatureLimitExceededException;
 use App\Mail\OrganizationInvitationMail;
 use App\Models\Invitation;
 use App\Models\Organization;
@@ -19,7 +20,7 @@ class InviteMemberAction
     ) {}
     public function handle(
         InviteMemberData $data,
-        
+
     ): Invitation {
 
         // Check if pending invitation already exists for the email and organization
@@ -47,6 +48,11 @@ class InviteMemberAction
             ]);
         }
 
+        if (! $data->organization->canInviteMember()) {
+            throw new FeatureLimitExceededException(
+                'Your subscription has reached the maximum number of members.'
+            );
+        }
         // Create invitation
         $invitation = Invitation::create([
             'organization_id' => $data->organization_id,

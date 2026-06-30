@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 #[Table('organizations')]
 #[Fillable(['name', 'slug', 'subscription_plan', 'subscription_status', 'owner_id'])]
@@ -46,6 +47,25 @@ class Organization extends Model
         return $this->hasMany(Invitation::class);
     }
 
+    // Define a hasManyThrough relationship to get all projects associated with the organization through workspaces
+
+    public function projects(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            Project::class,
+            Workspace::class
+        );
+    }
+
+    // Define a hasManyThrough relationship to get all teams associated with the organization through workspaces
+    public function teams(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            Team::class,
+            Workspace::class,
+        );
+    }
+
     public function getRouteKeyName(): string
     {
         return 'slug';
@@ -55,6 +75,25 @@ class Organization extends Model
     public function activityLogs(): MorphMany
     {
         return $this->morphMany(ActivityLog::class, 'subject');
+    }
+
+      // Organization  subscription  relationship
+
+    public function subscription()
+    {
+        return $this->hasOne(Subscription::class);
+    }
+
+    public function subscriptionPlan()
+    {
+        return $this->hasOneThrough(
+            SubscriptionPlan::class,
+            Subscription::class,
+            'organization_id',
+            'id',
+            'id',
+            'subscription_plan_id'
+        );
     }
 
 
@@ -95,10 +134,32 @@ class Organization extends Model
             === OrganizationRole::ADMIN;
     }
 
-    // Organization  subscription  relationship
+  
+    // Check if the organization can create a new workspace, project, or add a new member based on the subscription plan limits
 
-    public function subscription()
+    public function canCreateWorkspace(): bool
     {
-        return $this->hasOne(Subscription::class);
+
+        $limit = $this->subscription?->plan?->max_workspaces;
+
+        return is_null($limit)
+            || $this->workspaces()->count() < $limit;
+    }
+
+    public function canCreateProject(): bool
+
+    {
+        $limit = $this->subscription?->plan?->max_projects;
+
+        return is_null($limit)
+            || $this->projects()->count() < $limit;
+    }
+
+    public function canAddMember(): bool
+    {
+        $limit = $this->subscription?->plan?->max_members;
+
+        return is_null($limit)
+            || $this->members()->count() < $limit;
     }
 }

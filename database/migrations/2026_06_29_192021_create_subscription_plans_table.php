@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('subscription_plans', function (Blueprint $table) {
             $table->id();
-            
+
             $table->string('name');
             $table->string('slug')->unique();
 
@@ -22,9 +22,9 @@ return new class extends Migration
 
             $table->string('billing_interval');
 
-            $table->unsignedInteger('max_workspaces');
-            $table->unsignedInteger('max_projects');
-            $table->unsignedInteger('max_members');
+            $table->unsignedInteger('max_workspaces')->nullable();
+            $table->unsignedInteger('max_projects')->nullable();
+            $table->unsignedInteger('max_members')->nullable();
 
             $table->boolean('is_active')->default(true);
             $table->timestamps();

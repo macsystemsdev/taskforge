@@ -10,6 +10,7 @@ use App\Models\Team;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use App\Domain\Projects\Enums\ProjectStatus;
+use App\Exceptions\FeatureLimitExceededException;
 use DomainException;
 
 class CreateProjectAction
@@ -23,6 +24,14 @@ class CreateProjectAction
         CreateProjectData $data,
 
     ): Project {
+
+        $organization = $workspace->organization;
+        
+        if (! $organization->canCreateProject()) {
+            throw new FeatureLimitExceededException(
+                'Your subscription has reached the maximum number of projects.'
+            );
+        }
 
         $team = Team::query()->findOrFail($data->teamId);
 
