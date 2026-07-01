@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Contracts\Billing\PaymentGateway;
+use App\Infrastructure\Billing\StripePaymentGateway;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +26,12 @@ class AppServiceProvider extends ServiceProvider
             $this->app->register(\Laravel\Telescope\TelescopeServiceProvider::class);
             $this->app->register(TelescopeServiceProvider::class);
         }
+
+        // Bind the PaymentGateway interface to the StripePaymentGateway implementation
+        $this->app->bind(
+            PaymentGateway::class,
+            StripePaymentGateway::class,
+        );
     }
 
     /**

@@ -20,7 +20,7 @@ class CreateWorkspaceAction
         $data,
     ): Workspace {
 
-    dd($organization->subscriptionPlan);
+        
         if (! $organization->canCreateWorkspace()) {
             throw new FeatureLimitExceededException(
                 'Your subscription has reached the maximum number of workspaces.'
@@ -32,6 +32,7 @@ class CreateWorkspaceAction
             'slug' => $slug,
             'description' => $data->description,
         ]);
+
 
         //activity log
         $this->activity->handle(

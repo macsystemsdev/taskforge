@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\OrganizationInvitationController;
+use App\Livewire\Billing\ShowBilling;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 use App\Models\Organization;
@@ -129,6 +130,13 @@ Route::middleware(['auth'])->group(function () {
 
         return back();
     })->name('notifications.read-all');
+
+    Route::get(
+        '/organizations/{organization}/billing',
+        function (Organization $organization) {
+            return view('pages.billing.show', compact('organization'));
+        }
+    )->name('organizations.billing');
 });
 
 

@@ -23,7 +23,7 @@ class Subscription extends Model
 {
     use HasFactory;
 
-        protected function casts(): array
+    protected function casts(): array
     {
         return [
             'status' => SubscriptionStatus::class,
@@ -33,13 +33,16 @@ class Subscription extends Model
         ];
     }
 
-        public function organization()
+    public function organization()
     {
         return $this->belongsTo(Organization::class);
     }
 
     public function plan()
     {
-        return $this->belongsTo(SubscriptionPlan::class);
+        return $this->belongsTo(
+            SubscriptionPlan::class,
+            'subscription_plan_id'
+        );
     }
 }
