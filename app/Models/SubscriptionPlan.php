@@ -6,7 +6,7 @@ use App\Domain\Billing\BillingInterval;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Model;
-
+use Carbon\CarbonInterface;
 
 #[Table('subscription_plans')]
 
@@ -95,7 +95,26 @@ class SubscriptionPlan extends Model
     }
 
     public function isFree(): bool
-{
-    return $this->billing_interval === BillingInterval::NONE;
-}
+    {
+        return $this->billing_interval === BillingInterval::NONE;
+    }
+
+    public function paymentTransactions()
+    {
+        return $this->hasMany(PaymentTransaction::class);
+    }
+
+
+
+    public function subscriptionEndsAt(): ?CarbonInterface
+    {
+        return match ($this->billing_interval) {
+
+            BillingInterval::NONE => null,
+
+            BillingInterval::MONTHLY => now()->addMonth(),
+
+            BillingInterval::YEARLY => now()->addYear(),
+        };
+    }
 }

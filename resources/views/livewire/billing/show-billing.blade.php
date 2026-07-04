@@ -5,8 +5,13 @@ use App\Models\SubscriptionPlan;
 use Livewire\Component;
 use Flux\Flux;
 use Livewire\Attributes\Computed;
+use App\Domain\Billing\DataTransferObjects\CheckoutData;
+use App\Domain\Billing\Enum\PaymentProvider;
+use App\Domain\Billing\Services\CreateCheckoutService;
 
 new class extends Component {
+    public ?SubscriptionPlan $selectedPlan = null;
+
     public Organization $organization;
 
     public function mount(Organization $organization): void
@@ -18,6 +23,31 @@ new class extends Component {
     public function plans()
     {
         return SubscriptionPlan::query()->where('is_active', true)->orderBy('price')->get();
+    }
+
+    public function selectPlan(SubscriptionPlan $plan): void
+    {
+        $this->selectedPlan = $plan;
+
+        Flux::modal('confirm-subscription')->show();
+    }
+
+    public function resetSelectedPlan(): void
+    {
+        $this->selectedPlan = null;
+
+        Flux::modal('confirm-subscription')->close();
+    }
+
+    public function confirmPlanChange(): mixed
+    {
+        if (!$this->selectedPlan) {
+            return null;
+        }
+
+        $response = app(CreateCheckoutService::class)->handle(new CheckoutData(organization: $this->organization, plan: $this->selectedPlan, provider: PaymentProvider::STRIPE));
+
+        return redirect()->away($response->url);
     }
 
     public function render()
@@ -42,11 +72,11 @@ new class extends Component {
                 </p>
 
                 <h2 class="mt-2 text-2xl font-semibold text-zinc-950 dark:text-white">
-                    {{ $organization->subscription->plan->name }}
+                    {{ $organization->subscription?->plan?->name ?? 'No Active Plan' }}
                 </h2>
 
                 <p class="mt-1 tf-muted">
-                    {{ $organization->subscription->status->value }}
+                    {{ $organization->subscription?->status?->value ?? '-' }}
                 </p>
 
             </div>
@@ -182,7 +212,7 @@ new class extends Component {
 
                         </button>
                     @else
-                        <button wire:click="changePlan({{ $plan->id }})" class="tf-button-primary w-full">
+                        <button wire:click="selectPlan({{ $plan->id }})" class="tf-button-primary w-full">
 
                             Choose Plan
 
@@ -192,9 +222,147 @@ new class extends Component {
                 </div>
 
 
+
+
             </x-ui.card>
         @endforeach
 
     </div>
+    <flux:modal name="confirm-subscription" x-on:close="$wire.resetSelectedPlan()">
 
+        @if ($selectedPlan)
+            <div class="space-y-8">
+
+                <div>
+
+                    <h2 class="text-xl font-semibold text-zinc-950 dark:text-white">
+                        Confirm Subscription Change
+                    </h2>
+
+                    <p class="mt-2 tf-muted">
+                        Review your new subscription before continuing to our secure payment provider.
+                    </p>
+
+                </div>
+
+                <div class="grid gap-4 md:grid-cols-2">
+
+                    {{-- Current Plan --}}
+                    <div class="rounded-xl border border-zinc-200 p-5 dark:border-white/10">
+
+                        <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                            Current Plan
+                        </p>
+
+                        <h3 class="mt-2 text-xl font-semibold">
+                            {{ $organization->subscription?->plan?->name ?? 'None' }}
+                        </h3>
+
+                        <p class="mt-1 tf-muted">
+                            {{ $organization->subscription?->plan?->formattedPrice() ?? 'Free' }}
+                        </p>
+
+                        <div class="mt-6 space-y-2 text-sm">
+
+                            <div class="flex justify-between">
+                                <span>Workspaces</span>
+                                <span>{{ $organization->subscription?->plan?->workspaceLimitLabel() ?? '-' }}</span>
+                            </div>
+
+                            <div class="flex justify-between">
+                                <span>Projects</span>
+                                <span>{{ $organization->subscription?->plan?->projectLimitLabel() ?? '-' }}</span>
+                            </div>
+
+                            <div class="flex justify-between">
+                                <span>Members</span>
+                                <span>{{ $organization->subscription?->plan?->memberLimitLabel() ?? '-' }}</span>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    {{-- New Plan --}}
+                    <div
+                        class="rounded-xl border-2 border-indigo-500 bg-indigo-50/40 p-5 dark:border-indigo-400 dark:bg-indigo-500/10">
+
+                        <p class="text-xs font-semibold uppercase tracking-wide text-indigo-600">
+                            New Plan
+                        </p>
+
+                        <h3 class="mt-2 text-xl font-semibold">
+                            {{ $selectedPlan->name }}
+                        </h3>
+
+                        <p class="mt-1 font-medium text-indigo-600">
+                            {{ $selectedPlan->formattedPrice() }}
+
+                            @unless ($selectedPlan->isFree())
+                                / {{ $selectedPlan->billingLabel() }}
+                            @endunless
+                        </p>
+
+                        <div class="mt-6 space-y-2 text-sm">
+
+                            <div class="flex justify-between">
+                                <span>Workspaces</span>
+                                <span>{{ $selectedPlan->workspaceLimitLabel() }}</span>
+                            </div>
+
+                            <div class="flex justify-between">
+                                <span>Projects</span>
+                                <span>{{ $selectedPlan->projectLimitLabel() }}</span>
+                            </div>
+
+                            <div class="flex justify-between">
+                                <span>Members</span>
+                                <span>{{ $selectedPlan->memberLimitLabel() }}</span>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div
+                    class="rounded-xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-900 dark:bg-amber-950/20">
+
+                    <h4 class="font-medium text-amber-900 dark:text-amber-300">
+                        Before you continue
+                    </h4>
+
+                    <ul class="mt-3 space-y-2 text-sm text-amber-800 dark:text-amber-200">
+
+                        <li>• Your current subscription remains active until payment is successfully completed.</li>
+
+                        <li>• The selected plan becomes active immediately after payment confirmation.</li>
+
+                        <li>• Future renewals will use the selected subscription plan.</li>
+
+                    </ul>
+
+                </div>
+
+                <div class="flex justify-end gap-3">
+
+                    <flux:button variant="ghost" x-on:click="$dispatch('close')">
+
+                        Cancel
+
+                    </flux:button>
+
+                    <flux:button variant="primary" wire:click="confirmPlanChange">
+
+                        Continue to Payment
+
+                    </flux:button>
+
+                </div>
+
+            </div>
+        @endif
+
+    </flux:modal>
 </div>

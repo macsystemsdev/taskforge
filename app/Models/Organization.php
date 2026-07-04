@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 #[Table('organizations')]
-#[Fillable(['name', 'slug', 'subscription_plan', 'subscription_status', 'owner_id'])]
+#[Fillable(['name', 'slug', 'subscription_plan', 'subscription_status', 'owner_id', 'stripe_customer_id'])]
 class Organization extends Model
 {
 
@@ -77,7 +77,7 @@ class Organization extends Model
         return $this->morphMany(ActivityLog::class, 'subject');
     }
 
-      // Organization  subscription  relationship
+    // Organization  subscription  relationship
 
     public function subscription()
     {
@@ -97,6 +97,10 @@ class Organization extends Model
     }
 
 
+    public function hasStripeCustomer(): bool
+    {
+        return filled($this->stripe_customer_id);
+    }
 
     // Role-based access control for organization members
 
@@ -134,7 +138,7 @@ class Organization extends Model
             === OrganizationRole::ADMIN;
     }
 
-  
+
     // Check if the organization can create a new workspace, project, or add a new member based on the subscription plan limits
 
     public function canCreateWorkspace(): bool
@@ -162,4 +166,18 @@ class Organization extends Model
         return is_null($limit)
             || $this->members()->count() < $limit;
     }
+
+    public function paymentTransactions()
+    {
+        return $this->hasMany(PaymentTransaction::class);
+    }
+
+    public function isSubscribedTo(
+        SubscriptionPlan $plan,
+    ): bool {
+        return $this->subscription->plan->is($plan);
+    }
+
+    // organization plan checking methods
+    
 }

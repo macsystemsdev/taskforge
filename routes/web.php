@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\OrganizationInvitationController;
-use App\Livewire\Billing\ShowBilling;
+use App\Http\Controllers\StripeWebhookController;
+use App\Livewire\Billing\ShowBillingCancel;
+use App\Livewire\Billing\ShowBillingSuccess;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 use App\Models\Organization;
@@ -137,7 +139,21 @@ Route::middleware(['auth'])->group(function () {
             return view('pages.billing.show', compact('organization'));
         }
     )->name('organizations.billing');
+
+    Route::get(
+        '/organizations/{organization}/billing/success',
+        ShowBillingSuccess::class
+    )->name('billing.success');
+
+    Route::get(
+        '/organizations/{organization}/billing/cancel',
+        ShowBillingCancel::class
+    )->name('billing.cancel');
 });
 
+// Stripe webhook route
+Route::post(
+    '/stripe/webhook', StripeWebhookController::class
+)->name('stripe.webhook');
 
 require __DIR__ . '/settings.php';

@@ -45,4 +45,20 @@ class Subscription extends Model
             'subscription_plan_id'
         );
     }
+
+    public function isActive(): bool
+    {
+        return $this->status === SubscriptionStatus::ACTIVE;
+    }
+
+    public function isCancelled(): bool
+    {
+        return $this->status === SubscriptionStatus::CANCELLED;
+    }
+
+    public function hasExpired(): bool
+    {
+        return $this->ends_at !== null
+            && $this->ends_at->isPast();
+    }
 }

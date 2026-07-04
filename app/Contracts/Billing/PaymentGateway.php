@@ -2,13 +2,16 @@
 
 namespace App\Contracts\Billing;
 
-use App\Models\Organization;
-use App\Models\SubscriptionPlan;
+use App\Domain\Billing\DataTransferObjects\CheckoutData;
+use App\Domain\Billing\DataTransferObjects\CheckoutResponse;
+use App\Models\PaymentTransaction;
 
 interface PaymentGateway
 {
-    public function createCheckout(
-        Organization $organization,
-        SubscriptionPlan $plan,
-    ): string;
+    /**
+     * Creates a checkout session with the payment provider.
+     *
+     * Returns a URL the customer should be redirected to.
+     */
+    public function createCheckout(CheckoutData $data, PaymentTransaction $transaction): CheckoutResponse;
 }
