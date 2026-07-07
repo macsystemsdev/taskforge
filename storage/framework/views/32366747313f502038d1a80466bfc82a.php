@@ -22,7 +22,7 @@ new class extends Component {
     #[Computed]
     public function plans()
     {
-        return SubscriptionPlan::query()->where('is_active', true)->orderBy('price')->get();
+        return SubscriptionPlan::query()->purchasable()->orderBy('price')->get();
     }
 
     public function selectPlan(SubscriptionPlan $plan): void
@@ -139,7 +139,7 @@ new class extends Component {
             <div>
 
                 <p class="tf-muted">
-                    Renewal
+                    Next Billing Date
                 </p>
 
                 <p class="mt-2 font-semibold text-zinc-950 dark:text-white">
@@ -162,12 +162,81 @@ new class extends Component {
 <?php unset($__componentOriginaldae4cd48acb67888a4631e1ba48f2f93); ?>
 <?php endif; ?>
 
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($organization->subscription->hasPendingPlan()): ?>
+        <?php if (isset($component)) { $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.card','data' => ['class' => 'mt-6']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('ui.card'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['class' => 'mt-6']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+
+            <div class="flex items-start justify-between">
+
+                <div>
+
+                    <p class="tf-panel-title">
+                        Upcoming Subscription
+                    </p>
+
+                    <h3 class="mt-2 text-xl font-semibold">
+                        <?php echo e($organization->subscription->pendingPlan->name); ?>
+
+                    </h3>
+
+                    <p class="tf-muted mt-1">
+                        Scheduled for
+                        <?php echo e($organization->subscription->pending_effective_at->format('M d, Y')); ?>
+
+                    </p>
+
+                </div>
+
+                <span class="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700">
+                    Scheduled
+                </span>
+
+            </div>
+
+            <div class="mt-6 rounded-lg bg-blue-50 p-4">
+
+                <p class="text-sm text-blue-800">
+
+                    Your payment has been received.
+
+                    Your subscription will automatically change to
+                    <strong><?php echo e($organization->subscription->pendingPlan->name); ?></strong>
+                    on
+                    <?php echo e($organization->subscription->pending_effective_at->format('F j, Y')); ?>.
+
+                </p>
+
+            </div>
+
+         <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93)): ?>
+<?php $attributes = $__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93; ?>
+<?php unset($__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginaldae4cd48acb67888a4631e1ba48f2f93)): ?>
+<?php $component = $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93; ?>
+<?php unset($__componentOriginaldae4cd48acb67888a4631e1ba48f2f93); ?>
+<?php endif; ?>
+    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
     
     <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
 
         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $this->plans; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $plan): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
             <?php
                 $current = $organization->subscription->plan->is($plan);
+                $scheduled = $organization->subscription->pending_subscription_plan_id === $plan->id;
             ?>
 
             <?php if (isset($component)) { $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93 = $component; } ?>
@@ -250,6 +319,12 @@ new class extends Component {
                         <button disabled class="tf-button-secondary w-full cursor-not-allowed opacity-70">
 
                             Current Plan
+
+                        </button>
+                    <?php elseif($scheduled): ?>
+                        <button disabled class="tf-button-secondary w-full cursor-not-allowed opacity-70">
+
+                            Scheduled Plan
 
                         </button>
                     <?php else: ?>
@@ -401,11 +476,11 @@ new class extends Component {
 
                     <ul class="mt-3 space-y-2 text-sm text-amber-800 dark:text-amber-200">
 
-                        <li>• Your current subscription remains active until payment is successfully completed.</li>
+                        <li>• Your payment secures your next subscription plan immediately.</li>
 
-                        <li>• The selected plan becomes active immediately after payment confirmation.</li>
+                        <li>• Your current plan remains active until the end of the current billing period.</li>
 
-                        <li>• Future renewals will use the selected subscription plan.</li>
+                        <li>• The new plan will automatically become active on your next renewal date.</li>
 
                     </ul>
 

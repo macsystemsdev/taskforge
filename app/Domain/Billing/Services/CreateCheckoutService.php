@@ -9,6 +9,8 @@ use App\Exceptions\Billing\SubscriptionAlreadyActiveException;
 use App\Exceptions\Billing\SubscriptionPlanInactiveException;
 use App\Models\PaymentTransaction;
 use App\Domain\Billing\DataTransferObjects\CheckoutResponse;
+use App\Exceptions\Billing\CannotPurchaseFreePlanException;
+use App\Exceptions\Billing\SubscriptionChangeAlreadyScheduledException;
 
 class CreateCheckoutService
 {
@@ -19,7 +21,7 @@ class CreateCheckoutService
     public function handle(
         CheckoutData $data,
     ): CheckoutResponse {
-        
+
         $this->ensurePlanCanBeChanged($data);
 
         $transaction = PaymentTransaction::create([
@@ -51,6 +53,16 @@ class CreateCheckoutService
 
         if ($data->organization->isSubscribedTo($data->plan)) {
             throw new SubscriptionAlreadyActiveException();
+        }
+
+        if ($data->plan->isFree()) {
+            throw new CannotPurchaseFreePlanException();
+        }
+
+        $subscription = $data->organization->subscription;
+
+        if ($subscription->hasPendingPlan()) {
+            throw new SubscriptionChangeAlreadyScheduledException();
         }
     }
 }

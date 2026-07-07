@@ -28,14 +28,19 @@ class CompletePaymentService
 
             $subscription = $transaction->organization->subscription;
 
-            $plan = $transaction->plan;
+            if ($subscription->shouldActivateImmediately()) {
 
-            $subscription->update([
-                'subscription_plan_id' => $transaction->subscription_plan_id,
-                'status' => SubscriptionStatus::ACTIVE,
-                'starts_at' => now(),
-                'ends_at' => $plan->subscriptionEndsAt()
-            ]);
+                $subscription->activatePlan(
+                    $transaction->plan,
+                );
+            } else {
+
+                $subscription->schedulePlanChange(
+                    plan: $transaction->plan,
+                    transaction: $transaction,
+                );
+            }
+
 
             // log the successful payment
             $this->activity->handle(

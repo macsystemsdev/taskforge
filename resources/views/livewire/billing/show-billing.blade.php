@@ -22,7 +22,7 @@ new class extends Component {
     #[Computed]
     public function plans()
     {
-        return SubscriptionPlan::query()->where('is_active', true)->orderBy('price')->get();
+        return SubscriptionPlan::query()->purchasable()->orderBy('price')->get();
     }
 
     public function selectPlan(SubscriptionPlan $plan): void
@@ -123,7 +123,7 @@ new class extends Component {
             <div>
 
                 <p class="tf-muted">
-                    Renewal
+                    Next Billing Date
                 </p>
 
                 <p class="mt-2 font-semibold text-zinc-950 dark:text-white">
@@ -136,15 +136,63 @@ new class extends Component {
 
     </x-ui.card>
 
+    @if ($organization->subscription->hasPendingPlan())
+        <x-ui.card class="mt-6">
+
+            <div class="flex items-start justify-between">
+
+                <div>
+
+                    <p class="tf-panel-title">
+                        Upcoming Subscription
+                    </p>
+
+                    <h3 class="mt-2 text-xl font-semibold">
+                        {{ $organization->subscription->pendingPlan->name }}
+                    </h3>
+
+                    <p class="tf-muted mt-1">
+                        Scheduled for
+                        {{ $organization->subscription->pending_effective_at->format('M d, Y') }}
+                    </p>
+
+                </div>
+
+                <span class="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700">
+                    Scheduled
+                </span>
+
+            </div>
+
+            <div class="mt-6 rounded-lg bg-blue-50 p-4">
+
+                <p class="text-sm text-blue-800">
+
+                    Your payment has been received.
+
+                    Your subscription will automatically change to
+                    <strong>{{ $organization->subscription->pendingPlan->name }}</strong>
+                    on
+                    {{ $organization->subscription->pending_effective_at->format('F j, Y') }}.
+
+                </p>
+
+            </div>
+
+        </x-ui.card>
+    @endif
+
     {{-- Available Plans --}}
     <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
 
         @foreach ($this->plans as $plan)
             @php
                 $current = $organization->subscription->plan->is($plan);
+                $scheduled = $organization->subscription->pending_subscription_plan_id === $plan->id;
             @endphp
 
-            <x-ui.card class="flex h-full flex-col {{ $current ? 'border-indigo-500 ring-2 ring-indigo-500/10' : '' }}">
+            <x-ui.card
+                class="flex h-full flex-col {{ $current ? 'border-indigo-500 ring-2 ring-indigo-500/10' : '' }}">
 
                 <div class="flex items-start justify-between">
 
@@ -209,6 +257,12 @@ new class extends Component {
                         <button disabled class="tf-button-secondary w-full cursor-not-allowed opacity-70">
 
                             Current Plan
+
+                        </button>
+                    @elseif ($scheduled)
+                        <button disabled class="tf-button-secondary w-full cursor-not-allowed opacity-70">
+
+                            Scheduled Plan
 
                         </button>
                     @else
@@ -335,11 +389,11 @@ new class extends Component {
 
                     <ul class="mt-3 space-y-2 text-sm text-amber-800 dark:text-amber-200">
 
-                        <li>• Your current subscription remains active until payment is successfully completed.</li>
+                        <li>• Your payment secures your next subscription plan immediately.</li>
 
-                        <li>• The selected plan becomes active immediately after payment confirmation.</li>
+                        <li>• Your current plan remains active until the end of the current billing period.</li>
 
-                        <li>• Future renewals will use the selected subscription plan.</li>
+                        <li>• The new plan will automatically become active on your next renewal date.</li>
 
                     </ul>
 

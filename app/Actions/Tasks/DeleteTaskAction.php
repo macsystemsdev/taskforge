@@ -18,7 +18,7 @@ class DeleteTaskAction
 
         if (
             ! $task->status->isTodo()
-            && ! $task->status->isCancelled()
+            || ! $task->status->isCancelled()
         ) {
             throw new DomainException(
                 'Only todo or cancelled tasks can be deleted.'

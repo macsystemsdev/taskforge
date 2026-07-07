@@ -117,4 +117,11 @@ class SubscriptionPlan extends Model
             BillingInterval::YEARLY => now()->addYear(),
         };
     }
+
+    public function scopePurchasable($query)
+    {
+        return $query
+            ->where('is_active', true)
+            ->where('billing_interval', '!=', BillingInterval::NONE);
+    }
 }
