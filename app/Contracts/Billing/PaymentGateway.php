@@ -4,7 +4,9 @@ namespace App\Contracts\Billing;
 
 use App\Domain\Billing\DataTransferObjects\CheckoutData;
 use App\Domain\Billing\DataTransferObjects\CheckoutResponse;
+use App\Domain\Billing\DataTransferObjects\PaymentResponse;
 use App\Models\PaymentTransaction;
+use App\Models\Subscription;
 
 interface PaymentGateway
 {
@@ -14,4 +16,9 @@ interface PaymentGateway
      * Returns a URL the customer should be redirected to.
      */
     public function createCheckout(CheckoutData $data, PaymentTransaction $transaction): CheckoutResponse;
+
+    public function chargeCustomer(
+         CheckoutData $data,
+        PaymentTransaction $transaction,
+    ): PaymentResponse;
 }

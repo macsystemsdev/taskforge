@@ -10,12 +10,19 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Stripe\Exception\SignatureVerificationException;
 use Stripe\Webhook;
+use Stripe\StripeClient;
 
 class StripeWebhookController extends Controller
 {
+    protected StripeClient $stripe;
+
     public function __construct(
         protected CompletePaymentService $service,
-    ) {}
+    ) {
+        $this->stripe = new StripeClient(
+            config('services.stripe.secret')
+        );
+    }
 
     public function __invoke(Request $request)
     {
@@ -46,11 +53,26 @@ class StripeWebhookController extends Controller
             default => response()->json(['ignored' => true]),
         };
     }
-    
+
     protected function handleCheckoutCompleted($session)
     {
         $transactionId = $session->metadata->payment_transaction_id ?? null;
-        
+
+        $transaction = PaymentTransaction::processing($transactionId);
+
+        if (! $transaction) {
+            return response()->json(['not_found'], 404);
+        }
+
+        $paymentIntent = $this->stripe
+            ->paymentIntents
+            ->retrieve($session->payment_intent);
+
+        $transaction->organization->update([
+            'stripe_payment_method_id' => $paymentIntent->payment_method,
+        ]);
+
+
         $this->service->handle($transactionId);
 
         return response()->json(['ok' => true]);

@@ -3,6 +3,7 @@
 namespace App\Domain\Billing\Services;
 
 use App\Contracts\Billing\PaymentGateway;
+use App\Domain\Billing\Actions\CreatePaymentTransactionAction;
 use App\Domain\Billing\DataTransferObjects\CheckoutData;
 use App\Domain\Billing\Enum\PaymentStatus;
 use App\Exceptions\Billing\SubscriptionAlreadyActiveException;
@@ -16,6 +17,7 @@ class CreateCheckoutService
 {
     public function __construct(
         protected PaymentGateway $paymentGateway,
+        protected CreatePaymentTransactionAction $createPaymentTransaction,
     ) {}
 
     public function handle(
@@ -24,14 +26,9 @@ class CreateCheckoutService
 
         $this->ensurePlanCanBeChanged($data);
 
-        $transaction = PaymentTransaction::create([
-            'organization_id' => $data->organization->id,
-            'subscription_plan_id' => $data->plan->id,
-            'provider' => $data->provider,
-            'amount' => $data->plan->price,
-            'currency' => $data->plan->currency,
-            'status' => PaymentStatus::PENDING,
-        ]);
+        $transaction = $this->createPaymentTransaction->handle(
+            data: $data,
+        );
 
         $response = $this->paymentGateway->createCheckout($data, $transaction);
 

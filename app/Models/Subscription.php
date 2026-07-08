@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Domain\Billing\BillingInterval;
+use App\Domain\Billing\Enum\PaymentProvider;
 use App\Domain\Billing\SubscriptionStatus;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Table;
@@ -176,5 +177,26 @@ class Subscription extends Model
         ]);
 
         $this->clearPendingPlan();
+    }
+
+    public function shouldRenew(): bool
+    {
+        return $this->isActive()
+            && $this->ends_at?->isPast();
+    }
+
+    public function renewalPlan(): SubscriptionPlan
+    {
+        return $this->hasPendingPlan()
+            ? $this->pendingPlan
+            : $this->plan;
+    }
+
+    public function renewalProvider(): PaymentProvider
+    {
+        return $this->organization
+            ->latestSuccessfulTransaction()
+            ?->provider
+            ?? PaymentProvider::STRIPE;
     }
 }

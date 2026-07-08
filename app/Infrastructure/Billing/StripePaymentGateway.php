@@ -5,9 +5,11 @@ namespace App\Infrastructure\Billing;
 use App\Contracts\Billing\PaymentGateway;
 use App\Domain\Billing\DataTransferObjects\CheckoutData;
 use App\Domain\Billing\DataTransferObjects\CheckoutResponse;
+use App\Domain\Billing\DataTransferObjects\PaymentResponse;
 use App\Domain\Billing\Enum\PaymentStatus;
 use App\Models\Organization;
 use App\Models\PaymentTransaction;
+use App\Models\Subscription;
 use Illuminate\Support\Str;
 use Stripe\StripeClient;
 
@@ -99,6 +101,12 @@ class StripePaymentGateway implements PaymentGateway
 
             ]],
 
+            'payment_intent_data' => [
+
+                'setup_future_usage' => 'off_session',
+
+            ],
+
             'metadata' => [
                 'payment_transaction_id' => $transaction->id,
                 'organization_id' => $transaction->organization_id,
@@ -120,6 +128,15 @@ class StripePaymentGateway implements PaymentGateway
                 'customer' => $customerId,
             ],
 
+        );
+    }
+
+    public function chargeCustomer(
+        CheckoutData $data,
+        PaymentTransaction $transaction,
+    ): PaymentResponse {
+        throw new \LogicException(
+            'Stripe renewal payments are not implemented yet.'
         );
     }
 }

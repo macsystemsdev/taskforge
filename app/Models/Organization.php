@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\Billing\Enum\PaymentStatus;
 use App\Domain\Organizations\Enums\OrganizationRole;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Table;
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 #[Table('organizations')]
-#[Fillable(['name', 'slug', 'subscription_plan', 'subscription_status', 'owner_id', 'stripe_customer_id'])]
+#[Fillable(['name', 'slug', 'subscription_plan', 'subscription_status', 'owner_id', 'stripe_customer_id', 'stripe_payment_method_id'])]
 class Organization extends Model
 {
 
@@ -178,6 +179,11 @@ class Organization extends Model
         return $this->subscription->plan->is($plan);
     }
 
-    // organization plan checking methods
-    
+    public function latestSuccessfulTransaction(): ?PaymentTransaction
+    {
+        return $this->paymentTransactions()
+            ->where('status', PaymentStatus::SUCCESSFUL)
+            ->latest('paid_at')
+            ->first();
+    }
 }
