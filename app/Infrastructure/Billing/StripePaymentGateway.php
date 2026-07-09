@@ -7,10 +7,14 @@ use App\Domain\Billing\DataTransferObjects\CheckoutData;
 use App\Domain\Billing\DataTransferObjects\CheckoutResponse;
 use App\Domain\Billing\DataTransferObjects\PaymentResponse;
 use App\Domain\Billing\Enum\PaymentStatus;
+use App\Exceptions\Billing\BillingCustomerException;
+use App\Exceptions\Billing\BillingException;
+use App\Exceptions\Billing\MissingPaymentMethodException;
 use App\Models\Organization;
 use App\Models\PaymentTransaction;
 use App\Models\Subscription;
 use Illuminate\Support\Str;
+use Stripe\Exception\ApiErrorException;
 use Stripe\StripeClient;
 
 class StripePaymentGateway implements PaymentGateway
@@ -132,11 +136,77 @@ class StripePaymentGateway implements PaymentGateway
     }
 
     public function chargeCustomer(
-        CheckoutData $data,
         PaymentTransaction $transaction,
     ): PaymentResponse {
-        throw new \LogicException(
-            'Stripe renewal payments are not implemented yet.'
+
+        $organization = $transaction->organization;
+
+        if (
+            ! $organization->stripe_customer_id
+        ) {
+            throw new BillingCustomerException(
+                'Missing Stripe billing information.'
+            );
+        }
+
+        if (
+            ! $organization
+                ->stripe_payment_method_id
+        ) {
+            throw new MissingPaymentMethodException();
+        }
+
+        try {
+            $intent = $this->stripe
+                ->paymentIntents
+                ->create([
+
+                    'customer' =>
+                    $organization
+                        ->stripe_customer_id,
+
+                    'payment_method' =>
+                    $organization
+                        ->stripe_payment_method_id,
+
+                    'amount' =>
+                    $transaction->amount,
+
+                    'currency' =>
+                    strtolower(
+                        $transaction->currency
+                    ),
+
+                    'off_session' => true,
+
+                    'confirm' => true,
+
+                    'metadata' => [
+
+                        'payment_transaction_id' =>
+                        $transaction->id,
+
+                    ],
+                ]);
+        } catch (ApiErrorException $e) {
+
+            report($e);
+
+            $transaction->markFailed(
+                reason: $e->getMessage()
+            );
+
+            return PaymentResponse::failed(
+                $e->getMessage()
+            );
+        }
+
+        return PaymentResponse::successful(
+            reference: $intent->id,
+            metadata: [
+                'customer' => $organization->stripe_customer_id,
+                'payment_method' => $organization->stripe_payment_method_id,
+            ],
         );
     }
 }

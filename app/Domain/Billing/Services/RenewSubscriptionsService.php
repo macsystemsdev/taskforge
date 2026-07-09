@@ -5,16 +5,15 @@ namespace App\Domain\Billing\Services;
 use App\Contracts\Billing\PaymentGateway;
 use App\Domain\Billing\Actions\CreatePaymentTransactionAction;
 use App\Domain\Billing\DataTransferObjects\CheckoutData;
-use App\Domain\Billing\DataTransferObjects\CreatePaymentTransactionData;
-use App\Domain\Billing\Enum\PaymentProvider;;
 use App\Models\Subscription;
-
+use Throwable;
 
 class RenewSubscriptionsService
 {
     public function __construct(
         protected PaymentGateway $gateway,
-        protected CreatePaymentTransactionAction $createPayment
+        protected CreatePaymentTransactionAction $createPayment,
+        protected RenewSubscriptionService $renew,
     ) {}
     public function handle(): void
     {
@@ -25,26 +24,25 @@ class RenewSubscriptionsService
                 'organization',
                 'pendingPlan',
             ])
-            ->lazy()
+            ->lazyById()
             ->each(function (Subscription $subscription) {
 
                 if (! $subscription->shouldRenew()) {
                     return;
                 }
 
-                $plan = $subscription->renewalPlan();
-                $provider = $subscription->renewalProvider();
-                $data =  new CheckoutData(
-                        organization: $subscription->organization,
-                        plan: $plan,
-                        provider: $provider,
-                    );
-                $transaction = $this->createPayment->handle($data);
+                try {
 
-                $this->gateway->chargeCustomer(
-                    data: $data,
-                    transaction: $transaction,
-                );
+                    $this->renew
+                        ->handle(
+                            $subscription
+                        );
+                } catch (
+                    Throwable $e
+                ) {
+
+                    report($e);
+                }
             });
     }
 }

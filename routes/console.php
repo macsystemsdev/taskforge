@@ -9,7 +9,10 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('subscriptions:activate-pending')
-    ->everyMinute();
+    ->daily();
+
+Schedule::command('subscriptions:renew')
+    ->daily();
 
 Schedule::command('subscriptions:expire')
-    ->everyMinute();
+    ->daily();

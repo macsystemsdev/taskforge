@@ -18,7 +18,6 @@ interface PaymentGateway
     public function createCheckout(CheckoutData $data, PaymentTransaction $transaction): CheckoutResponse;
 
     public function chargeCustomer(
-         CheckoutData $data,
         PaymentTransaction $transaction,
     ): PaymentResponse;
 }

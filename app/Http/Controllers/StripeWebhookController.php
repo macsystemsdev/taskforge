@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Billing\Enum\PaymentProvider;
 use App\Domain\Billing\Enum\PaymentStatus;
 use App\Domain\Billing\Services\CompletePaymentService;
 use App\Domain\Billing\SubscriptionStatus;
 use App\Models\PaymentTransaction;
+use App\Models\WebhookEvent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Stripe\Exception\SignatureVerificationException;
@@ -15,6 +17,26 @@ use Stripe\StripeClient;
 class StripeWebhookController extends Controller
 {
     protected StripeClient $stripe;
+
+    protected function alreadyProcessed($event): bool
+    {
+        return WebhookEvent::query()
+            ->where(
+                'event_id',
+                $event->id
+            )
+            ->exists();
+    }
+
+    protected function storeWebhookEvent($event): void
+    {
+        WebhookEvent::create([
+            'provider' => PaymentProvider::STRIPE,
+            'event_id' => $event->id,
+            'event_type' => $event->type,
+            'processed_at' => now(),
+        ]);
+    }
 
     public function __construct(
         protected CompletePaymentService $service,
@@ -40,7 +62,19 @@ class StripeWebhookController extends Controller
             return response('Invalid signature', 400);
         }
 
-        return $this->handleEvent($event);
+
+        if ($this->alreadyProcessed($event)) {
+
+            return response()->json([
+                'duplicate' => true,
+            ]);
+        }
+
+        $response = $this->handleEvent($event);
+
+        $this->storeWebhookEvent($event);
+
+        return $response;
     }
 
     protected function handleEvent($event)
@@ -48,7 +82,21 @@ class StripeWebhookController extends Controller
         return match ($event->type) {
 
             'checkout.session.completed' =>
+
             $this->handleCheckoutCompleted($event->data->object),
+
+            'payment_intent.succeeded'
+
+            => $this->handleRenewalCompleted(
+
+                $event->data->object
+            ),
+
+            'payment_intent.payment_failed'
+            =>
+            $this->handleRenewalFailed(
+                $event->data->object
+            ),
 
             default => response()->json(['ignored' => true]),
         };
@@ -76,5 +124,70 @@ class StripeWebhookController extends Controller
         $this->service->handle($transactionId);
 
         return response()->json(['ok' => true]);
+    }
+
+    protected function handleRenewalCompleted(
+        $paymentIntent
+    ) {
+
+        if (
+            $paymentIntent->status
+            !== 'succeeded'
+        ) {
+            return;
+        }
+
+        $transactionId =
+            $paymentIntent
+            ->metadata
+            ->payment_transaction_id
+            ?? null;
+
+        $transaction =
+            PaymentTransaction::processing(
+                $transactionId
+            );
+
+        if (! $transaction) {
+            return response()->json([
+                'missing_transaction'
+            ]);
+        }
+
+        $this->service->handle(
+            $transaction->id
+        );
+
+        return response()->json([
+            'ok' => true,
+        ]);
+    }
+
+    protected function handleRenewalFailed($paymentIntent) 
+    {
+        $transactionId =
+            $paymentIntent
+            ->metadata
+            ->payment_transaction_id
+            ?? null;
+
+        $transaction =
+            PaymentTransaction::processing(
+                $transactionId
+            );
+
+        if (! $transaction) {
+            return;
+        }
+
+        $transaction->markFailed(
+            $paymentIntent
+                ->last_payment_error
+                ?->message
+        );
+
+        return response()->json([
+            'failed' => true,
+        ]);
     }
 }
