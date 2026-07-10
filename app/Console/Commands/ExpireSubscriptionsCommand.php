@@ -2,7 +2,9 @@
 
 namespace App\Console\Commands;
 
+use App\Domain\Billing\Services\DowngradeSubscriptionService;
 use App\Domain\Billing\Services\ExpireSubscriptionsService;
+use App\Models\Subscription;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;

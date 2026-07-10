@@ -113,6 +113,36 @@ select:focus[data-flux-control] {
     .tf-button-secondary {
         @apply inline-flex items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 shadow-sm transition hover:bg-zinc-50 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-white/10;
     }
+
+    .tf-button-primary.is-loading,
+    .tf-button-secondary.is-loading,
+    .tf-button-danger.is-loading {
+        @apply pointer-events-none cursor-not-allowed opacity-80;
+    }
+
+    .tf-button-primary:disabled,
+    .tf-button-secondary:disabled,
+    .tf-button-danger:disabled {
+        @apply pointer-events-none cursor-not-allowed opacity-80;
+    }
+
+    .tf-button-content {
+        @apply inline-flex items-center gap-2 transition-opacity duration-200;
+    }
+
+    .tf-button-spinner {
+        @apply ml-2 inline-flex items-center transition-opacity duration-200;
+    }
+
+    .tf-button-primary.is-loading .tf-button-content,
+    .tf-button-secondary.is-loading .tf-button-content,
+    .tf-button-danger.is-loading .tf-button-content {
+        @apply opacity-90;
+    }
+
+    .tf-inline-loader {
+        @apply inline-block size-4 animate-spin rounded-full border-2 border-current/70 border-t-transparent;
+    }
 }
 
 /* \[:where(&)\]:size-4 {

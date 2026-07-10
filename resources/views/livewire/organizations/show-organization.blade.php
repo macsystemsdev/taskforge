@@ -206,14 +206,30 @@ new class extends Component {
 ?>
 
 <x-ui.page>
-    <x-ui.page-header :title="$organization->name" :description="__('Manage workspaces, members, invitations, and project flow for this organization.')" :eyebrow="__('Organization')">
-        <x-slot:actions>
-            <x-ui.status-badge :status="$organization->subscription_status ?? 'active'" />
-        </x-slot:actions>
-    </x-ui.page-header>
+    <div class="mb-6 overflow-hidden rounded-3xl border border-zinc-200 bg-white/80 p-5 shadow-sm backdrop-blur sm:p-6 dark:border-white/10 dark:bg-zinc-900/70">
+        <x-ui.page-header :title="$organization->name" :description="__('Manage workspaces, members, invitations, and project flow for this organization.')" :eyebrow="__('Organization')">
+            <x-slot:actions>
+                <x-ui.status-badge :status="$organization->subscription_status ?? 'active'" />
+            </x-slot:actions>
+        </x-ui.page-header>
+
+        <div class="mt-5 flex flex-wrap gap-2">
+            @can('update', $organization)
+                <flux:button wire:click="openEditOrganizationModal">
+                    Edit Organization
+                </flux:button>
+            @endcan
+
+            @can('delete', $organization)
+                <flux:button variant="danger" wire:click="openDeleteOrganizationModal">
+                    Delete Organization
+                </flux:button>
+            @endcan
+        </div>
+    </div>
 
     @can('viewActivityLog', $organization)
-        <div class="mb-6 grid gap-4 sm:grid-cols-4">
+        <div class="mb-6 grid gap-4 sm:grid-cols-3">
             <x-ui.card class="space-y-2">
                 <p class="tf-muted">Workspaces</p>
                 <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
@@ -235,23 +251,6 @@ new class extends Component {
             </x-ui.card>
         </div>
     @endcan
-
-    <div class="flex gap-2">
-
-        @can('update', $organization)
-            <flux:button wire:click="openEditOrganizationModal">
-                Edit Organization
-            </flux:button>
-        @endcan
-
-        @can('delete', $organization)
-            <flux:button variant="danger" wire:click="openDeleteOrganizationModal">
-                Delete Organization
-            </flux:button>
-        @endcan
-
-    </div>
-
 
     {{-- Workspaces --}}
 
@@ -291,67 +290,83 @@ new class extends Component {
 
     </flux:modal>
 
-    <x-ui.card class="mb-6 space-y-5">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <x-ui.card class="mb-6 border-zinc-200/80 bg-white/90 shadow-sm">
+        <div class="flex flex-col gap-4 border-b border-zinc-200/70 pb-5 sm:flex-row sm:items-end sm:justify-between dark:border-white/10">
             <div>
                 <h2 class="tf-panel-title">Workspaces</h2>
-                <p class="tf-panel-subtitle">Operational spaces inside this organization.</p>
+                <p class="tf-panel-subtitle">Organize teams, projects, and delivery areas around each workspace.</p>
             </div>
-        </div>
-
-        <div class="grid gap-4 lg:grid-cols-2">
-            @foreach ($organization->workspaces as $workspace)
-                <div
-                    class="rounded-lg border border-zinc-200 p-4 transition hover:bg-zinc-50 dark:border-white/10 dark:hover:bg-white/[0.03]">
-                    <div class="flex items-start justify-between gap-4">
-                        <div class="min-w-0">
-                            <h3 class="truncate font-semibold text-zinc-950 dark:text-white">
-                                {{ $workspace->name }}
-                            </h3>
-
-
-                            <p class="mt-1 line-clamp-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                                {{ $workspace->description ?: 'No workspace description.' }}
-                            </p>
-
-                            <x-ui.card class="space-y-2">
-                                <p class="tf-muted">Teams</p>
-                                <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
-                                    {{ $workspace->teams_count }}</p>
-                            </x-ui.card>
-
-                            <x-ui.card class="space-y-2">
-                                <p class="tf-muted">Projects</p>
-                                <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
-                                    {{ $workspace->projects_count }}</p>
-                            </x-ui.card>
-
-
-
-                        </div>
-                    </div>
-
-                    <a href="{{ route('workspaces.show', ['workspace' => $workspace]) }}">
-                        <flux:button>
-                            View Workspace
-                        </flux:button>
-                    </a>
-
-                </div>
-            @endforeach
 
             @can('createWorkspace', $organization)
-                <flux:card wire:click="openCreateWorkspaceModal" wire:key="create-workspace-card" class="cursor-pointer">
-                    <div class="flex h-full flex-col items-center justify-center gap-2">
-
-                        <flux:icon.plus />
-
-                        <span>Create Workspace</span>
-
-                    </div>
-                </flux:card>
+                <flux:button wire:click="openCreateWorkspaceModal">
+                    Create workspace
+                </flux:button>
             @endcan
         </div>
+
+        @if ($organization->workspaces->isNotEmpty())
+            <div class="mt-6 grid gap-4 xl:grid-cols-2">
+                @foreach ($organization->workspaces as $workspace)
+                    <div class="group rounded-2xl border border-zinc-200 bg-zinc-50/80 p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-zinc-300 hover:bg-white dark:border-white/10 dark:bg-white/[0.03] dark:hover:border-white/15 dark:hover:bg-white/[0.05]">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex min-w-0 items-center gap-3">
+                                <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-zinc-950 text-sm font-semibold text-white dark:bg-white dark:text-zinc-950">
+                                    {{ strtoupper(substr($workspace->name, 0, 1)) }}
+                                </div>
+
+                                <div class="min-w-0">
+                                    <h3 class="truncate font-semibold text-zinc-950 dark:text-white">
+                                        {{ $workspace->name }}
+                                    </h3>
+                                    <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                                        {{ $workspace->projects_count }} projects • {{ $workspace->teams_count }} teams
+                                    </p>
+                                </div>
+                            </div>
+
+                            <span class="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400">
+                                Active
+                            </span>
+                        </div>
+
+                        <p class="mt-4 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                            {{ $workspace->description ?: 'This workspace is ready for teams, projects, and delivery planning.' }}
+                        </p>
+
+                        <div class="mt-5 flex flex-wrap gap-2">
+                            <div class="rounded-xl border border-zinc-200 bg-white/80 px-3 py-2 text-sm text-zinc-700 shadow-sm dark:border-white/10 dark:bg-zinc-900/80 dark:text-zinc-200">
+                                <span class="font-semibold text-zinc-950 dark:text-white">{{ $workspace->teams_count }}</span>
+                                teams
+                            </div>
+                            <div class="rounded-xl border border-zinc-200 bg-white/80 px-3 py-2 text-sm text-zinc-700 shadow-sm dark:border-white/10 dark:bg-zinc-900/80 dark:text-zinc-200">
+                                <span class="font-semibold text-zinc-950 dark:text-white">{{ $workspace->projects_count }}</span>
+                                projects
+                            </div>
+                        </div>
+
+                        <div class="mt-5 flex items-center justify-between gap-3">
+                            <p class="text-sm text-zinc-500 dark:text-zinc-400">Operational view ready</p>
+                            <a href="{{ route('workspaces.show', ['workspace' => $workspace]) }}"
+                                class="inline-flex items-center text-sm font-semibold text-zinc-950 transition hover:underline dark:text-white"
+                                wire:navigate>
+                                Open workspace
+                            </a>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <div class="mt-6 rounded-2xl border border-dashed border-zinc-300 bg-zinc-50/70 p-8 text-center dark:border-white/10 dark:bg-white/[0.03]">
+                <p class="text-base font-semibold text-zinc-950 dark:text-white">No workspaces yet</p>
+                <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">Create the first workspace to organize projects and teams around a clear operational home.</p>
+
+                @can('createWorkspace', $organization)
+                    <button wire:click="openCreateWorkspaceModal" class="tf-button-primary mt-5">
+                        Create your first workspace
+                    </button>
+                @endcan
+            </div>
+        @endif
 
 
 
@@ -420,41 +435,32 @@ new class extends Component {
 
         {{-- Invitation Form --}}
         @can('inviteMembers', $organization)
-            <x-ui.card class="space-y-6">
+            <x-ui.card class="space-y-6 border-zinc-200/80 bg-white/90 shadow-sm">
                 <div>
                     <h2 class="tf-panel-title">Invite Member</h2>
-                    <p class="tf-panel-subtitle">Invite collaborators into this organization.</p>
+                    <p class="tf-panel-subtitle">Bring collaborators into the organization with a clear role from the start.</p>
                 </div>
 
                 <form wire:submit="inviteMember" class="space-y-4">
-
                     <flux:input wire:model="inviteEmail" label="Email" type="email" required />
 
                     @error('email')
-                        <p class="text-sm text-red-500 mt-1">
+                        <p class="mt-1 text-sm text-red-500">
                             {{ $message }}
                         </p>
                     @enderror
 
                     @error('inviteEmail')
-                        <div class="text-red-600 text-sm mt-1">{{ $message }}</div>
+                        <div class="mt-1 text-sm text-red-600">{{ $message }}</div>
                     @enderror
 
                     <flux:select wire:model="inviteRole" label="Role">
-
-                        <option value="member">
-                            Member
-                        </option>
-
-                        <option value="admin">
-                            Admin
-                        </option>
-
-
+                        <option value="member">Member</option>
+                        <option value="admin">Admin</option>
                     </flux:select>
 
                     @error('inviteRole')
-                        <p class="text-sm text-red-500 mt-1">
+                        <p class="mt-1 text-sm text-red-500">
                             {{ $message }}
                         </p>
                     @enderror
@@ -462,24 +468,20 @@ new class extends Component {
                     <flux:button variant="primary" type="submit" class="w-full sm:w-auto">
                         Send Invitation
                     </flux:button>
-
                 </form>
             </x-ui.card>
         @endcan
 
-
         {{-- Members --}}
-        <x-ui.card class="space-y-6">
+        <x-ui.card class="space-y-6 border-zinc-200/80 bg-white/90 shadow-sm">
             <div>
                 <h2 class="tf-panel-title">Members</h2>
-                <p class="tf-panel-subtitle">Organization participants.</p>
+                <p class="tf-panel-subtitle">The people currently contributing to this organization.</p>
             </div>
 
             <div class="space-y-3">
-
                 @foreach ($organization->members as $member)
-                    <div
-                        class="flex items-center justify-between gap-3 rounded-lg border border-zinc-200 p-3 dark:border-white/10">
+                    <div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-zinc-50/70 p-3 shadow-sm dark:border-white/10 dark:bg-white/[0.03]">
                         <div class="flex min-w-0 items-center gap-3">
                             <x-ui.avatar :name="$member->name" />
                             <div class="min-w-0">
@@ -493,13 +495,8 @@ new class extends Component {
                             </div>
                         </div>
 
-
                         @can('changeMemberRole', $organization)
-                            <flux:select
-                                wire:change="updateRole(
-        {{ $member->id }},
-        $event.target.value
-    )">
+                            <flux:select wire:change="updateRole({{ $member->id }}, $event.target.value)">
                                 @foreach (App\Domain\Organizations\Enums\OrganizationRole::cases() as $role)
                                     <option value="{{ $role }}" @selected($member->pivot->role === $role)>
                                         {{ ucfirst($role->value) }}
@@ -509,12 +506,12 @@ new class extends Component {
                         @endcan
 
                         @if (!auth()->user()->can('changeMemberRole', $organization))
-                            <input type="text" disabled value="{{ $member->pivot->role }}">
+                            <div class="rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-sm text-zinc-600 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-300">
+                                {{ ucfirst($member->pivot->role) }}
+                            </div>
                         @endif
-
                     </div>
                 @endforeach
-
             </div>
         </x-ui.card>
 
@@ -522,10 +519,10 @@ new class extends Component {
 
     {{-- Invitations Table --}}
     @can('inviteMembers', $organization)
-        <x-ui.card padding="p-0" class="mt-6 overflow-hidden">
+        <x-ui.card padding="p-0" class="mt-6 overflow-hidden border-zinc-200/80 bg-white/90 shadow-sm">
             <div class="border-b border-zinc-200 px-5 py-4 dark:border-white/10">
                 <h2 class="tf-panel-title">Invitations</h2>
-                <p class="tf-panel-subtitle">Track invitation states and pending access.</p>
+                <p class="tf-panel-subtitle">Track the status of invites and pending access requests.</p>
             </div>
 
             <div class="overflow-x-auto">

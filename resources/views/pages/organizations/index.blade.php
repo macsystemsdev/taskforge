@@ -15,20 +15,22 @@
     @endphp
 
     <x-ui.page>
-        <x-ui.page-header :title="__('Organizations')" :description="__('Manage the operating boundaries for teams, workspaces, invitations, and project ownership.')">
-            <x-slot:actions>
-                <a href="{{ route('organizations.create') }}" class="tf-button-primary" wire:navigate>
-                    <flux:icon name="plus" class="mr-2 size-4" />
-                    New Organization
-                </a>
-            </x-slot:actions>
-        </x-ui.page-header>
+        <div class="mb-6 overflow-hidden rounded-3xl border border-zinc-200 bg-white/80 p-5 shadow-sm backdrop-blur sm:p-6 dark:border-white/10 dark:bg-zinc-900/70">
+            <x-ui.page-header :title="__('Organizations')" :description="__('Manage the operating boundaries for teams, workspaces, invitations, and project ownership.')">
+                <x-slot:actions>
+                    <a href="{{ route('organizations.create') }}" class="inline-flex items-center justify-center rounded-full bg-zinc-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-800" wire:navigate>
+                        <flux:icon name="plus" class="mr-2 size-4" />
+                        New Organization
+                    </a>
+                </x-slot:actions>
+            </x-ui.page-header>
+        </div>
 
         @if ($organizations->isNotEmpty())
             <div class="grid gap-4 lg:grid-cols-2">
                 @foreach ($organizations as $organization)
                     <a href="{{ route('organizations.show', $organization) }}"
-                        class="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md dark:border-white/10 dark:bg-zinc-900/70 dark:hover:border-white/20"
+                        class="rounded-2xl border border-zinc-200 bg-white/90 p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md dark:border-white/10 dark:bg-zinc-900/70 dark:hover:border-white/20"
                         wire:navigate>
                         <div class="flex items-start justify-between gap-4">
                             <div class="min-w-0">

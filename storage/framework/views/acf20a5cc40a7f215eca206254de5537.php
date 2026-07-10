@@ -42,7 +42,7 @@ unset($__defined_vars, $__key, $__value); ?>
     ][$size] ?? 'max-w-7xl';
 ?>
 
-<div <?php echo e($attributes->merge(['class' => "mx-auto w-full {$maxWidth} px-4 py-6 sm:px-6 lg:px-8 lg:py-8"])); ?>>
+<div <?php echo e($attributes->merge(['class' => "mx-auto w-full {$maxWidth} px-3 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8"])); ?>>
     <?php echo e($slot); ?>
 
 </div>

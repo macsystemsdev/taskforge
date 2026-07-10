@@ -30,7 +30,11 @@ class CompletePaymentService
                 'paid_at' => now(),
             ]);
 
+            
+
             $subscription = $transaction->organization->subscription;
+            
+            $subscription->clearTrial();
 
             if ($subscription->shouldActivateImmediately()) {
 

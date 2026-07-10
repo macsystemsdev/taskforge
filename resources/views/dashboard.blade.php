@@ -15,29 +15,31 @@
     @endphp
 
     <x-ui.page>
-        <x-ui.page-header
-            :title="__('Operations Dashboard')"
-            :description="__('A focused view of organizations, project load, assigned work, and notification pressure.')"
-        />
+        <div class="mb-6 overflow-hidden rounded-3xl border border-zinc-200 bg-gradient-to-br from-zinc-950 via-zinc-900 to-indigo-950 p-6 text-white shadow-xl shadow-zinc-950/10 sm:p-8">
+            <x-ui.page-header
+                :title="__('Operations Dashboard')"
+                :description="__('A focused view of organizations, project load, assigned work, and notification pressure.')"
+            />
+        </div>
 
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <x-ui.card class="space-y-2">
-                <p class="tf-muted">Organizations</p>
+            <x-ui.card class="space-y-2 border-zinc-200/80 bg-white/90 shadow-sm">
+                <p class="text-sm font-medium text-zinc-500">Organizations</p>
                 <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">{{ $allOrganizations->count() }}</p>
             </x-ui.card>
 
-            <x-ui.card class="space-y-2">
-                <p class="tf-muted">Projects</p>
+            <x-ui.card class="space-y-2 border-zinc-200/80 bg-white/90 shadow-sm">
+                <p class="text-sm font-medium text-zinc-500">Projects</p>
                 <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">{{ $projects->count() }}</p>
             </x-ui.card>
 
-            <x-ui.card class="space-y-2">
-                <p class="tf-muted">Tasks due soon</p>
+            <x-ui.card class="space-y-2 border-zinc-200/80 bg-white/90 shadow-sm">
+                <p class="text-sm font-medium text-zinc-500">Tasks due soon</p>
                 <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">{{ $dueSoon }}</p>
             </x-ui.card>
 
-            <x-ui.card class="space-y-2">
-                <p class="tf-muted">Unread notifications</p>
+            <x-ui.card class="space-y-2 border-zinc-200/80 bg-white/90 shadow-sm">
+                <p class="text-sm font-medium text-zinc-500">Unread notifications</p>
                 <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">{{ $unreadNotifications }}</p>
             </x-ui.card>
         </div>

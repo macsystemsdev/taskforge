@@ -104,7 +104,23 @@ class SubscriptionPlan extends Model
         return $this->hasMany(PaymentTransaction::class);
     }
 
-
+    public function featureHighlights(): array
+    {
+        return [
+            [
+                'label' => 'Workspaces',
+                'value' => $this->workspaceLimitLabel(),
+            ],
+            [
+                'label' => 'Projects',
+                'value' => $this->projectLimitLabel(),
+            ],
+            [
+                'label' => 'Members',
+                'value' => $this->memberLimitLabel(),
+            ],
+        ];
+    }
 
     public function subscriptionEndsAt(): ?CarbonInterface
     {
@@ -123,5 +139,32 @@ class SubscriptionPlan extends Model
         return $query
             ->where('is_active', true)
             ->where('billing_interval', '!=', BillingInterval::NONE);
+    }
+
+    public static function trialPlan(): self
+    {
+        try {
+            $plan = static::query()
+                ->where('slug', 'pro-monthly')
+                ->first();
+
+            if ($plan) {
+                return $plan;
+            }
+        } catch (\Throwable) {
+            // Fall back to an in-memory trial plan when the database lookup is unavailable.
+        }
+
+        return new static([
+            'name' => 'Pro Trial',
+            'slug' => 'trial',
+            'price' => 0.0,
+            'currency' => 'usd',
+            'billing_interval' => BillingInterval::MONTHLY,
+            'max_workspaces' => null,
+            'max_projects' => null,
+            'max_members' => null,
+            'is_active' => true,
+        ]);
     }
 }

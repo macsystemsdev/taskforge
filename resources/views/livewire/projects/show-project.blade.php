@@ -52,53 +52,53 @@ new class extends Component {
         $dueDate = $project->due_date ? $project->due_date->format('M d, Y') : __('No due date');
     @endphp
 
-    <x-ui.page-header :title="$project->name" :description="$project->description ?: __('No project description has been added yet.')" :eyebrow="$project->workspace->organization->name . ' / ' . $project->workspace->name">
-        <x-slot:actions>
+    <div class="mb-6 overflow-hidden rounded-3xl border border-zinc-200 bg-white/80 p-5 shadow-sm backdrop-blur sm:p-6 dark:border-white/10 dark:bg-zinc-900/70">
+        <x-ui.page-header :title="$project->name" :description="$project->description ?: __('No project description has been added yet.')" :eyebrow="$project->workspace->organization->name . ' / ' . $project->workspace->name">
+            <x-slot:actions>
 
-            <x-ui.status-badge :status="$project->status" />
+                <x-ui.status-badge :status="$project->status" />
 
+                @if ($project->status->isActive())
+                    @can('update', $project)
+                        <a href="{{ route('projects.edit', $project) }}" wire:navigate class="tf-button-secondary">
+                            Edit
+                        </a>
+                    @endcan
 
-            @if ($project->status->isActive())
-                @can('update', $project)
-                    <a href="{{ route('projects.edit', $project) }}" wire:navigate class="tf-button-secondary">
-                        Edit
-                    </a>
-                @endcan
+                    @can('complete', $project)
+                        <button wire:click="completeProject" class="tf-button-primary">
+                            Complete
+                        </button>
+                    @endcan
 
-                @can('complete', $project)
-                    <button wire:click="completeProject" class="tf-button-primary">
-                        Complete
+                    @can('cancel', $project)
+                        <button wire:click="cancelProject" class="tf-button-secondary">
+                            Cancel
+                        </button>
+                    @endcan
+                @endif
+
+                @can('delete', $project)
+                    <button wire:click="deleteProject" wire:confirm="Delete this project?" class="tf-button-danger">
+                        Delete
                     </button>
                 @endcan
 
-                @can('cancel', $project)
-                    <button wire:click="cancelProject" class="tf-button-secondary">
-                        Cancel
-                    </button>
-                @endcan
-            @endif
+            </x-slot:actions>
+        </x-ui.page-header>
 
-            @can('delete', $project)
-                <button wire:click="deleteProject" wire:confirm="Delete this project?" class="tf-button-danger">
-                    Delete
-                </button>
-            @endcan
+        @if ($project->isOverdue())
+            <div class="mt-5 rounded-2xl border border-red-200 bg-red-50/80 p-4 text-sm text-red-700">
+                This project is overdue.
+            </div>
+        @endif
 
-        </x-slot:actions>
-    </x-ui.page-header>
-
-    @if ($project->isOverdue())
-        <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-            This project is overdue.
-        </div>
-    @endif
-
-    @if ($project->hasUpcomingDeadlines())
-        <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-            Some tasks are approaching their deadlines.
-        </div>
-    @endif
-
+        @if ($project->hasUpcomingDeadlines())
+            <div class="mt-3 rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-700">
+                Some tasks are approaching their deadlines.
+            </div>
+        @endif
+    </div>
 
     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <x-ui.card class="space-y-2">

@@ -20,6 +20,8 @@ use Illuminate\Support\Carbon;
     'starts_at',
     'ends_at',
     'trial_ends_at',
+    'trial_starts_at',
+    'has_used_trial',
     'pending_subscription_plan_id',
     'pending_payment_transaction_id',
     'pending_effective_at',
@@ -37,6 +39,8 @@ class Subscription extends Model
             'ends_at' => 'datetime',
             'trial_ends_at' => 'datetime',
             'pending_effective_at' => 'datetime',
+            'trial_starts_at' => 'datetime',
+            'has_used_trial' => 'boolean',
         ];
     }
 
@@ -77,7 +81,7 @@ class Subscription extends Model
 
     public function isFree(): bool
     {
-        return $this->plan->billing_interval === BillingInterval::NONE;
+        return $this->plan?->billing_interval === BillingInterval::NONE;
     }
 
     public function isPaid(): bool
@@ -109,9 +113,24 @@ class Subscription extends Model
 
     public function scopeExpired($query)
     {
-        return $query
-            ->whereNotNull('ends_at')
-            ->where('ends_at', '<=', now());
+        $query->where(function ($query) {
+
+            $query
+                ->whereNotNull('ends_at')
+                ->where(
+                    'ends_at',
+                    '<=',
+                    now()
+                );
+        })->orWhere(function ($query) {
+
+            $query->whereNotNull('trial_ends_at')
+                ->where(
+                    'trial_ends_at',
+                    '<=',
+                    now()
+                );
+        });
     }
 
     public function hasPendingPlan(): bool
@@ -198,5 +217,83 @@ class Subscription extends Model
             ->latestSuccessfulTransaction()
             ?->provider
             ?? PaymentProvider::STRIPE;
+    }
+
+    public function isTrial(): bool
+    {
+        return
+            $this->trial_ends_at !== null
+            &&
+            $this->trial_ends_at->isFuture();
+    }
+
+    public function hasUsedTrial(): bool
+    {
+        return (bool) $this->has_used_trial;
+    }
+
+    public function canStartTrial(): bool
+    {
+        return
+            ! $this->hasUsedTrial()
+            &&
+            $this->isFree();
+    }
+
+    public function hasTrialExpired(): bool
+    {
+        return
+            $this->trial_ends_at
+            ?->isPast()
+            ?? false;
+    }
+
+    public function accessPlan()
+    {
+        if ($this->isTrial()) {
+            return SubscriptionPlan::trialPlan();
+        }
+
+        return $this->plan;
+    }
+
+    public function clearTrial(): void
+    {
+        $this->update([
+            'trial_starts_at' => null,
+            'trial_ends_at' => null,
+        ]);
+    }
+
+    public function trialDaysRemaining(): int
+    {
+        return max(
+            now()->diffInDays(
+                $this->trial_ends_at,
+                false
+            ),
+            0
+        );
+    }
+
+    public function trialBadgeColor(): string
+    {
+        return match (true) {
+
+            $this->trialDaysRemaining() <= 1 => 'danger',
+
+            $this->trialDaysRemaining() <= 3 => 'warning',
+
+            $this->trialDaysRemaining() <= 7 => 'yellow',
+
+            default => 'success',
+        };
+    }
+
+    public function accessPlanName(): string
+    {
+        return $this
+            ->accessPlan()
+            ->name;
     }
 }

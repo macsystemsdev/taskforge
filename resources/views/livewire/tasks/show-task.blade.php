@@ -97,18 +97,21 @@ new class extends Component {
 
 
 <x-ui.page>
+    <div class="mb-6 overflow-hidden rounded-3xl border border-zinc-200 bg-white/80 p-5 shadow-sm backdrop-blur sm:p-6 dark:border-white/10 dark:bg-zinc-900/70">
+        <x-ui.page-header :title="$task->title" :description="$task->description ?: __('No task description has been added yet.')" :eyebrow="$task->project->workspace->name . ' / ' . $task->project->team->name . ' / ' . $task->project->name">
+            <x-slot:actions>
+                <x-ui.status-badge :status="$task->status" />
+            </x-slot:actions>
+        </x-ui.page-header>
 
-
-    <x-ui.page-header :title="$task->title" :description="$task->description ?: __('No task description has been added yet.')" :eyebrow="$task->project->workspace->name . ' / ' . $task->project->team->name . ' / ' . $task->project->name">
-        <x-slot:actions>
-            <x-ui.status-badge :status="$task->status" />
-
-        </x-slot:actions>
-    </x-ui.page-header>
+        <div class="mt-5 rounded-2xl border border-zinc-200 bg-zinc-50/80 p-4 text-sm text-zinc-600 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-400">
+            Keep this task moving with clear ownership, deadlines, and next actions.
+        </div>
+    </div>
 
     <div class="grid gap-5 xl:grid-cols-[1fr_360px]">
         <div class="space-y-6">
-            <x-ui.card>
+            <x-ui.card class="border-zinc-200/80 bg-white/90 shadow-sm">
                 <div class="grid gap-5 sm:grid-cols-3">
                     <div>
                         <p class="tf-muted">Assignee</p>
@@ -152,7 +155,7 @@ new class extends Component {
         </div>
 
         <aside class="space-y-6 md:sticky md:top-20">
-            <x-ui.card>
+            <x-ui.card class="border-zinc-200/80 bg-white/90 shadow-sm">
                 <h2 class="tf-panel-title">Task Metadata</h2>
                 <dl class="mt-5 space-y-4 text-sm">
                     <div class="flex items-center justify-between gap-4">
@@ -206,7 +209,7 @@ new class extends Component {
                 </dl>
             </x-ui.card>
 
-            <x-ui.card>
+            <x-ui.card class="border-zinc-200/80 bg-white/90 shadow-sm">
 
                 <h2 class="tf-panel-title">
                     Task Actions
@@ -260,7 +263,7 @@ new class extends Component {
             @can('reassign', $task)
 
                 @if (!$task->status->isDone() && !$task->status->isCancelled())
-                    <x-ui.card>
+                    <x-ui.card class="border-zinc-200/80 bg-white/90 shadow-sm">
 
                         <h2 class="tf-panel-title">
                             Reassign Task
@@ -294,7 +297,7 @@ new class extends Component {
 
             @endcan
 
-            <x-ui.card>
+            <x-ui.card class="border-zinc-200/80 bg-white/90 shadow-sm">
                 <h2 class="tf-panel-title">Activity</h2>
                 <div class="mt-5 space-y-4">
                     @forelse ($this->activityLogs as $log)

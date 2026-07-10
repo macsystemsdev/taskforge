@@ -1,6 +1,9 @@
 <flux:header container class="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
     @php
         $unreadNotifications = auth()->check() ? auth()->user()->unreadNotifications()->count() : 0;
+        $organization = request()->route('organization') ?? auth()->user()?->organizations()->first();
+        $billingRoute = $organization ? route('organizations.billing', ['organization' => $organization]) : route('dashboard');
+        $isBillingRoute = request()->routeIs('organizations.billing') || request()->routeIs('billing.*');
     @endphp
 
     <flux:sidebar.toggle class="lg:hidden mr-2" icon="bars-2" inset="left" />
@@ -22,6 +25,10 @@
 
         <flux:navbar.item icon="check-circle" :href="route('tasks.index')" :current="request()->routeIs('tasks.*')" wire:navigate>
             {{ __('Tasks') }}
+        </flux:navbar.item>
+
+        <flux:navbar.item icon="credit-card" :href="$billingRoute" :current="$isBillingRoute" wire:navigate>
+            {{ __('Billing') }}
         </flux:navbar.item>
     </flux:navbar>
 

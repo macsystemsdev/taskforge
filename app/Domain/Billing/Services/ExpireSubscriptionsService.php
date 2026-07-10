@@ -20,6 +20,15 @@ class ExpireSubscriptionsService
 
         foreach ($subscriptions as $subscription) {
 
+            if ($subscription->hasTrialExpired()) {
+
+                $subscription->clearTrial();
+
+                $subscription->activatePendingPlan();
+
+                continue;
+            }
+
             $this->downgrade->handle($subscription);
         }
     }

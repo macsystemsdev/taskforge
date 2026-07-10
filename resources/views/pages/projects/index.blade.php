@@ -9,11 +9,13 @@
     @endphp
 
     <x-ui.page>
-        <x-ui.page-header :title="__('Projects')" :description="__(
-            'Scan active project ownership, workspace context, dates, and task volume from one operational list.',
-        )" />
+        <div class="mb-6 overflow-hidden rounded-3xl border border-zinc-200 bg-white/80 p-5 shadow-sm backdrop-blur sm:p-6 dark:border-white/10 dark:bg-zinc-900/70">
+            <x-ui.page-header :title="__('Projects')" :description="__(
+                'Scan active project ownership, workspace context, dates, and task volume from one operational list.',
+            )" />
+        </div>
 
-        <x-ui.card padding="p-0" class="overflow-hidden">
+        <x-ui.card padding="p-0" class="overflow-hidden border-zinc-200/80 bg-white/90 shadow-sm">
             @if ($projects->isNotEmpty())
                 <div class="overflow-x-auto">
                     <table>
