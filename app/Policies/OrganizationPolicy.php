@@ -61,15 +61,6 @@ class OrganizationPolicy
         );
     }
 
-    public function createTeam(
-        User $user,
-        Organization $organization
-    ): bool {
-        return OrganizationPermissions::canCreateTeam(
-            $organization->roleFor($user)
-        );
-    }
-
     public function createWorkspace(
         User $user,
         Organization $organization

@@ -18,7 +18,9 @@ test('project creation shows a validation error when the slug already exists', f
     $workspace = Workspace::create([
         'organization_id' => $organization->id,
         'name' => 'General Workspace',
+        'slug' => 'general-workspace',
         'description' => 'Default workspace',
+        'is_default' => true,
     ]);
 
     Project::create([

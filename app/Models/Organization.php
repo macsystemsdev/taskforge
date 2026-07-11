@@ -103,6 +103,19 @@ class Organization extends Model
         return filled($this->stripe_customer_id);
     }
 
+    public function tasks()
+    {
+        return Task::query()
+            ->whereHas(
+                'project.workspace',
+                fn($query) =>
+                $query->where(
+                    'organization_id',
+                    $this->id
+                )
+            );
+    }
+
     // Role-based access control for organization members
 
     public function roleFor(User $user): ?OrganizationRole
@@ -139,34 +152,174 @@ class Organization extends Model
             === OrganizationRole::ADMIN;
     }
 
+    // Check if the organization is within the limit of a specific resource based on the subscription plan
+    private function withinLimit(
+        int $currentCount,
+        ?int $limit,
+    ): bool {
+        return $limit === null || $currentCount < $limit;
+    }
+
 
     // Check if the organization can create a new workspace, project, or add a new member based on the subscription plan limits
 
+    public function currentPlan(): ?SubscriptionPlan
+    {
+        return $this->subscription
+            ?->accessPlan();
+    }
+
     public function canCreateWorkspace(): bool
     {
-
-        $limit = $this->subscription?->plan?->max_workspaces;
-
-        return is_null($limit)
-            || $this->workspaces()->count() < $limit;
+        return $this->withinLimit(
+            $this->workspaces()->count(),
+            $this->currentPlan()?->max_workspaces,
+        );
     }
 
     public function canCreateProject(): bool
-
     {
-        $limit = $this->subscription?->plan?->max_projects;
-
-        return is_null($limit)
-            || $this->projects()->count() < $limit;
+        return $this->withinLimit(
+            $this->projects()->count(),
+            $this->currentPlan()?->max_projects,
+        );
     }
+
+    public function canCreateTask(): bool
+    {
+        return $this->withinLimit(
+            $this->tasks()->count(),
+            $this->currentPlan()?->max_tasks,
+        );
+    }
+
+    public function canCreateTeam(): bool
+    {
+        return $this->withinLimit(
+            $this->teams()->count(),
+            $this->currentPlan()?->max_teams,
+        );
+    }
+
 
     public function canAddMember(): bool
     {
-        $limit = $this->subscription?->plan?->max_members;
-
-        return is_null($limit)
-            || $this->members()->count() < $limit;
+        return $this->withinLimit(
+            $this->members()->count(),
+            $this->currentPlan()?->max_members,
+        );
     }
+
+    public function canUpload(
+        int $bytes
+    ): bool {
+
+        $limit =
+            $this->currentPlan()
+            ?->max_storage_mb;
+
+        if (is_null($limit)) {
+            return true;
+        }
+
+        return ($this->storage_used_bytes + $bytes)
+
+            <=
+
+            ($limit * 1024 * 1024);
+    }
+    // Check if the organization feature usage based on subscription plan
+    public function workspaceUsage(): int
+    {
+        return $this->workspaces()->count();
+    }
+
+    public function projectUsage(): int
+    {
+        return $this->projects()->count();
+    }
+
+    public function teamUsage(): int
+    {
+        return $this->teams()->count();
+    }
+
+    public function memberUsage(): int
+    {
+        return $this->members()->count();
+    }
+
+    public function storageUsageMb(): float
+    {
+        return round(
+            ($this->storage_used_bytes ?? 0)
+                / 1024
+                / 1024,
+            2
+        );
+    }
+
+    public function taskUsage(): int
+    {
+        return $this->tasks()->count();
+    }
+    // check locked workspaces based on subscription plan limit
+    public function lockedWorkspaces()
+    {
+        $limit = $this->currentPlan()?->max_workspaces;
+
+        if ($limit === null) {
+            return collect();
+        }
+
+        return $this->workspaces
+            ->sortBy('created_at')
+            ->slice($limit);
+    }
+
+    public function lockedProjects()
+    {
+        $limit = $this->currentPlan()?->max_projects;
+
+        if ($limit === null) {
+            return collect();
+        }
+
+        return $this->projects
+            ->sortBy('created_at')
+            ->slice($limit);
+    }
+
+    public function lockedTasks()
+    {
+        $limit = $this->currentPlan()?->max_tasks;
+
+        if ($limit === null) {
+            return collect();
+        }
+
+        return $this->projects()
+            ->with('tasks')
+            ->get()
+            ->pluck('tasks')
+            ->flatten()
+            ->sortBy('created_at')
+            ->slice($limit);
+    }
+
+    public function lockedTeams()
+    {
+        $limit = $this->currentPlan()?->max_teams;
+
+        if ($limit === null) {
+            return collect();
+        }
+
+        return $this->teams
+            ->sortBy('created_at')
+            ->slice($limit);
+    }
+
 
     public function paymentTransactions()
     {

@@ -3,11 +3,9 @@
 use App\Actions\Teams\CreateTeam;
 use App\Rules\TeamName;
 use Flux\Flux;
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use App\Models\Workspace;
 use App\Data\Teams\CreateTeamData;
-use App\Actions\Teams\CreateTeam;
 use Illuminate\Support\Facades\Gate;
 
 new class extends Component {
@@ -30,7 +28,15 @@ new class extends Component {
             'description' => ['nullable', 'string'],
         ]);
 
-        $team = app(CreateTeam::class)->handle(workspace: $this->workspace, data: new CreateTeamData(name: $validated['name'], description: $validated['description']), owner: auth()->user());
+        $team = app(CreateTeam::class)->handle(
+            workspace: $this->workspace,
+            data: new CreateTeamData(
+                name: $validated['name'],
+                description: $validated['description'] ?? null,
+                leaderId: auth()->id(),
+                memberIds: [],
+            ),
+        );
 
         $this->dispatch('close-modal', name: 'create-team-switcher');
 

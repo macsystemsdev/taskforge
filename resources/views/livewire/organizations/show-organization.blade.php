@@ -15,6 +15,7 @@ use App\Data\Workspaces\CreateWorkspaceData;
 use App\Actions\Organizations\DeleteOrganizationAction;
 use App\Actions\Organizations\UpdateOrganizationAction;
 use App\Data\Organizations\UpdateOrganizationData;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 new class extends Component {
     public Organization $organization;
@@ -206,7 +207,24 @@ new class extends Component {
 ?>
 
 <x-ui.page>
-    <div class="mb-6 overflow-hidden rounded-3xl border border-zinc-200 bg-white/80 p-5 shadow-sm backdrop-blur sm:p-6 dark:border-white/10 dark:bg-zinc-900/70">
+    @php
+        $currentPlan = $organization->currentPlan();
+        $workspaceUsage = $organization->workspaces()->count();
+        $projectUsage = $organization->projects()->count();
+        $teamUsage = $organization->teams()->count();
+        $taskUsage = $organization->tasks()->count();
+        $memberUsage = $organization->members()->count();
+        $workspaceLimit = $currentPlan?->max_workspaces;
+        $projectLimit = $currentPlan?->max_projects;
+        $teamLimit = $currentPlan?->max_teams;
+        $taskLimit = $currentPlan?->max_tasks;
+        $memberLimit = $currentPlan?->max_members;
+        $storageLimit = $currentPlan?->max_storage_mb;
+        $lockedWorkspaces = $organization->lockedWorkspaces();
+    @endphp
+
+    <div
+        class="mb-6 overflow-hidden rounded-3xl border border-zinc-200 bg-white/80 p-5 shadow-sm backdrop-blur sm:p-6 dark:border-white/10 dark:bg-zinc-900/70">
         <x-ui.page-header :title="$organization->name" :description="__('Manage workspaces, members, invitations, and project flow for this organization.')" :eyebrow="__('Organization')">
             <x-slot:actions>
                 <x-ui.status-badge :status="$organization->subscription_status ?? 'active'" />
@@ -214,43 +232,62 @@ new class extends Component {
         </x-ui.page-header>
 
         <div class="mt-5 flex flex-wrap gap-2">
-            @can('update', $organization)
-                <flux:button wire:click="openEditOrganizationModal">
+            @if (auth()->user()->can('update', $organization))
+                <flux:button wire:click="openEditOrganizationModal" wire:loading.attr="disabled"
+                    wire:target="openEditOrganizationModal">
                     Edit Organization
                 </flux:button>
-            @endcan
+            @endif
 
-            @can('delete', $organization)
-                <flux:button variant="danger" wire:click="openDeleteOrganizationModal">
+            @if (auth()->user()->can('delete', $organization))
+                <flux:button variant="danger" wire:click="openDeleteOrganizationModal" wire:loading.attr="disabled"
+                    wire:target="openDeleteOrganizationModal">
                     Delete Organization
                 </flux:button>
-            @endcan
+            @endif
         </div>
     </div>
 
-    @can('viewActivityLog', $organization)
-        <div class="mb-6 grid gap-4 sm:grid-cols-3">
+    @if (auth()->user()->can('viewActivityLog', $organization))
+        <div class="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <x-ui.card class="space-y-2">
                 <p class="tf-muted">Workspaces</p>
                 <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
-                    {{ $organization->workspaces->count() }}</p>
+                    {{ $workspaceUsage }} / {{ $workspaceLimit === null ? 'Unlimited' : $workspaceLimit }}</p>
             </x-ui.card>
 
+            <x-ui.card class="space-y-2">
+                <p class="tf-muted">Projects</p>
+                <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+                    {{ $projectUsage }} / {{ $projectLimit === null ? 'Unlimited' : $projectLimit }}</p>
+            </x-ui.card>
 
+            <x-ui.card class="space-y-2">
+                <p class="tf-muted">Teams</p>
+                <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+                    {{ $teamUsage }} / {{ $teamLimit === null ? 'Unlimited' : $teamLimit }}</p>
+            </x-ui.card>
+
+            <x-ui.card class="space-y-2">
+                <p class="tf-muted">Tasks</p>
+                <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+                    {{ $taskUsage }} / {{ $taskLimit === null ? 'Unlimited' : $taskLimit }}</p>
+            </x-ui.card>
 
             <x-ui.card class="space-y-2">
                 <p class="tf-muted">Members</p>
                 <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
-                    {{ $organization->members->count() }}</p>
+                    {{ $memberUsage }} / {{ $memberLimit === null ? 'Unlimited' : $memberLimit }}</p>
             </x-ui.card>
 
             <x-ui.card class="space-y-2">
-                <p class="tf-muted">Open invitations</p>
+                <p class="tf-muted">Storage Usage</p>
                 <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
-                    {{ $this->invitations->where('status', 'pending')->count() }}</p>
+                    {{ $organization->storageUsageMb() }} MB /
+                    {{ $storageLimit === null ? 'Unlimited' : $storageLimit . ' MB' }}</p>
             </x-ui.card>
         </div>
-    @endcan
+    @endif
 
     {{-- Workspaces --}}
 
@@ -280,8 +317,19 @@ new class extends Component {
                     Cancel
                 </flux:button>
 
-                <flux:button variant="primary" wire:click="createWorkspace">
-                    Create Workspace
+                <flux:button variant="primary" wire:click="createWorkspace" wire:loading.attr="disabled"
+                    wire:target="createWorkspace" class="inline-flex items-center justify-center gap-2">
+                    <span wire:loading.remove wire:target="createWorkspace">Create Workspace</span>
+                    <span wire:loading.flex wire:target="createWorkspace" class="items-center justify-center gap-2">
+                        <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z">
+                            </path>
+                        </svg>
+                        <span>Creating...</span>
+                    </span>
                 </flux:button>
 
             </div>
@@ -291,26 +339,38 @@ new class extends Component {
     </flux:modal>
 
     <x-ui.card class="mb-6 border-zinc-200/80 bg-white/90 shadow-sm">
-        <div class="flex flex-col gap-4 border-b border-zinc-200/70 pb-5 sm:flex-row sm:items-end sm:justify-between dark:border-white/10">
+        <div
+            class="flex flex-col gap-4 border-b border-zinc-200/70 pb-5 sm:flex-row sm:items-end sm:justify-between dark:border-white/10">
             <div>
                 <h2 class="tf-panel-title">Workspaces</h2>
                 <p class="tf-panel-subtitle">Organize teams, projects, and delivery areas around each workspace.</p>
             </div>
 
-            @can('createWorkspace', $organization)
-                <flux:button wire:click="openCreateWorkspaceModal">
-                    Create workspace
-                </flux:button>
-            @endcan
+            @if (auth()->user()->can('createWorkspace', $organization))
+                @if ($organization->canCreateWorkspace())
+                    <flux:button wire:click="openCreateWorkspaceModal" wire:loading.attr="disabled"
+                        wire:target="openCreateWorkspaceModal">
+                        Create Workspace
+                    </flux:button>
+                @else
+                    <a href="{{ route('organizations.billing', $organization) }}"
+                        class="inline-flex items-center justify-center rounded-full bg-zinc-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-800"
+                        wire:navigate>
+                        Upgrade plan
+                    </a>
+                @endif
+            @endif
         </div>
 
         @if ($organization->workspaces->isNotEmpty())
             <div class="mt-6 grid gap-4 xl:grid-cols-2">
                 @foreach ($organization->workspaces as $workspace)
-                    <div class="group rounded-2xl border border-zinc-200 bg-zinc-50/80 p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-zinc-300 hover:bg-white dark:border-white/10 dark:bg-white/[0.03] dark:hover:border-white/15 dark:hover:bg-white/[0.05]">
+                    <div
+                        class="group rounded-2xl border border-zinc-200 bg-zinc-50/80 p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-zinc-300 hover:bg-white dark:border-white/10 dark:bg-white/[0.03] dark:hover:border-white/15 dark:hover:bg-white/[0.05]">
                         <div class="flex items-start justify-between gap-3">
                             <div class="flex min-w-0 items-center gap-3">
-                                <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-zinc-950 text-sm font-semibold text-white dark:bg-white dark:text-zinc-950">
+                                <div
+                                    class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-zinc-950 text-sm font-semibold text-white dark:bg-white dark:text-zinc-950">
                                     {{ strtoupper(substr($workspace->name, 0, 1)) }}
                                 </div>
 
@@ -319,14 +379,29 @@ new class extends Component {
                                         {{ $workspace->name }}
                                     </h3>
                                     <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                                        {{ $workspace->projects_count }} projects • {{ $workspace->teams_count }} teams
+                                        {{ $workspace->projects_count }} projects • {{ $workspace->teams_count }}
+                                        teams
                                     </p>
                                 </div>
                             </div>
 
-                            <span class="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400">
-                                Active
-                            </span>
+                            @php
+                                $isWorkspaceLocked = $lockedWorkspaces->contains(
+                                    fn($lockedWorkspace) => $lockedWorkspace->id === $workspace->id,
+                                );
+                            @endphp
+
+                            @if ($isWorkspaceLocked)
+                                <span
+                                    class="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400">
+                                    Locked
+                                </span>
+                            @else
+                                <span
+                                    class="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400">
+                                    Active
+                                </span>
+                            @endif
                         </div>
 
                         <p class="mt-4 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
@@ -334,12 +409,16 @@ new class extends Component {
                         </p>
 
                         <div class="mt-5 flex flex-wrap gap-2">
-                            <div class="rounded-xl border border-zinc-200 bg-white/80 px-3 py-2 text-sm text-zinc-700 shadow-sm dark:border-white/10 dark:bg-zinc-900/80 dark:text-zinc-200">
-                                <span class="font-semibold text-zinc-950 dark:text-white">{{ $workspace->teams_count }}</span>
+                            <div
+                                class="rounded-xl border border-zinc-200 bg-white/80 px-3 py-2 text-sm text-zinc-700 shadow-sm dark:border-white/10 dark:bg-zinc-900/80 dark:text-zinc-200">
+                                <span
+                                    class="font-semibold text-zinc-950 dark:text-white">{{ $workspace->teams_count }}</span>
                                 teams
                             </div>
-                            <div class="rounded-xl border border-zinc-200 bg-white/80 px-3 py-2 text-sm text-zinc-700 shadow-sm dark:border-white/10 dark:bg-zinc-900/80 dark:text-zinc-200">
-                                <span class="font-semibold text-zinc-950 dark:text-white">{{ $workspace->projects_count }}</span>
+                            <div
+                                class="rounded-xl border border-zinc-200 bg-white/80 px-3 py-2 text-sm text-zinc-700 shadow-sm dark:border-white/10 dark:bg-zinc-900/80 dark:text-zinc-200">
+                                <span
+                                    class="font-semibold text-zinc-950 dark:text-white">{{ $workspace->projects_count }}</span>
                                 projects
                             </div>
                         </div>
@@ -356,15 +435,39 @@ new class extends Component {
                 @endforeach
             </div>
         @else
-            <div class="mt-6 rounded-2xl border border-dashed border-zinc-300 bg-zinc-50/70 p-8 text-center dark:border-white/10 dark:bg-white/[0.03]">
+            <div
+                class="mt-6 rounded-2xl border border-dashed border-zinc-300 bg-zinc-50/70 p-8 text-center dark:border-white/10 dark:bg-white/[0.03]">
                 <p class="text-base font-semibold text-zinc-950 dark:text-white">No workspaces yet</p>
-                <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">Create the first workspace to organize projects and teams around a clear operational home.</p>
+                <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">Create the first workspace to organize projects
+                    and teams around a clear operational home.</p>
 
-                @can('createWorkspace', $organization)
-                    <button wire:click="openCreateWorkspaceModal" class="tf-button-primary mt-5">
-                        Create your first workspace
-                    </button>
-                @endcan
+                @if (auth()->user()->can('createWorkspace', $organization))
+                    @if ($organization->canCreateWorkspace())
+                        <button wire:click="openCreateWorkspaceModal" wire:loading.attr="disabled"
+                            wire:target="openCreateWorkspaceModal"
+                            class="tf-button-primary mt-5 inline-flex items-center justify-center gap-2">
+                            <span wire:loading.remove wire:target="openCreateWorkspaceModal">Create your first
+                                workspace</span>
+                            <span wire:loading.flex wire:target="openCreateWorkspaceModal"
+                                class="items-center justify-center gap-2">
+                                <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"
+                                    aria-hidden="true">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10"
+                                        stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor"
+                                        d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z">
+                                    </path>
+                                </svg>
+                                <span>Opening...</span>
+                            </span>
+                        </button>
+                    @else
+                        <a href="{{ route('organizations.billing', $organization) }}" class="tf-button-primary mt-5"
+                            wire:navigate>
+                            Upgrade plan
+                        </a>
+                    @endif
+                @endif
             </div>
         @endif
 
@@ -387,8 +490,20 @@ new class extends Component {
                         Cancel
                     </flux:button>
 
-                    <flux:button wire:click="updateOrganization">
-                        Save Changes
+                    <flux:button wire:click="updateOrganization" wire:loading.attr="disabled"
+                        wire:target="updateOrganization" class="inline-flex items-center justify-center gap-2">
+                        <span wire:loading.remove wire:target="updateOrganization">Save Changes</span>
+                        <span wire:loading.flex wire:target="updateOrganization"
+                            class="items-center justify-center gap-2">
+                            <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <circle class="opacity-25" cx="12" cy="12" r="10"
+                                    stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z">
+                                </path>
+                            </svg>
+                            <span>Saving...</span>
+                        </span>
                     </flux:button>
 
                 </div>
@@ -416,8 +531,20 @@ new class extends Component {
                         Cancel
                     </flux:button>
 
-                    <flux:button variant="danger" wire:click="deleteOrganization">
-                        Delete
+                    <flux:button variant="danger" wire:click="deleteOrganization" wire:loading.attr="disabled"
+                        wire:target="deleteOrganization" class="inline-flex items-center justify-center gap-2">
+                        <span wire:loading.remove wire:target="deleteOrganization">Delete</span>
+                        <span wire:loading.flex wire:target="deleteOrganization"
+                            class="items-center justify-center gap-2">
+                            <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <circle class="opacity-25" cx="12" cy="12" r="10"
+                                    stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z">
+                                </path>
+                            </svg>
+                            <span>Deleting...</span>
+                        </span>
                     </flux:button>
 
                 </div>
@@ -434,11 +561,13 @@ new class extends Component {
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
 
         {{-- Invitation Form --}}
-        @can('inviteMembers', $organization)
+        @if (auth()->user()->can('inviteMembers', $organization))
             <x-ui.card class="space-y-6 border-zinc-200/80 bg-white/90 shadow-sm">
                 <div>
                     <h2 class="tf-panel-title">Invite Member</h2>
-                    <p class="tf-panel-subtitle">Bring collaborators into the organization with a clear role from the start.</p>
+                    <p class="tf-panel-subtitle">Bring collaborators into the organization with a clear role from the
+                        start.
+                    </p>
                 </div>
 
                 <form wire:submit="inviteMember" class="space-y-4">
@@ -465,12 +594,35 @@ new class extends Component {
                         </p>
                     @enderror
 
-                    <flux:button variant="primary" type="submit" class="w-full sm:w-auto">
-                        Send Invitation
-                    </flux:button>
+                    @if ($organization->canAddMember())
+                        <flux:button variant="primary" type="submit" wire:loading.attr="disabled"
+                            wire:target="inviteMember"
+                            class="inline-flex w-full items-center justify-center gap-2 sm:w-auto">
+                            <span wire:loading.remove wire:target="inviteMember">Send Invitation</span>
+                            <span wire:loading.flex wire:target="inviteMember"
+                                class="items-center justify-center gap-2">
+                                <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"
+                                    aria-hidden="true">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10"
+                                        stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor"
+                                        d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z">
+                                    </path>
+                                </svg>
+                                <span>Sending...</span>
+                            </span>
+                        </flux:button>
+                    @else
+                        <flux:button variant="primary" type="button" class="w-full sm:w-auto"
+                            @disabled(true)>
+                            Upgrade to invite more members.
+                        </flux:button>
+                    @endif
+
+
                 </form>
             </x-ui.card>
-        @endcan
+        @endif
 
         {{-- Members --}}
         <x-ui.card class="space-y-6 border-zinc-200/80 bg-white/90 shadow-sm">
@@ -481,7 +633,8 @@ new class extends Component {
 
             <div class="space-y-3">
                 @foreach ($organization->members as $member)
-                    <div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-zinc-50/70 p-3 shadow-sm dark:border-white/10 dark:bg-white/[0.03]">
+                    <div
+                        class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-zinc-50/70 p-3 shadow-sm dark:border-white/10 dark:bg-white/[0.03]">
                         <div class="flex min-w-0 items-center gap-3">
                             <x-ui.avatar :name="$member->name" />
                             <div class="min-w-0">
@@ -495,7 +648,7 @@ new class extends Component {
                             </div>
                         </div>
 
-                        @can('changeMemberRole', $organization)
+                        @if (auth()->user()->can('changeMemberRole', $organization))
                             <flux:select wire:change="updateRole({{ $member->id }}, $event.target.value)">
                                 @foreach (App\Domain\Organizations\Enums\OrganizationRole::cases() as $role)
                                     <option value="{{ $role }}" @selected($member->pivot->role === $role)>
@@ -503,10 +656,11 @@ new class extends Component {
                                     </option>
                                 @endforeach
                             </flux:select>
-                        @endcan
+                        @endif
 
                         @if (!auth()->user()->can('changeMemberRole', $organization))
-                            <div class="rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-sm text-zinc-600 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-300">
+                            <div
+                                class="rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-sm text-zinc-600 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-300">
                                 {{ ucfirst($member->pivot->role) }}
                             </div>
                         @endif
@@ -518,7 +672,7 @@ new class extends Component {
     </div>
 
     {{-- Invitations Table --}}
-    @can('inviteMembers', $organization)
+    @if (auth()->user()->can('inviteMembers', $organization))
         <x-ui.card padding="p-0" class="mt-6 overflow-hidden border-zinc-200/80 bg-white/90 shadow-sm">
             <div class="border-b border-zinc-200 px-5 py-4 dark:border-white/10">
                 <h2 class="tf-panel-title">Invitations</h2>
@@ -588,12 +742,25 @@ new class extends Component {
 
                                     @if ($invitation->isPending())
                                         <flux:button size="sm" variant="danger"
-                                            wire:click="
-                                        cancelInvitation(
-                                            {{ $invitation->id }}
-                                        )
-                                    ">
-                                            Cancel
+                                            wire:click="cancelInvitation({{ $invitation->id }})"
+                                            wire:loading.attr="disabled"
+                                            wire:target="cancelInvitation({{ $invitation->id }})"
+                                            class="inline-flex items-center justify-center gap-2">
+                                            <span wire:loading.remove
+                                                wire:target="cancelInvitation({{ $invitation->id }})">Cancel</span>
+                                            <span wire:loading.flex
+                                                wire:target="cancelInvitation({{ $invitation->id }})"
+                                                class="items-center justify-center gap-2">
+                                                <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"
+                                                    aria-hidden="true">
+                                                    <circle class="opacity-25" cx="12" cy="12" r="10"
+                                                        stroke="currentColor" stroke-width="4"></circle>
+                                                    <path class="opacity-75" fill="currentColor"
+                                                        d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z">
+                                                    </path>
+                                                </svg>
+                                                <span>Canceling...</span>
+                                            </span>
                                         </flux:button>
                                     @endif
 
@@ -615,6 +782,5 @@ new class extends Component {
 
             </div>
         </x-ui.card>
-    @endcan
 
 </x-ui.page>

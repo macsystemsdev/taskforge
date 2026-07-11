@@ -231,22 +231,28 @@ unset($__defined_vars, $__key, $__value); ?>
 <?php $component = $__componentOriginal5027d420cfeeb03dd925cfc08ae44851; ?>
 <?php unset($__componentOriginal5027d420cfeeb03dd925cfc08ae44851); ?>
 <?php endif; ?>
-            <form method="POST" action="<?php echo e(route('logout')); ?>" class="w-full">
+            <form method="POST" action="<?php echo e(route('logout')); ?>" class="w-full" x-data="{ submitting: false }" x-on:submit="submitting = true">
                 <?php echo csrf_field(); ?>
                 <?php if (isset($component)) { $__componentOriginal5027d420cfeeb03dd925cfc08ae44851 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal5027d420cfeeb03dd925cfc08ae44851 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::menu.item','data' => ['as' => 'button','type' => 'submit','icon' => 'arrow-right-start-on-rectangle','class' => 'w-full cursor-pointer','dataTest' => 'logout-button']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::menu.item','data' => ['as' => 'button','type' => 'submit','icon' => 'arrow-right-start-on-rectangle','class' => 'w-full cursor-pointer','dataTest' => 'logout-button','xBind:disabled' => 'submitting']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::menu.item'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['as' => 'button','type' => 'submit','icon' => 'arrow-right-start-on-rectangle','class' => 'w-full cursor-pointer','data-test' => 'logout-button']); ?>
+<?php $component->withAttributes(['as' => 'button','type' => 'submit','icon' => 'arrow-right-start-on-rectangle','class' => 'w-full cursor-pointer','data-test' => 'logout-button','x-bind:disabled' => 'submitting']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-                    <?php echo e(__('Log out')); ?>
-
+                    <span x-show="!submitting"><?php echo e(__('Log out')); ?></span>
+                    <span x-show="submitting" class="inline-flex items-center justify-center gap-2">
+                        <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z"></path>
+                        </svg>
+                        <span><?php echo e(__('Logging out...')); ?></span>
+                    </span>
                  <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginal5027d420cfeeb03dd925cfc08ae44851)): ?>

@@ -59,30 +59,30 @@ new class extends Component {
                 <x-ui.status-badge :status="$project->status" />
 
                 @if ($project->status->isActive())
-                    @can('update', $project)
+                    @if (auth()->user()->can('update', $project))
                         <a href="{{ route('projects.edit', $project) }}" wire:navigate class="tf-button-secondary">
                             Edit
                         </a>
-                    @endcan
+                    @endif
 
-                    @can('complete', $project)
+                    @if (auth()->user()->can('complete', $project))
                         <button wire:click="completeProject" class="tf-button-primary">
                             Complete
                         </button>
-                    @endcan
+                    @endif
 
-                    @can('cancel', $project)
+                    @if (auth()->user()->can('cancel', $project))
                         <button wire:click="cancelProject" class="tf-button-secondary">
                             Cancel
                         </button>
-                    @endcan
+                    @endif
                 @endif
 
-                @can('delete', $project)
+                @if (auth()->user()->can('delete', $project))
                     <button wire:click="deleteProject" wire:confirm="Delete this project?" class="tf-button-danger">
                         Delete
                     </button>
-                @endcan
+                @endif
 
             </x-slot:actions>
         </x-ui.page-header>
@@ -128,9 +128,9 @@ new class extends Component {
 
         <div class="space-y-6">
 
-            @can('createTask', $project)
+            @if (auth()->user()->can('createTask', $project))
                 @livewire('tasks.create-task', ['project' => $project])
-            @endcan
+            @endif
 
             @livewire('comments.comment-section', [
                 'commentable' => $project,

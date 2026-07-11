@@ -29,7 +29,28 @@ class ExpireSubscriptionsService
                 continue;
             }
 
-            $this->downgrade->handle($subscription);
+            if ($subscription->hasPendingPlan()) {
+
+                $subscription->activatePendingPlan();
+
+                continue;
+            }
+
+            if ($subscription->isInGracePeriod()) {
+
+                if ($subscription->hasGraceExpired()) {
+
+                    $subscription->clearGracePeriod();
+
+                    $this->downgrade->handle(
+                        $subscription
+                    );
+                }
+
+                continue;
+            }
+
+            $subscription->startGracePeriod();
         }
     }
 }

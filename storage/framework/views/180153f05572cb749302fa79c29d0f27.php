@@ -14,6 +14,7 @@ use App\Data\Workspaces\CreateWorkspaceData;
 use App\Actions\Organizations\DeleteOrganizationAction;
 use App\Actions\Organizations\UpdateOrganizationAction;
 use App\Data\Organizations\UpdateOrganizationData;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 ?>
 
 <?php if (isset($component)) { $__componentOriginal1f4cdfbcf032dc00af93962c134fd24f = $component; } ?>
@@ -28,7 +29,24 @@ use App\Data\Organizations\UpdateOrganizationData;
 <?php $component->withAttributes([]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-    <div class="mb-6 overflow-hidden rounded-3xl border border-zinc-200 bg-white/80 p-5 shadow-sm backdrop-blur sm:p-6 dark:border-white/10 dark:bg-zinc-900/70">
+    <?php
+        $currentPlan = $organization->currentPlan();
+        $workspaceUsage = $organization->workspaces()->count();
+        $projectUsage = $organization->projects()->count();
+        $teamUsage = $organization->teams()->count();
+        $taskUsage = $organization->tasks()->count();
+        $memberUsage = $organization->members()->count();
+        $workspaceLimit = $currentPlan?->max_workspaces;
+        $projectLimit = $currentPlan?->max_projects;
+        $teamLimit = $currentPlan?->max_teams;
+        $taskLimit = $currentPlan?->max_tasks;
+        $memberLimit = $currentPlan?->max_members;
+        $storageLimit = $currentPlan?->max_storage_mb;
+        $lockedWorkspaces = $organization->lockedWorkspaces();
+    ?>
+
+    <div
+        class="mb-6 overflow-hidden rounded-3xl border border-zinc-200 bg-white/80 p-5 shadow-sm backdrop-blur sm:p-6 dark:border-white/10 dark:bg-zinc-900/70">
         <?php if (isset($component)) { $__componentOriginal91a231a9270579fa1ae9246bd51fb785 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal91a231a9270579fa1ae9246bd51fb785 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.page-header','data' => ['title' => $organization->name,'description' => __('Manage workspaces, members, invitations, and project flow for this organization.'),'eyebrow' => __('Organization')]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -77,17 +95,17 @@ use App\Data\Organizations\UpdateOrganizationData;
 <?php endif; ?>
 
         <div class="mt-5 flex flex-wrap gap-2">
-            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('update', $organization)): ?>
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(auth()->user()->can('update', $organization)): ?>
                 <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['wire:click' => 'openEditOrganizationModal']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['wire:click' => 'openEditOrganizationModal','wire:loading.attr' => 'disabled','wire:target' => 'openEditOrganizationModal']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['wire:click' => 'openEditOrganizationModal']); ?>
+<?php $component->withAttributes(['wire:click' => 'openEditOrganizationModal','wire:loading.attr' => 'disabled','wire:target' => 'openEditOrganizationModal']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                     Edit Organization
@@ -101,19 +119,19 @@ use App\Data\Organizations\UpdateOrganizationData;
 <?php $component = $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
 <?php unset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
 <?php endif; ?>
-            <?php endif; ?>
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
-            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('delete', $organization)): ?>
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(auth()->user()->can('delete', $organization)): ?>
                 <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['variant' => 'danger','wire:click' => 'openDeleteOrganizationModal']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['variant' => 'danger','wire:click' => 'openDeleteOrganizationModal','wire:loading.attr' => 'disabled','wire:target' => 'openDeleteOrganizationModal']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['variant' => 'danger','wire:click' => 'openDeleteOrganizationModal']); ?>
+<?php $component->withAttributes(['variant' => 'danger','wire:click' => 'openDeleteOrganizationModal','wire:loading.attr' => 'disabled','wire:target' => 'openDeleteOrganizationModal']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                     Delete Organization
@@ -127,12 +145,12 @@ use App\Data\Organizations\UpdateOrganizationData;
 <?php $component = $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
 <?php unset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
 <?php endif; ?>
-            <?php endif; ?>
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
         </div>
     </div>
 
-    <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('viewActivityLog', $organization)): ?>
-        <div class="mb-6 grid gap-4 sm:grid-cols-3">
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(auth()->user()->can('viewActivityLog', $organization)): ?>
+        <div class="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <?php if (isset($component)) { $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.card','data' => ['class' => 'space-y-2']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -147,7 +165,7 @@ use App\Data\Organizations\UpdateOrganizationData;
 
                 <p class="tf-muted">Workspaces</p>
                 <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
-                    <?php echo e($organization->workspaces->count()); ?></p>
+                    <?php echo e($workspaceUsage); ?> / <?php echo e($workspaceLimit === null ? 'Unlimited' : $workspaceLimit); ?></p>
              <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93)): ?>
@@ -159,7 +177,83 @@ use App\Data\Organizations\UpdateOrganizationData;
 <?php unset($__componentOriginaldae4cd48acb67888a4631e1ba48f2f93); ?>
 <?php endif; ?>
 
+            <?php if (isset($component)) { $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.card','data' => ['class' => 'space-y-2']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('ui.card'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['class' => 'space-y-2']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
+                <p class="tf-muted">Projects</p>
+                <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+                    <?php echo e($projectUsage); ?> / <?php echo e($projectLimit === null ? 'Unlimited' : $projectLimit); ?></p>
+             <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93)): ?>
+<?php $attributes = $__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93; ?>
+<?php unset($__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginaldae4cd48acb67888a4631e1ba48f2f93)): ?>
+<?php $component = $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93; ?>
+<?php unset($__componentOriginaldae4cd48acb67888a4631e1ba48f2f93); ?>
+<?php endif; ?>
+
+            <?php if (isset($component)) { $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.card','data' => ['class' => 'space-y-2']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('ui.card'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['class' => 'space-y-2']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+                <p class="tf-muted">Teams</p>
+                <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+                    <?php echo e($teamUsage); ?> / <?php echo e($teamLimit === null ? 'Unlimited' : $teamLimit); ?></p>
+             <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93)): ?>
+<?php $attributes = $__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93; ?>
+<?php unset($__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginaldae4cd48acb67888a4631e1ba48f2f93)): ?>
+<?php $component = $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93; ?>
+<?php unset($__componentOriginaldae4cd48acb67888a4631e1ba48f2f93); ?>
+<?php endif; ?>
+
+            <?php if (isset($component)) { $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.card','data' => ['class' => 'space-y-2']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('ui.card'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['class' => 'space-y-2']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+                <p class="tf-muted">Tasks</p>
+                <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+                    <?php echo e($taskUsage); ?> / <?php echo e($taskLimit === null ? 'Unlimited' : $taskLimit); ?></p>
+             <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93)): ?>
+<?php $attributes = $__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93; ?>
+<?php unset($__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginaldae4cd48acb67888a4631e1ba48f2f93)): ?>
+<?php $component = $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93; ?>
+<?php unset($__componentOriginaldae4cd48acb67888a4631e1ba48f2f93); ?>
+<?php endif; ?>
 
             <?php if (isset($component)) { $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93 = $attributes; } ?>
@@ -175,7 +269,7 @@ use App\Data\Organizations\UpdateOrganizationData;
 
                 <p class="tf-muted">Members</p>
                 <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
-                    <?php echo e($organization->members->count()); ?></p>
+                    <?php echo e($memberUsage); ?> / <?php echo e($memberLimit === null ? 'Unlimited' : $memberLimit); ?></p>
              <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93)): ?>
@@ -199,9 +293,10 @@ use App\Data\Organizations\UpdateOrganizationData;
 <?php $component->withAttributes(['class' => 'space-y-2']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-                <p class="tf-muted">Open invitations</p>
+                <p class="tf-muted">Storage Usage</p>
                 <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
-                    <?php echo e($this->invitations->where('status', 'pending')->count()); ?></p>
+                    <?php echo e($organization->storageUsageMb()); ?> MB /
+                    <?php echo e($storageLimit === null ? 'Unlimited' : $storageLimit . ' MB'); ?></p>
              <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93)): ?>
@@ -213,7 +308,7 @@ use App\Data\Organizations\UpdateOrganizationData;
 <?php unset($__componentOriginaldae4cd48acb67888a4631e1ba48f2f93); ?>
 <?php endif; ?>
         </div>
-    <?php endif; ?>
+    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
     
 
@@ -358,17 +453,27 @@ use App\Data\Organizations\UpdateOrganizationData;
 
                 <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['variant' => 'primary','wire:click' => 'createWorkspace']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['variant' => 'primary','wire:click' => 'createWorkspace','wire:loading.attr' => 'disabled','wire:target' => 'createWorkspace','class' => 'inline-flex items-center justify-center gap-2']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['variant' => 'primary','wire:click' => 'createWorkspace']); ?>
+<?php $component->withAttributes(['variant' => 'primary','wire:click' => 'createWorkspace','wire:loading.attr' => 'disabled','wire:target' => 'createWorkspace','class' => 'inline-flex items-center justify-center gap-2']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-                    Create Workspace
+                    <span wire:loading.remove wire:target="createWorkspace">Create Workspace</span>
+                    <span wire:loading.flex wire:target="createWorkspace" class="items-center justify-center gap-2">
+                        <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z">
+                            </path>
+                        </svg>
+                        <span>Creating...</span>
+                    </span>
                  <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
@@ -407,27 +512,29 @@ use App\Data\Organizations\UpdateOrganizationData;
 <?php $component->withAttributes(['class' => 'mb-6 border-zinc-200/80 bg-white/90 shadow-sm']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-        <div class="flex flex-col gap-4 border-b border-zinc-200/70 pb-5 sm:flex-row sm:items-end sm:justify-between dark:border-white/10">
+        <div
+            class="flex flex-col gap-4 border-b border-zinc-200/70 pb-5 sm:flex-row sm:items-end sm:justify-between dark:border-white/10">
             <div>
                 <h2 class="tf-panel-title">Workspaces</h2>
                 <p class="tf-panel-subtitle">Organize teams, projects, and delivery areas around each workspace.</p>
             </div>
 
-            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('createWorkspace', $organization)): ?>
-                <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(auth()->user()->can('createWorkspace', $organization)): ?>
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($organization->canCreateWorkspace()): ?>
+                    <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['wire:click' => 'openCreateWorkspaceModal']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['wire:click' => 'openCreateWorkspaceModal','wire:loading.attr' => 'disabled','wire:target' => 'openCreateWorkspaceModal']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['wire:click' => 'openCreateWorkspaceModal']); ?>
+<?php $component->withAttributes(['wire:click' => 'openCreateWorkspaceModal','wire:loading.attr' => 'disabled','wire:target' => 'openCreateWorkspaceModal']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-                    Create workspace
-                 <?php echo $__env->renderComponent(); ?>
+                        Create Workspace
+                     <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
 <?php $attributes = $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
@@ -437,16 +544,25 @@ use App\Data\Organizations\UpdateOrganizationData;
 <?php $component = $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
 <?php unset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
 <?php endif; ?>
-            <?php endif; ?>
+                <?php else: ?>
+                    <a href="<?php echo e(route('organizations.billing', $organization)); ?>"
+                        class="inline-flex items-center justify-center rounded-full bg-zinc-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-800"
+                        wire:navigate>
+                        Upgrade plan
+                    </a>
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
         </div>
 
         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($organization->workspaces->isNotEmpty()): ?>
             <div class="mt-6 grid gap-4 xl:grid-cols-2">
                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $organization->workspaces; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $workspace): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                    <div class="group rounded-2xl border border-zinc-200 bg-zinc-50/80 p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-zinc-300 hover:bg-white dark:border-white/10 dark:bg-white/[0.03] dark:hover:border-white/15 dark:hover:bg-white/[0.05]">
+                    <div
+                        class="group rounded-2xl border border-zinc-200 bg-zinc-50/80 p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-zinc-300 hover:bg-white dark:border-white/10 dark:bg-white/[0.03] dark:hover:border-white/15 dark:hover:bg-white/[0.05]">
                         <div class="flex items-start justify-between gap-3">
                             <div class="flex min-w-0 items-center gap-3">
-                                <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-zinc-950 text-sm font-semibold text-white dark:bg-white dark:text-zinc-950">
+                                <div
+                                    class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-zinc-950 text-sm font-semibold text-white dark:bg-white dark:text-zinc-950">
                                     <?php echo e(strtoupper(substr($workspace->name, 0, 1))); ?>
 
                                 </div>
@@ -457,14 +573,30 @@ use App\Data\Organizations\UpdateOrganizationData;
 
                                     </h3>
                                     <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                                        <?php echo e($workspace->projects_count); ?> projects • <?php echo e($workspace->teams_count); ?> teams
+                                        <?php echo e($workspace->projects_count); ?> projects • <?php echo e($workspace->teams_count); ?>
+
+                                        teams
                                     </p>
                                 </div>
                             </div>
 
-                            <span class="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400">
-                                Active
-                            </span>
+                            <?php
+                                $isWorkspaceLocked = $lockedWorkspaces->contains(
+                                    fn($lockedWorkspace) => $lockedWorkspace->id === $workspace->id,
+                                );
+                            ?>
+
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($isWorkspaceLocked): ?>
+                                <span
+                                    class="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400">
+                                    Locked
+                                </span>
+                            <?php else: ?>
+                                <span
+                                    class="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400">
+                                    Active
+                                </span>
+                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                         </div>
 
                         <p class="mt-4 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
@@ -473,12 +605,16 @@ use App\Data\Organizations\UpdateOrganizationData;
                         </p>
 
                         <div class="mt-5 flex flex-wrap gap-2">
-                            <div class="rounded-xl border border-zinc-200 bg-white/80 px-3 py-2 text-sm text-zinc-700 shadow-sm dark:border-white/10 dark:bg-zinc-900/80 dark:text-zinc-200">
-                                <span class="font-semibold text-zinc-950 dark:text-white"><?php echo e($workspace->teams_count); ?></span>
+                            <div
+                                class="rounded-xl border border-zinc-200 bg-white/80 px-3 py-2 text-sm text-zinc-700 shadow-sm dark:border-white/10 dark:bg-zinc-900/80 dark:text-zinc-200">
+                                <span
+                                    class="font-semibold text-zinc-950 dark:text-white"><?php echo e($workspace->teams_count); ?></span>
                                 teams
                             </div>
-                            <div class="rounded-xl border border-zinc-200 bg-white/80 px-3 py-2 text-sm text-zinc-700 shadow-sm dark:border-white/10 dark:bg-zinc-900/80 dark:text-zinc-200">
-                                <span class="font-semibold text-zinc-950 dark:text-white"><?php echo e($workspace->projects_count); ?></span>
+                            <div
+                                class="rounded-xl border border-zinc-200 bg-white/80 px-3 py-2 text-sm text-zinc-700 shadow-sm dark:border-white/10 dark:bg-zinc-900/80 dark:text-zinc-200">
+                                <span
+                                    class="font-semibold text-zinc-950 dark:text-white"><?php echo e($workspace->projects_count); ?></span>
                                 projects
                             </div>
                         </div>
@@ -495,15 +631,39 @@ use App\Data\Organizations\UpdateOrganizationData;
                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
             </div>
         <?php else: ?>
-            <div class="mt-6 rounded-2xl border border-dashed border-zinc-300 bg-zinc-50/70 p-8 text-center dark:border-white/10 dark:bg-white/[0.03]">
+            <div
+                class="mt-6 rounded-2xl border border-dashed border-zinc-300 bg-zinc-50/70 p-8 text-center dark:border-white/10 dark:bg-white/[0.03]">
                 <p class="text-base font-semibold text-zinc-950 dark:text-white">No workspaces yet</p>
-                <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">Create the first workspace to organize projects and teams around a clear operational home.</p>
+                <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">Create the first workspace to organize projects
+                    and teams around a clear operational home.</p>
 
-                <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('createWorkspace', $organization)): ?>
-                    <button wire:click="openCreateWorkspaceModal" class="tf-button-primary mt-5">
-                        Create your first workspace
-                    </button>
-                <?php endif; ?>
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(auth()->user()->can('createWorkspace', $organization)): ?>
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($organization->canCreateWorkspace()): ?>
+                        <button wire:click="openCreateWorkspaceModal" wire:loading.attr="disabled"
+                            wire:target="openCreateWorkspaceModal"
+                            class="tf-button-primary mt-5 inline-flex items-center justify-center gap-2">
+                            <span wire:loading.remove wire:target="openCreateWorkspaceModal">Create your first
+                                workspace</span>
+                            <span wire:loading.flex wire:target="openCreateWorkspaceModal"
+                                class="items-center justify-center gap-2">
+                                <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"
+                                    aria-hidden="true">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10"
+                                        stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor"
+                                        d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z">
+                                    </path>
+                                </svg>
+                                <span>Opening...</span>
+                            </span>
+                        </button>
+                    <?php else: ?>
+                        <a href="<?php echo e(route('organizations.billing', $organization)); ?>" class="tf-button-primary mt-5"
+                            wire:navigate>
+                            Upgrade plan
+                        </a>
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
             </div>
         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
@@ -600,17 +760,28 @@ use App\Data\Organizations\UpdateOrganizationData;
 
                     <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['wire:click' => 'updateOrganization']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['wire:click' => 'updateOrganization','wire:loading.attr' => 'disabled','wire:target' => 'updateOrganization','class' => 'inline-flex items-center justify-center gap-2']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['wire:click' => 'updateOrganization']); ?>
+<?php $component->withAttributes(['wire:click' => 'updateOrganization','wire:loading.attr' => 'disabled','wire:target' => 'updateOrganization','class' => 'inline-flex items-center justify-center gap-2']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-                        Save Changes
+                        <span wire:loading.remove wire:target="updateOrganization">Save Changes</span>
+                        <span wire:loading.flex wire:target="updateOrganization"
+                            class="items-center justify-center gap-2">
+                            <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <circle class="opacity-25" cx="12" cy="12" r="10"
+                                    stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z">
+                                </path>
+                            </svg>
+                            <span>Saving...</span>
+                        </span>
                      <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
@@ -709,17 +880,28 @@ use App\Data\Organizations\UpdateOrganizationData;
 
                     <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['variant' => 'danger','wire:click' => 'deleteOrganization']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['variant' => 'danger','wire:click' => 'deleteOrganization','wire:loading.attr' => 'disabled','wire:target' => 'deleteOrganization','class' => 'inline-flex items-center justify-center gap-2']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['variant' => 'danger','wire:click' => 'deleteOrganization']); ?>
+<?php $component->withAttributes(['variant' => 'danger','wire:click' => 'deleteOrganization','wire:loading.attr' => 'disabled','wire:target' => 'deleteOrganization','class' => 'inline-flex items-center justify-center gap-2']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-                        Delete
+                        <span wire:loading.remove wire:target="deleteOrganization">Delete</span>
+                        <span wire:loading.flex wire:target="deleteOrganization"
+                            class="items-center justify-center gap-2">
+                            <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <circle class="opacity-25" cx="12" cy="12" r="10"
+                                    stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z">
+                                </path>
+                            </svg>
+                            <span>Deleting...</span>
+                        </span>
                      <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
@@ -763,7 +945,7 @@ use App\Data\Organizations\UpdateOrganizationData;
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
 
         
-        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('inviteMembers', $organization)): ?>
+        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(auth()->user()->can('inviteMembers', $organization)): ?>
             <?php if (isset($component)) { $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.card','data' => ['class' => 'space-y-6 border-zinc-200/80 bg-white/90 shadow-sm']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -778,7 +960,9 @@ use App\Data\Organizations\UpdateOrganizationData;
 
                 <div>
                     <h2 class="tf-panel-title">Invite Member</h2>
-                    <p class="tf-panel-subtitle">Bring collaborators into the organization with a clear role from the start.</p>
+                    <p class="tf-panel-subtitle">Bring collaborators into the organization with a clear role from the
+                        start.
+                    </p>
                 </div>
 
                 <form wire:submit="inviteMember" class="space-y-4">
@@ -869,20 +1053,33 @@ if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
-                    <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($organization->canAddMember()): ?>
+                        <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['variant' => 'primary','type' => 'submit','class' => 'w-full sm:w-auto']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['variant' => 'primary','type' => 'submit','wire:loading.attr' => 'disabled','wire:target' => 'inviteMember','class' => 'inline-flex w-full items-center justify-center gap-2 sm:w-auto']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['variant' => 'primary','type' => 'submit','class' => 'w-full sm:w-auto']); ?>
+<?php $component->withAttributes(['variant' => 'primary','type' => 'submit','wire:loading.attr' => 'disabled','wire:target' => 'inviteMember','class' => 'inline-flex w-full items-center justify-center gap-2 sm:w-auto']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-                        Send Invitation
-                     <?php echo $__env->renderComponent(); ?>
+                            <span wire:loading.remove wire:target="inviteMember">Send Invitation</span>
+                            <span wire:loading.flex wire:target="inviteMember"
+                                class="items-center justify-center gap-2">
+                                <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"
+                                    aria-hidden="true">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10"
+                                        stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor"
+                                        d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z">
+                                    </path>
+                                </svg>
+                                <span>Sending...</span>
+                            </span>
+                         <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
 <?php $attributes = $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
@@ -892,8 +1089,11 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
 <?php $component = $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
 <?php unset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
 <?php endif; ?>
-                </form>
-             <?php echo $__env->renderComponent(); ?>
+                    <?php else: ?>
+                        <flux:button variant="primary" type="button" class="w-full sm:w-auto"
+                            <?php if(true): echo 'disabled'; endif; ?>>
+                            Upgrade to invite more members.
+                         <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93)): ?>
 <?php $attributes = $__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93; ?>
@@ -903,7 +1103,21 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
 <?php $component = $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93; ?>
 <?php unset($__componentOriginaldae4cd48acb67888a4631e1ba48f2f93); ?>
 <?php endif; ?>
-        <?php endif; ?>
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+
+                </form>
+             <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal1f4cdfbcf032dc00af93962c134fd24f)): ?>
+<?php $attributes = $__attributesOriginal1f4cdfbcf032dc00af93962c134fd24f; ?>
+<?php unset($__attributesOriginal1f4cdfbcf032dc00af93962c134fd24f); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal1f4cdfbcf032dc00af93962c134fd24f)): ?>
+<?php $component = $__componentOriginal1f4cdfbcf032dc00af93962c134fd24f; ?>
+<?php unset($__componentOriginal1f4cdfbcf032dc00af93962c134fd24f); ?>
+<?php endif; ?>
+        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
         
         <?php if (isset($component)) { $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93 = $component; } ?>
@@ -925,7 +1139,8 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
 
             <div class="space-y-3">
                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $organization->members; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $member): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                    <div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-zinc-50/70 p-3 shadow-sm dark:border-white/10 dark:bg-white/[0.03]">
+                    <div
+                        class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-zinc-50/70 p-3 shadow-sm dark:border-white/10 dark:bg-white/[0.03]">
                         <div class="flex min-w-0 items-center gap-3">
                             <?php if (isset($component)) { $__componentOriginald04dd79f9e235eb8e58dee4526a2f3c2 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginald04dd79f9e235eb8e58dee4526a2f3c2 = $attributes; } ?>
@@ -962,7 +1177,7 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
                             </div>
                         </div>
 
-                        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('changeMemberRole', $organization)): ?>
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(auth()->user()->can('changeMemberRole', $organization)): ?>
                             <?php if (isset($component)) { $__componentOriginala467913f9ff34913553be64599ec6e92 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginala467913f9ff34913553be64599ec6e92 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::select.index','data' => ['wire:change' => 'updateRole('.e($member->id).', $event.target.value)']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -991,10 +1206,11 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
 <?php $component = $__componentOriginala467913f9ff34913553be64599ec6e92; ?>
 <?php unset($__componentOriginala467913f9ff34913553be64599ec6e92); ?>
 <?php endif; ?>
-                        <?php endif; ?>
+                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
                         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(!auth()->user()->can('changeMemberRole', $organization)): ?>
-                            <div class="rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-sm text-zinc-600 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-300">
+                            <div
+                                class="rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-sm text-zinc-600 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-300">
                                 <?php echo e(ucfirst($member->pivot->role)); ?>
 
                             </div>
@@ -1016,7 +1232,7 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
     </div>
 
     
-    <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('inviteMembers', $organization)): ?>
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(auth()->user()->can('inviteMembers', $organization)): ?>
         <?php if (isset($component)) { $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.card','data' => ['padding' => 'p-0','class' => 'mt-6 overflow-hidden border-zinc-200/80 bg-white/90 shadow-sm']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -1123,27 +1339,31 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
                                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($invitation->isPending()): ?>
                                         <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['size' => 'sm','variant' => 'danger','wire:click' => '
-                                        cancelInvitation(
-                                            '.e($invitation->id).'
-
-                                        )
-                                    ']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['size' => 'sm','variant' => 'danger','wire:click' => 'cancelInvitation('.e($invitation->id).')','wire:loading.attr' => 'disabled','wire:target' => 'cancelInvitation('.e($invitation->id).')','class' => 'inline-flex items-center justify-center gap-2']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['size' => 'sm','variant' => 'danger','wire:click' => '
-                                        cancelInvitation(
-                                            '.e($invitation->id).'
-
-                                        )
-                                    ']); ?>
+<?php $component->withAttributes(['size' => 'sm','variant' => 'danger','wire:click' => 'cancelInvitation('.e($invitation->id).')','wire:loading.attr' => 'disabled','wire:target' => 'cancelInvitation('.e($invitation->id).')','class' => 'inline-flex items-center justify-center gap-2']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-                                            Cancel
+                                            <span wire:loading.remove
+                                                wire:target="cancelInvitation(<?php echo e($invitation->id); ?>)">Cancel</span>
+                                            <span wire:loading.flex
+                                                wire:target="cancelInvitation(<?php echo e($invitation->id); ?>)"
+                                                class="items-center justify-center gap-2">
+                                                <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"
+                                                    aria-hidden="true">
+                                                    <circle class="opacity-25" cx="12" cy="12" r="10"
+                                                        stroke="currentColor" stroke-width="4"></circle>
+                                                    <path class="opacity-75" fill="currentColor"
+                                                        d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z">
+                                                    </path>
+                                                </svg>
+                                                <span>Canceling...</span>
+                                            </span>
                                          <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
@@ -1203,15 +1423,14 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
 <?php $component = $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93; ?>
 <?php unset($__componentOriginaldae4cd48acb67888a4631e1ba48f2f93); ?>
 <?php endif; ?>
-    <?php endif; ?>
 
  <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
-<?php if (isset($__attributesOriginal1f4cdfbcf032dc00af93962c134fd24f)): ?>
-<?php $attributes = $__attributesOriginal1f4cdfbcf032dc00af93962c134fd24f; ?>
-<?php unset($__attributesOriginal1f4cdfbcf032dc00af93962c134fd24f); ?>
+<?php if (isset($__attributesOriginal)): ?>
+<?php $attributes = $__attributesOriginal; ?>
+<?php unset($__attributesOriginal); ?>
 <?php endif; ?>
-<?php if (isset($__componentOriginal1f4cdfbcf032dc00af93962c134fd24f)): ?>
-<?php $component = $__componentOriginal1f4cdfbcf032dc00af93962c134fd24f; ?>
-<?php unset($__componentOriginal1f4cdfbcf032dc00af93962c134fd24f); ?>
+<?php if (isset($__componentOriginal)): ?>
+<?php $component = $__componentOriginal; ?>
+<?php unset($__componentOriginal); ?>
 <?php endif; ?><?php /**PATH D:\Code\taskforge\storage\framework\views/livewire/views/7b1f7b52.blade.php ENDPATH**/ ?>

@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Enums\TeamRole;
+use App\Domain\Teams\Enums\TeamRole;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -46,7 +46,7 @@ class UserFactory extends Factory
             ]);
 
             $team->members()->attach($user, [
-                'role' => TeamRole::Owner->value,
+                'role' => TeamRole::LEADER->value,
             ]);
 
             $user->update(['current_team_id' => $team->id]);

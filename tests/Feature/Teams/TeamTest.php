@@ -1,6 +1,6 @@
 <?php
 
-use App\Enums\TeamRole;
+use App\Domain\Teams\Enums\TeamRole;
 use App\Models\Team;
 use App\Models\User;
 use Livewire\Livewire;
@@ -68,14 +68,14 @@ test('creating a team attaches the creator as owner', function () {
     $this->assertDatabaseHas('team_members', [
         'team_id' => $team->id,
         'user_id' => $user->id,
-        'role' => TeamRole::Owner->value,
+        'role' => TeamRole::LEADER->value,
     ]);
 });
 
 test('team edit page can be rendered', function () {
     $user = User::factory()->create();
     $team = Team::factory()->create();
-    $team->members()->attach($user, ['role' => TeamRole::Owner->value]);
+    $team->members()->attach($user, ['role' => TeamRole::LEADER->value]);
 
     $response = $this
         ->actingAs($user)
@@ -88,7 +88,7 @@ test('teams can be updated by owners', function () {
     $user = User::factory()->create();
     $team = Team::factory()->create(['name' => 'Original Name']);
 
-    $team->members()->attach($user, ['role' => TeamRole::Owner->value]);
+    $team->members()->attach($user, ['role' => TeamRole::LEADER->value]);
 
     $this->actingAs($user);
 
@@ -108,8 +108,8 @@ test('teams cannot be updated by members', function () {
     $member = User::factory()->create();
     $team = Team::factory()->create();
 
-    $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
-    $team->members()->attach($member, ['role' => TeamRole::Member->value]);
+    $team->members()->attach($owner, ['role' => TeamRole::LEADER->value]);
+    $team->members()->attach($member, ['role' => TeamRole::MEMBER->value]);
 
     $this->actingAs($member);
 
@@ -123,7 +123,7 @@ test('teams can be deleted by owners', function () {
     $user = User::factory()->create();
     $team = Team::factory()->create();
 
-    $team->members()->attach($user, ['role' => TeamRole::Owner->value]);
+    $team->members()->attach($user, ['role' => TeamRole::LEADER->value]);
 
     $this->actingAs($user);
 
@@ -141,7 +141,7 @@ test('team deletion requires name confirmation', function () {
     $user = User::factory()->create();
     $team = Team::factory()->create();
 
-    $team->members()->attach($user, ['role' => TeamRole::Owner->value]);
+    $team->members()->attach($user, ['role' => TeamRole::LEADER->value]);
 
     $this->actingAs($user);
 
@@ -160,13 +160,13 @@ test('deleting current team switches to alphabetically first remaining team', fu
     $user = User::factory()->create(['name' => 'Mike']);
 
     $zuluTeam = Team::factory()->create(['name' => 'Zulu Team']);
-    $zuluTeam->members()->attach($user, ['role' => TeamRole::Owner->value]);
+    $zuluTeam->members()->attach($user, ['role' => TeamRole::LEADER->value]);
 
     $alphaTeam = Team::factory()->create(['name' => 'Alpha Team']);
-    $alphaTeam->members()->attach($user, ['role' => TeamRole::Owner->value]);
+    $alphaTeam->members()->attach($user, ['role' => TeamRole::LEADER->value]);
 
     $betaTeam = Team::factory()->create(['name' => 'Beta Team']);
-    $betaTeam->members()->attach($user, ['role' => TeamRole::Owner->value]);
+    $betaTeam->members()->attach($user, ['role' => TeamRole::LEADER->value]);
 
     $user->update(['current_team_id' => $zuluTeam->id]);
 
@@ -188,7 +188,7 @@ test('deleting current team falls back to personal team when alphabetically firs
     $user = User::factory()->create();
     $personalTeam = $user->personalTeam();
     $team = Team::factory()->create(['name' => 'Zulu Team']);
-    $team->members()->attach($user, ['role' => TeamRole::Owner->value]);
+    $team->members()->attach($user, ['role' => TeamRole::LEADER->value]);
 
     $user->update(['current_team_id' => $team->id]);
 
@@ -210,7 +210,7 @@ test('deleting non current team leaves current team unchanged', function () {
     $user = User::factory()->create();
     $personalTeam = $user->personalTeam();
     $team = Team::factory()->create();
-    $team->members()->attach($user, ['role' => TeamRole::Owner->value]);
+    $team->members()->attach($user, ['role' => TeamRole::LEADER->value]);
 
     $user->update(['current_team_id' => $personalTeam->id]);
 
@@ -233,8 +233,8 @@ test('deleting team switches other affected users to their personal team', funct
     $member = User::factory()->create();
 
     $team = Team::factory()->create();
-    $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
-    $team->members()->attach($member, ['role' => TeamRole::Member->value]);
+    $team->members()->attach($owner, ['role' => TeamRole::LEADER->value]);
+    $team->members()->attach($member, ['role' => TeamRole::MEMBER->value]);
 
     $owner->update(['current_team_id' => $team->id]);
     $member->update(['current_team_id' => $team->id]);
@@ -272,8 +272,8 @@ test('teams cannot be deleted by non owners', function () {
     $member = User::factory()->create();
     $team = Team::factory()->create();
 
-    $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
-    $team->members()->attach($member, ['role' => TeamRole::Member->value]);
+    $team->members()->attach($owner, ['role' => TeamRole::LEADER->value]);
+    $team->members()->attach($member, ['role' => TeamRole::MEMBER->value]);
 
     $this->actingAs($member);
 

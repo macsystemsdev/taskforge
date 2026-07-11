@@ -19,6 +19,9 @@ use Carbon\CarbonInterface;
     'max_workspaces',
     'max_projects',
     'max_members',
+    'max_teams',
+    'max_tasks',
+    'max_storage_mb',
     'is_active',
 ])]
 
@@ -59,6 +62,22 @@ class SubscriptionPlan extends Model
     public function memberLimitLabel(): string
     {
         return $this->formatLimit($this->max_members);
+    }
+
+    public function teamLimitLabel(): string
+    {
+        return $this->formatLimit(
+            $this->max_teams
+        );
+    }
+
+    public function storageLimitLabel(): string
+    {
+        if (is_null($this->max_storage_mb)) {
+            return 'Unlimited';
+        }
+
+        return "{$this->max_storage_mb} MB";
     }
 
     public function billingIntervalLabel(): string

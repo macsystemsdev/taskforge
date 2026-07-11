@@ -18,16 +18,22 @@ new #[Title('Teams')] class extends Component {
 
     public function createTeam(CreateTeam $createTeam): void
     {
+        $workspace = Auth::user()->currentTeam?->workspace ?? Auth::user()->personalTeam()?->workspace;
+
+        abort_if(! $workspace, 422, __('No workspace is available for this team.'));
+
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:255', new TeamName],
             'description' => ['nullable', 'string'],
         ]);
 
         $team = $createTeam->handle(
-            Auth::user(),
+            $workspace,
             new CreateTeamData(
                 name: $validated['name'],
                 description: $validated['description'] ?? null,
+                leaderId: Auth::id(),
+                memberIds: [],
             )
         );
 

@@ -59,8 +59,15 @@ new class extends Component {
 
 
 
-                <flux:button variant="primary" type="submit">
-                    Create Organization
+                <flux:button variant="primary" type="submit" wire:loading.attr="disabled" wire:target="createOrganization" class="inline-flex items-center justify-center gap-2">
+                    <span wire:loading.remove wire:target="createOrganization">Create Organization</span>
+                    <span wire:loading.flex wire:target="createOrganization" class="inline-flex items-center justify-center gap-2">
+                        <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z"></path>
+                        </svg>
+                        <span>Creating...</span>
+                    </span>
                 </flux:button>
             </div>
         </form>

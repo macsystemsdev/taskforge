@@ -217,31 +217,31 @@ new class extends Component {
 
                 <div class="mt-4 flex flex-col gap-2">
 
-                    @can('start', $task)
+                    @if (auth()->user()->can('start', $task))
                         <button wire:click="startTask" class="tf-button-primary">
                             Start Task
                         </button>
-                    @endcan
+                    @endif
 
-                    @can('complete', $task)
+                    @if (auth()->user()->can('complete', $task))
                         <button wire:click="completeTask" class="tf-button-primary">
                             Complete Task
                         </button>
-                    @endcan
+                    @endif
 
-                    @can('cancel', $task)
+                    @if (auth()->user()->can('cancel', $task))
                         <button wire:click="cancelTask" class="tf-button-secondary">
                             Cancel Task
                         </button>
-                    @endcan
+                    @endif
 
-                    @can('delete', $task)
+                    @if (auth()->user()->can('delete', $task))
                         @if ($task->status->isTodo() || $task->status->isCancelled())
                             <button wire:click="deleteTask" wire:confirm="Delete this task?" class="tf-button-danger">
                                 Delete Task
                             </button>
                         @endif
-                    @endcan
+                    @endif
 
                 </div>
 
@@ -260,7 +260,7 @@ new class extends Component {
             </x-ui.card>
 
             
-            @can('reassign', $task)
+            @if (auth()->user()->can('reassign', $task))
 
                 @if (!$task->status->isDone() && !$task->status->isCancelled())
                     <x-ui.card class="border-zinc-200/80 bg-white/90 shadow-sm">
@@ -295,7 +295,7 @@ new class extends Component {
                     </x-ui.card>
                 @endif
 
-            @endcan
+            @endif
 
             <x-ui.card class="border-zinc-200/80 bg-white/90 shadow-sm">
                 <h2 class="tf-panel-title">Activity</h2>

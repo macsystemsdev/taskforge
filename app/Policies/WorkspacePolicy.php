@@ -13,8 +13,21 @@ class WorkspacePolicy
         User $user,
         Workspace $workspace
     ): bool {
+
+        if (
+            $workspace
+            ->organization
+            ->lockedWorkspaces(
+                $workspace
+            )
+        ) {
+            return false;
+        }
+
         return WorkspacePermissions::canView(
-            $workspace->organization->roleFor($user)
+            $workspace
+                ->organization
+                ->roleFor($user)
         );
     }
 
@@ -22,6 +35,15 @@ class WorkspacePolicy
         User $user,
         Workspace $workspace
     ): bool {
+        if (
+            $workspace
+            ->organization
+            ->lockedWorkspaces(
+                $workspace
+            )
+        ) {
+            return false;
+        }
         return WorkspacePermissions::canUpdate(
             $workspace->organization->roleFor($user)
         );
@@ -31,6 +53,16 @@ class WorkspacePolicy
         User $user,
         Workspace $workspace
     ): bool {
+
+        if (
+            $workspace
+            ->organization
+            ->lockedWorkspaces(
+                $workspace
+            )
+        ) {
+            return false;
+        }
         return WorkspacePermissions::canDelete(
             $workspace->organization->roleFor($user)
         );
@@ -40,18 +72,38 @@ class WorkspacePolicy
         User $user,
         Workspace $workspace
     ): bool {
-        return WorkspacePermissions::canCreateTeam(
-            $workspace->organization->roleFor($user)
-        );
+        return
+
+            WorkspacePermissions::canCreateTeam(
+                $workspace
+                    ->organization
+                    ->roleFor($user)
+            )
+
+            &&
+
+            $workspace
+            ->organization
+            ->canCreateTeam();
     }
 
     public function createProject(
         User $user,
         Workspace $workspace
     ): bool {
-        return WorkspacePermissions::canCreateProject(
-            $workspace->organization->roleFor($user)
-        );
+        return
+
+            WorkspacePermissions::canCreateProject(
+                $workspace
+                    ->organization
+                    ->roleFor($user)
+            )
+
+            &&
+
+            $workspace
+            ->organization
+            ->canCreateProject();
     }
 
     public function viewActivityLog(

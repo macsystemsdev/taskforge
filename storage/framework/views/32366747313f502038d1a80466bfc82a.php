@@ -1,0 +1,650 @@
+<?php
+
+use App\Models\Organization;
+use App\Models\SubscriptionPlan;
+use Livewire\Component;
+use Flux\Flux;
+use Livewire\Attributes\Computed;
+use App\Domain\Billing\DataTransferObjects\CheckoutData;
+use App\Domain\Billing\Enum\PaymentProvider;
+use App\Domain\Billing\Services\CreateCheckoutService;
+use App\Domain\Billing\Services\StartTrialService;
+use App\Exceptions\Billing\TrialUnavailableException;
+
+new class extends Component {
+    public ?SubscriptionPlan $selectedPlan = null;
+
+    public Organization $organization;
+
+    public function mount(Organization $organization): void
+    {
+        $this->organization = $organization->load(['subscription.plan']);
+    }
+
+    #[Computed]
+    public function plans()
+    {
+        return SubscriptionPlan::query()->purchasable()->orderBy('price')->get();
+    }
+
+    public function selectPlan(SubscriptionPlan $plan): void
+    {
+        $this->selectedPlan = $plan;
+
+        Flux::modal('confirm-subscription')->show();
+    }
+
+    public function resetSelectedPlan(): void
+    {
+        $this->selectedPlan = null;
+
+        Flux::modal('confirm-subscription')->close();
+    }
+
+    public function confirmPlanChange(): mixed
+    {
+        if (!$this->selectedPlan) {
+            return null;
+        }
+
+        $response = app(CreateCheckoutService::class)->handle(new CheckoutData(organization: $this->organization, plan: $this->selectedPlan, provider: PaymentProvider::STRIPE));
+
+        return redirect()->away($response->url);
+    }
+
+    public function startTrial(StartTrialService $service)
+    {
+        try {
+            $service->handle($this->organization->subscription);
+
+            $this->organization->refresh();
+
+            $this->dispatch('notify', type: 'success', message: 'Your free trial has started.');
+        } catch (TrialUnavailableException) {
+            $this->dispatch('notify', type: 'error', message: 'Free trial is no longer available.');
+        }
+    }
+
+    public function render()
+    {
+        return view('livewire.billing.show-billing');
+    }
+};
+
+?>
+
+<div class="space-y-8">
+    <?php
+        $subscription = $organization->subscription;
+        $currentAccessLabel = $subscription->isTrial() ? 'Pro Trial' : ($subscription?->plan?->name ?? 'No Active Plan');
+        $currentAccessDescription = $subscription->isTrial() ? '14-day trial active' : ($subscription?->plan?->billingIntervalLabel() ?? 'Free');
+        $currentAccessBadge = $subscription->isTrial() ? 'Trial' : 'Active';
+    ?>
+
+    <div class="overflow-hidden rounded-3xl border border-zinc-200 bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-500 p-8 text-white shadow-2xl shadow-indigo-950/10">
+        <div class="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+            <div class="max-w-2xl">
+                <div class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-white/90">
+                    <span class="h-2 w-2 rounded-full bg-emerald-300"></span>
+                    Billing & plans
+                </div>
+
+                <h1 class="mt-5 text-3xl font-semibold tracking-tight sm:text-4xl">
+                    Scale your organization with confidence.
+                </h1>
+
+                <p class="mt-3 max-w-xl text-sm leading-6 text-indigo-50 sm:text-base">
+                    Unlock more workspaces, projects, and collaboration power as your team grows. Start a free trial in one click or switch to a plan that fits your momentum.
+                </p>
+            </div>
+
+            <div class="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-sm">
+                <p class="text-sm font-medium text-white/70">
+                    Current access
+                </p>
+                <p class="mt-2 text-xl font-semibold">
+                    <?php echo e($currentAccessLabel); ?>
+
+                </p>
+                <p class="mt-1 text-sm text-white/80">
+                    <?php echo e($currentAccessDescription); ?>
+
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($organization->subscription->isTrial()): ?>
+        <?php if (isset($component)) { $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.card','data' => ['class' => 'border-amber-200 bg-amber-50/80 shadow-sm dark:border-amber-500/20 dark:bg-amber-500/10']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('ui.card'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['class' => 'border-amber-200 bg-amber-50/80 shadow-sm dark:border-amber-500/20 dark:bg-amber-500/10']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm font-semibold text-amber-900 dark:text-amber-300">
+                        Pro Trial Active
+                    </p>
+                    <p class="mt-1 text-sm text-amber-800 dark:text-amber-200">
+                        <?php echo e($organization->subscription->trialDaysRemaining()); ?> days remaining on your trial.
+                    </p>
+                </div>
+
+                <span class="inline-flex w-fit items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
+                    Trial
+                </span>
+            </div>
+         <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93)): ?>
+<?php $attributes = $__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93; ?>
+<?php unset($__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginaldae4cd48acb67888a4631e1ba48f2f93)): ?>
+<?php $component = $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93; ?>
+<?php unset($__componentOriginaldae4cd48acb67888a4631e1ba48f2f93); ?>
+<?php endif; ?>
+    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+    <div class="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+        <?php if (isset($component)) { $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.card','data' => ['class' => 'border-zinc-200/80 bg-white/80 shadow-sm backdrop-blur']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('ui.card'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['class' => 'border-zinc-200/80 bg-white/80 shadow-sm backdrop-blur']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+            <div class="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                    <p class="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-500">
+                        Current Access
+                    </p>
+                    <h2 class="mt-2 text-2xl font-semibold text-zinc-950 dark:text-white">
+                        <?php echo e($currentAccessLabel); ?>
+
+                    </h2>
+                    <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-300">
+                        <?php echo e($subscription->isTrial() ? 'Trial is active right now.' : ($subscription?->status?->value ?? '-')); ?>
+
+                    </p>
+                </div>
+
+                <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+                    <?php echo e($currentAccessBadge); ?>
+
+                </span>
+            </div>
+
+            <div class="mt-8 grid gap-6 sm:grid-cols-3">
+                <div>
+                    <p class="text-sm font-medium text-zinc-500">Price</p>
+                    <p class="mt-2 text-lg font-semibold text-zinc-950 dark:text-white">
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($subscription->isTrial()): ?>
+                            Included with trial
+                        <?php else: ?>
+                            <?php echo e($subscription?->plan?->formattedPrice() ?? 'Free'); ?>
+
+
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($subscription?->plan?->isFree()): ?>
+                                <span class="text-sm font-normal text-zinc-500">
+                                    / <?php echo e($subscription?->plan?->billingLabel()); ?>
+
+                                </span>
+                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                    </p>
+                </div>
+
+                <div>
+                    <p class="text-sm font-medium text-zinc-500">Billing</p>
+                    <p class="mt-2 text-lg font-semibold text-zinc-950 dark:text-white">
+                        <?php echo e($subscription->isTrial() ? 'Trial' : ($subscription?->plan?->billingIntervalLabel() ?? 'Free')); ?>
+
+                    </p>
+                </div>
+
+                <div>
+                    <p class="text-sm font-medium text-zinc-500">Next Billing Date</p>
+                    <p class="mt-2 text-lg font-semibold text-zinc-950 dark:text-white">
+                        <?php echo e($subscription->isTrial() ? 'Ends after 14 days' : ($subscription->ends_at?->format('M d, Y') ?? 'No active renewal')); ?>
+
+                    </p>
+                </div>
+            </div>
+         <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93)): ?>
+<?php $attributes = $__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93; ?>
+<?php unset($__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginaldae4cd48acb67888a4631e1ba48f2f93)): ?>
+<?php $component = $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93; ?>
+<?php unset($__componentOriginaldae4cd48acb67888a4631e1ba48f2f93); ?>
+<?php endif; ?>
+
+        <?php if (isset($component)) { $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.card','data' => ['class' => 'border-zinc-200/80 bg-zinc-950 text-white shadow-sm']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('ui.card'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['class' => 'border-zinc-200/80 bg-zinc-950 text-white shadow-sm']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+            <p class="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-400">
+                Why teams upgrade
+            </p>
+            <ul class="mt-5 space-y-3 text-sm text-zinc-300">
+                <li class="flex items-start gap-2">
+                    <span class="mt-1 h-2.5 w-2.5 rounded-full bg-indigo-400"></span>
+                    Add more workspaces and projects without limits.
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="mt-1 h-2.5 w-2.5 rounded-full bg-indigo-400"></span>
+                    Give every collaborator the visibility they need.
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="mt-1 h-2.5 w-2.5 rounded-full bg-indigo-400"></span>
+                    Keep finance and operations aligned with predictable billing.
+                </li>
+            </ul>
+         <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93)): ?>
+<?php $attributes = $__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93; ?>
+<?php unset($__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginaldae4cd48acb67888a4631e1ba48f2f93)): ?>
+<?php $component = $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93; ?>
+<?php unset($__componentOriginaldae4cd48acb67888a4631e1ba48f2f93); ?>
+<?php endif; ?>
+    </div>
+
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($organization->subscription->hasPendingPlan()): ?>
+        <?php if (isset($component)) { $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.card','data' => ['class' => 'border-blue-200 bg-blue-50/80 shadow-sm dark:border-blue-500/20 dark:bg-blue-500/10']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('ui.card'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['class' => 'border-blue-200 bg-blue-50/80 shadow-sm dark:border-blue-500/20 dark:bg-blue-500/10']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm font-semibold uppercase tracking-[0.2em] text-blue-700">
+                        Upcoming Subscription
+                    </p>
+                    <h3 class="mt-2 text-xl font-semibold text-zinc-950 dark:text-white">
+                        <?php echo e($organization->subscription->pendingPlan->name); ?>
+
+                    </h3>
+                    <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-300">
+                        Scheduled for <?php echo e($organization->subscription->pending_effective_at->format('M d, Y')); ?>.
+                    </p>
+                </div>
+
+                <span class="inline-flex w-fit items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-blue-700">
+                    Scheduled
+                </span>
+            </div>
+         <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93)): ?>
+<?php $attributes = $__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93; ?>
+<?php unset($__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginaldae4cd48acb67888a4631e1ba48f2f93)): ?>
+<?php $component = $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93; ?>
+<?php unset($__componentOriginaldae4cd48acb67888a4631e1ba48f2f93); ?>
+<?php endif; ?>
+    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($organization->subscription->canStartTrial()): ?>
+        <?php if (isset($component)) { $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.card','data' => ['class' => 'border-indigo-200 bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-xl shadow-indigo-950/10']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('ui.card'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['class' => 'border-indigo-200 bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-xl shadow-indigo-950/10']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+            <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                <div class="max-w-2xl">
+                    <p class="text-sm font-semibold uppercase tracking-[0.25em] text-indigo-100">
+                        Free Trial
+                    </p>
+                    <h3 class="mt-2 text-2xl font-semibold">
+                        Start your 14-day Pro trial
+                    </h3>
+                    <p class="mt-3 text-sm leading-6 text-indigo-50 sm:text-base">
+                        Get full access to premium collaboration features, higher limits, and a polished workspace experience without entering a credit card.
+                    </p>
+                </div>
+
+                <button wire:click="startTrial" wire:loading.attr="disabled" wire:target="startTrial"
+                    class="inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-50">
+                    <span wire:loading.remove wire:target="startTrial">
+                        Start Free Trial
+                    </span>
+                    <span wire:loading.flex wire:target="startTrial" class="items-center justify-center gap-2">
+                        <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z"></path>
+                        </svg>
+                        <span>Starting...</span>
+                    </span>
+                </button>
+            </div>
+         <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93)): ?>
+<?php $attributes = $__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93; ?>
+<?php unset($__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginaldae4cd48acb67888a4631e1ba48f2f93)): ?>
+<?php $component = $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93; ?>
+<?php unset($__componentOriginaldae4cd48acb67888a4631e1ba48f2f93); ?>
+<?php endif; ?>
+    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+    <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $this->plans; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $plan): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+            <?php
+                $current = $organization->subscription?->accessPlan()?->is($plan) ?? false;
+                $scheduled = $organization->subscription?->pending_subscription_plan_id === $plan->id;
+            ?>
+
+            <?php if (isset($component)) { $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.card','data' => ['class' => 'flex h-full flex-col border-zinc-200/80 bg-white/90 shadow-sm '.e($current ? 'ring-2 ring-indigo-500/20' : '').'']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('ui.card'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['class' => 'flex h-full flex-col border-zinc-200/80 bg-white/90 shadow-sm '.e($current ? 'ring-2 ring-indigo-500/20' : '').'']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <h3 class="text-xl font-semibold text-zinc-950 dark:text-white">
+                            <?php echo e($plan->name); ?>
+
+                        </h3>
+                        <p class="mt-1 text-sm text-zinc-500">
+                            <?php echo e($plan->billingIntervalLabel()); ?>
+
+                        </p>
+                    </div>
+
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($current): ?>
+                        <span class="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300">
+                            Current
+                        </span>
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                </div>
+
+                <div class="mt-6">
+                    <p class="text-4xl font-semibold text-zinc-950 dark:text-white">
+                        <?php echo e($plan->formattedPrice()); ?>
+
+
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($plan->price > 0): ?>
+                            <span class="text-base font-normal text-zinc-500">
+                                / <?php echo e($plan->billingLabel()); ?>
+
+                            </span>
+                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                    </p>
+                </div>
+
+                <div class="mt-6 rounded-2xl border border-zinc-200 bg-slate-50 p-4 shadow-inner">
+                    <div class="mb-3 flex items-center justify-between">
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.25em] text-zinc-500">
+                            Plan details
+                        </p>
+                        <span class="rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-zinc-600">
+                            Included
+                        </span>
+                    </div>
+                    <ul class="space-y-3 text-sm text-zinc-700 dark:text-zinc-300">
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $plan->featureHighlights(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $feature): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                            <li class="flex items-center justify-between rounded-lg border border-zinc-200/80 bg-white/70 px-3 py-2">
+                                <span><?php echo e($feature['label']); ?></span>
+                                <span class="font-semibold text-zinc-950"><?php echo e($feature['value']); ?></span>
+                            </li>
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                    </ul>
+                </div>
+
+                <div class="mt-auto pt-8">
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($current && $organization->subscription->isTrial()): ?>
+                        <span class="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
+                            Trial Active
+                        </span>
+                    <?php elseif($current): ?>
+                        <button disabled class="w-full cursor-not-allowed rounded-full border border-zinc-200 bg-zinc-100 px-4 py-3 text-sm font-semibold text-zinc-500">
+                            Current Plan
+                        </button>
+                    <?php elseif($scheduled): ?>
+                        <button disabled class="w-full cursor-not-allowed rounded-full border border-zinc-200 bg-zinc-100 px-4 py-3 text-sm font-semibold text-zinc-500">
+                            Scheduled Plan
+                        </button>
+                    <?php else: ?>
+                        <button wire:click="selectPlan(<?php echo e($plan->id); ?>)" wire:loading.attr="disabled" wire:target="selectPlan(<?php echo e($plan->id); ?>)" class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-zinc-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800">
+                            <span wire:loading.remove wire:target="selectPlan(<?php echo e($plan->id); ?>)">Choose Plan</span>
+                            <span wire:loading.flex wire:target="selectPlan(<?php echo e($plan->id); ?>)" class="items-center justify-center gap-2">
+                                <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z"></path>
+                                </svg>
+                                <span>Choosing...</span>
+                            </span>
+                        </button>
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                </div>
+             <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93)): ?>
+<?php $attributes = $__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93; ?>
+<?php unset($__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginaldae4cd48acb67888a4631e1ba48f2f93)): ?>
+<?php $component = $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93; ?>
+<?php unset($__componentOriginaldae4cd48acb67888a4631e1ba48f2f93); ?>
+<?php endif; ?>
+        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+    </div>
+
+    <?php if (isset($component)) { $__componentOriginal8cc9d3143946b992b324617832699c5f = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal8cc9d3143946b992b324617832699c5f = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::modal.index','data' => ['name' => 'confirm-subscription','xOn:close' => '$wire.resetSelectedPlan()']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::modal'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['name' => 'confirm-subscription','x-on:close' => '$wire.resetSelectedPlan()']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($selectedPlan): ?>
+            <div class="space-y-8">
+                <div>
+                    <h2 class="text-xl font-semibold text-zinc-950 dark:text-white">
+                        Confirm Subscription Change
+                    </h2>
+                    <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
+                        Review your new subscription before continuing to our secure payment provider.
+                    </p>
+                </div>
+
+                <div class="grid gap-4 md:grid-cols-2">
+                    <div class="rounded-2xl border border-zinc-200 p-5 dark:border-white/10">
+                        <p class="text-xs font-semibold uppercase tracking-[0.25em] text-zinc-500">
+                            Current Plan
+                        </p>
+                        <h3 class="mt-2 text-xl font-semibold">
+                            <?php echo e($organization->subscription?->plan?->name ?? 'None'); ?>
+
+                        </h3>
+                        <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-300">
+                            <?php echo e($organization->subscription?->plan?->formattedPrice() ?? 'Free'); ?>
+
+                        </p>
+
+                        <div class="mt-6 space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span>Workspaces</span>
+                                <span><?php echo e($organization->subscription?->plan?->workspaceLimitLabel() ?? '-'); ?></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Projects</span>
+                                <span><?php echo e($organization->subscription?->plan?->projectLimitLabel() ?? '-'); ?></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Members</span>
+                                <span><?php echo e($organization->subscription?->plan?->memberLimitLabel() ?? '-'); ?></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl border-2 border-indigo-500 bg-indigo-50/60 p-5 dark:border-indigo-400 dark:bg-indigo-500/10">
+                        <p class="text-xs font-semibold uppercase tracking-[0.25em] text-indigo-600 dark:text-indigo-300">
+                            New Plan
+                        </p>
+                        <h3 class="mt-2 text-xl font-semibold">
+                            <?php echo e($selectedPlan->name); ?>
+
+                        </h3>
+                        <p class="mt-1 font-medium text-indigo-600 dark:text-indigo-300">
+                            <?php echo e($selectedPlan->formattedPrice()); ?>
+
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (! ($selectedPlan->isFree())): ?>
+                                / <?php echo e($selectedPlan->billingLabel()); ?>
+
+                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                        </p>
+
+                        <div class="mt-6 space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span>Workspaces</span>
+                                <span><?php echo e($selectedPlan->workspaceLimitLabel()); ?></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Projects</span>
+                                <span><?php echo e($selectedPlan->projectLimitLabel()); ?></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Members</span>
+                                <span><?php echo e($selectedPlan->memberLimitLabel()); ?></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-900 dark:bg-amber-950/20">
+                    <h4 class="font-medium text-amber-900 dark:text-amber-300">
+                        Before you continue
+                    </h4>
+                    <ul class="mt-3 space-y-2 text-sm text-amber-800 dark:text-amber-200">
+                        <li>• Your payment secures your next subscription plan immediately.</li>
+                        <li>• Your current plan remains active until the end of the current billing period.</li>
+                        <li>• The new plan will automatically become active on your next renewal date.</li>
+                    </ul>
+                </div>
+
+                <div class="flex justify-end gap-3">
+                    <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['variant' => 'ghost','xOn:click' => '$dispatch(\'close\')']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::button'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['variant' => 'ghost','x-on:click' => '$dispatch(\'close\')']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+                        Cancel
+                     <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
+<?php $attributes = $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
+<?php unset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
+<?php $component = $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
+<?php unset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
+<?php endif; ?>
+
+                    <?php if (isset($component)) { $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::button.index','data' => ['variant' => 'primary','wire:click' => 'confirmPlanChange','wire:loading.attr' => 'disabled','wire:target' => 'confirmPlanChange','class' => 'inline-flex items-center justify-center gap-2']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::button'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['variant' => 'primary','wire:click' => 'confirmPlanChange','wire:loading.attr' => 'disabled','wire:target' => 'confirmPlanChange','class' => 'inline-flex items-center justify-center gap-2']); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+                        <span wire:loading.remove wire:target="confirmPlanChange">Continue to Payment</span>
+                        <span wire:loading.flex wire:target="confirmPlanChange" class="items-center justify-center gap-2">
+                            <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z"></path>
+                            </svg>
+                            <span>Continuing...</span>
+                        </span>
+                     <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
+<?php $attributes = $__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
+<?php unset($__attributesOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580)): ?>
+<?php $component = $__componentOriginalc04b147acd0e65cc1a77f86fb0e81580; ?>
+<?php unset($__componentOriginalc04b147acd0e65cc1a77f86fb0e81580); ?>
+<?php endif; ?>
+                </div>
+            </div>
+        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+     <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal8cc9d3143946b992b324617832699c5f)): ?>
+<?php $attributes = $__attributesOriginal8cc9d3143946b992b324617832699c5f; ?>
+<?php unset($__attributesOriginal8cc9d3143946b992b324617832699c5f); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal8cc9d3143946b992b324617832699c5f)): ?>
+<?php $component = $__componentOriginal8cc9d3143946b992b324617832699c5f; ?>
+<?php unset($__componentOriginal8cc9d3143946b992b324617832699c5f); ?>
+<?php endif; ?>
+</div>
+<?php /**PATH D:\Code\taskforge\resources\views/livewire/billing/show-billing.blade.php ENDPATH**/ ?>

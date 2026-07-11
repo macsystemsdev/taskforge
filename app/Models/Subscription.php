@@ -25,6 +25,8 @@ use Illuminate\Support\Carbon;
     'pending_subscription_plan_id',
     'pending_payment_transaction_id',
     'pending_effective_at',
+    'grace_starts_at',
+    'grace_ends_at',
 ])]
 
 class Subscription extends Model
@@ -254,6 +256,11 @@ class Subscription extends Model
             return SubscriptionPlan::trialPlan();
         }
 
+        if ($this->isInGracePeriod()) {
+
+            return $this->plan;
+        }
+
         return $this->plan;
     }
 
@@ -295,5 +302,44 @@ class Subscription extends Model
         return $this
             ->accessPlan()
             ->name;
+    }
+
+    public function isInGracePeriod(): bool
+    {
+        return
+            $this->grace_ends_at
+            ?->isFuture()
+            ?? false;
+    }
+
+    public function hasGraceExpired(): bool
+    {
+        return
+            $this->grace_ends_at
+            ?->isPast()
+            ?? false;
+    }
+
+    public function startGracePeriod(): void
+    {
+        $this->update([
+
+            'grace_starts_at' => now(),
+
+            'grace_ends_at' =>
+            now()->addDays(7),
+
+        ]);
+    }
+
+    public function clearGracePeriod(): void
+    {
+        $this->update([
+
+            'grace_starts_at' => null,
+
+            'grace_ends_at' => null,
+
+        ]);
     }
 }

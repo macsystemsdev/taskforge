@@ -244,12 +244,16 @@ new class extends Component {
                 </div>
 
                 <button wire:click="startTrial" wire:loading.attr="disabled" wire:target="startTrial"
-                    class="inline-flex items-center justify-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-50">
+                    class="inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-50">
                     <span wire:loading.remove wire:target="startTrial">
                         Start Free Trial
                     </span>
-                    <span wire:loading wire:target="startTrial">
-                        Starting...
+                    <span wire:loading.flex wire:target="startTrial" class="items-center justify-center gap-2">
+                        <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z"></path>
+                        </svg>
+                        <span>Starting...</span>
                     </span>
                 </button>
             </div>
@@ -326,8 +330,15 @@ new class extends Component {
                             Scheduled Plan
                         </button>
                     @else
-                        <button wire:click="selectPlan({{ $plan->id }})" class="w-full rounded-full bg-zinc-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800">
-                            Choose Plan
+                        <button wire:click="selectPlan({{ $plan->id }})" wire:loading.attr="disabled" wire:target="selectPlan({{ $plan->id }})" class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-zinc-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800">
+                            <span wire:loading.remove wire:target="selectPlan({{ $plan->id }})">Choose Plan</span>
+                            <span wire:loading.flex wire:target="selectPlan({{ $plan->id }})" class="items-center justify-center gap-2">
+                                <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z"></path>
+                                </svg>
+                                <span>Choosing...</span>
+                            </span>
                         </button>
                     @endif
                 </div>
@@ -422,8 +433,15 @@ new class extends Component {
                         Cancel
                     </flux:button>
 
-                    <flux:button variant="primary" wire:click="confirmPlanChange">
-                        Continue to Payment
+                    <flux:button variant="primary" wire:click="confirmPlanChange" wire:loading.attr="disabled" wire:target="confirmPlanChange" class="inline-flex items-center justify-center gap-2">
+                        <span wire:loading.remove wire:target="confirmPlanChange">Continue to Payment</span>
+                        <span wire:loading.flex wire:target="confirmPlanChange" class="items-center justify-center gap-2">
+                            <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z"></path>
+                            </svg>
+                            <span>Continuing...</span>
+                        </span>
                     </flux:button>
                 </div>
             </div>

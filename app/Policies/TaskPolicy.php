@@ -14,6 +14,17 @@ class TaskPolicy
         User $user,
         Task $task
     ): bool {
+        if (
+            $task
+            ->project
+            ->workspace
+            ->organization
+            ->lockedTasks(
+                $task
+            )
+        ) {
+            return false;
+        }
         return $task->project
             ->workspace
             ->organization
@@ -24,6 +35,18 @@ class TaskPolicy
         User $user,
         Task $task
     ): bool {
+
+        if (
+            $task
+            ->project
+            ->workspace
+            ->organization
+            ->lockedTasks(
+                $task
+            )
+        ) {
+            return false;
+        }
         return $task->assignee_id === $user->id
             && $task->status === TaskStatus::TODO;
     }
@@ -32,6 +55,17 @@ class TaskPolicy
         User $user,
         Task $task
     ): bool {
+        if (
+            $task
+            ->project
+            ->workspace
+            ->organization
+            ->lockedTasks(
+                $task
+            )
+        ) {
+            return false;
+        }
         return $task->assignee_id === $user->id
             && $task->status === TaskStatus::IN_PROGRESS;
     }
@@ -41,11 +75,23 @@ class TaskPolicy
         Task $task
     ): bool {
 
+        if (
+            $task
+            ->project
+            ->workspace
+            ->organization
+            ->lockedTasks(
+                $task
+            )
+        ) {
+            return false;
+        }
         $role = $task
             ->project
             ->workspace
             ->organization
             ->roleFor($user);
+
 
         return TaskPermissions::canCancel(
             $role
@@ -81,6 +127,7 @@ class TaskPolicy
                 ->organization
                 ->roleFor($user)
         );
+
     }
 
     public function reassign(

@@ -12,6 +12,17 @@ class ProjectPolicy
         User $user,
         Project $project
     ): bool {
+
+        if (
+            $project
+            ->workspace
+            ->organization
+            ->lockedProjects(
+                $project
+            )
+        ) {
+            return false;
+        }
         return ProjectPermissions::canUpdate(
             $project
                 ->workspace
@@ -24,6 +35,17 @@ class ProjectPolicy
         User $user,
         Project $project
     ): bool {
+
+        if (
+            $project
+            ->workspace
+            ->organization
+            ->lockedProjects(
+                $project
+            )
+        ) {
+            return false;
+        }
         return ProjectPermissions::canDelete(
             $project
                 ->workspace
@@ -36,6 +58,17 @@ class ProjectPolicy
         User $user,
         Project $project
     ): bool {
+
+        if (
+            $project
+            ->workspace
+            ->organization
+            ->lockedProjects(
+                $project
+            )
+        ) {
+            return false;
+        }
         return ProjectPermissions::canComplete(
             $project
                 ->workspace
@@ -48,6 +81,17 @@ class ProjectPolicy
         User $user,
         Project $project
     ): bool {
+
+        if (
+            $project
+            ->workspace
+            ->organization
+            ->lockedProjects(
+                $project
+            )
+        ) {
+            return false;
+        }
         return ProjectPermissions::canCancel(
             $project
                 ->workspace
@@ -65,6 +109,11 @@ class ProjectPolicy
                 ->workspace
                 ->organization
                 ->roleFor($user)
-        );
+        )
+
+            && $project
+            ->workspace
+            ->organization
+            ->canCreateTask();
     }
 }
