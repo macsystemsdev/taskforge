@@ -21,7 +21,7 @@ class TeamPolicy
      */
     public function view(User $user, Team $team): bool
     {
-        if ($team->workspace->organization->lockedTeams($team)) {
+        if ($team->workspace->organization->teamLocked($team)) {
             return false;
         }
 
@@ -41,7 +41,7 @@ class TeamPolicy
      */
     public function update(User $user, Team $team): bool
     {
-        if ($team->workspace->organization->lockedTeams($team)) {
+        if ($team->workspace->organization->teamLocked($team)) {
             return false;
         }
 
@@ -53,7 +53,7 @@ class TeamPolicy
      */
     public function addMember(User $user, Team $team): bool
     {
-        if ($team->workspace->organization->lockedTeams($team)) {
+        if ($team->workspace->organization->teamLocked($team)) {
             return false;
         }
 
@@ -65,7 +65,7 @@ class TeamPolicy
      */
     public function updateMember(User $user, Team $team): bool
     {
-        if ($team->workspace->organization->lockedTeams($team)) {
+        if ($team->workspace->organization->teamLocked($team)) {
             return false;
         }
 
@@ -77,7 +77,7 @@ class TeamPolicy
      */
     public function removeMember(User $user, Team $team): bool
     {
-        if ($team->workspace->organization->lockedTeams($team)) {
+        if ($team->workspace->organization->teamLocked($team)) {
             return false;
         }
 
@@ -89,7 +89,7 @@ class TeamPolicy
      */
     public function delete(User $user, Team $team): bool
     {
-        if ($team->workspace->organization->lockedTeams($team)) {
+        if ($team->workspace->organization->teamLocked($team)) {
             return false;
         }
 

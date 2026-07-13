@@ -10,7 +10,6 @@
 <?php $component->withAttributes([]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-
     <?php
 $__split = function ($name, $params = []) {
     return [$name, $params];
@@ -38,7 +37,6 @@ unset($__params);
 unset($__componentSlots);
 unset($__split);
 ?>
-
  <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginal81a506f898233b9e7d58286e6bea3c18)): ?>

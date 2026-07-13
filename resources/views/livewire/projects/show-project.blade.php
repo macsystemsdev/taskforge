@@ -41,6 +41,8 @@ new class extends Component {
 
         $this->redirect(route('workspaces.show', $workspace), navigate: true);
     }
+
+
 };
 ?>
 
@@ -52,7 +54,8 @@ new class extends Component {
         $dueDate = $project->due_date ? $project->due_date->format('M d, Y') : __('No due date');
     @endphp
 
-    <div class="mb-6 overflow-hidden rounded-3xl border border-zinc-200 bg-white/80 p-5 shadow-sm backdrop-blur sm:p-6 dark:border-white/10 dark:bg-zinc-900/70">
+    <div
+        class="mb-6 overflow-hidden rounded-3xl border border-zinc-200 bg-white/80 p-5 shadow-sm backdrop-blur sm:p-6 dark:border-white/10 dark:bg-zinc-900/70">
         <x-ui.page-header :title="$project->name" :description="$project->description ?: __('No project description has been added yet.')" :eyebrow="$project->workspace->organization->name . ' / ' . $project->workspace->name">
             <x-slot:actions>
 

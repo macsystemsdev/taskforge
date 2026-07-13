@@ -8,6 +8,30 @@ use App\Models\User;
 
 class ProjectPolicy
 {
+
+    public function view(
+        User $user,
+        Project $project
+    ): bool {
+
+        if (
+            $project
+            ->workspace
+            ->organization
+            ->projectLocked(
+                $project
+            )
+        ) {
+            return false;
+        }
+
+        return ProjectPermissions::canView(
+            $project
+                ->workspace
+                ->organization
+                ->roleFor($user)
+        );
+    }
     public function update(
         User $user,
         Project $project
@@ -17,7 +41,7 @@ class ProjectPolicy
             $project
             ->workspace
             ->organization
-            ->lockedProjects(
+            ->projectLocked(
                 $project
             )
         ) {
@@ -40,7 +64,7 @@ class ProjectPolicy
             $project
             ->workspace
             ->organization
-            ->lockedProjects(
+            ->projectLocked(
                 $project
             )
         ) {
@@ -63,7 +87,7 @@ class ProjectPolicy
             $project
             ->workspace
             ->organization
-            ->lockedProjects(
+            ->projectLocked(
                 $project
             )
         ) {
@@ -86,7 +110,7 @@ class ProjectPolicy
             $project
             ->workspace
             ->organization
-            ->lockedProjects(
+            ->projectLocked(
                 $project
             )
         ) {

@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Override;
 
 #[Table('organizations')]
 #[Fillable(['name', 'slug', 'subscription_plan', 'subscription_status', 'owner_id', 'stripe_customer_id', 'stripe_payment_method_id'])]
@@ -306,6 +307,65 @@ class Organization extends Model
             ->sortBy('created_at')
             ->slice($limit);
     }
+
+    // check locked features based on subscription plan limit
+
+    public function workspaceLocked(
+        Workspace $workspace
+    ): bool {
+        return $this
+            ->lockedWorkspaces()
+            ->contains(
+                fn($lockedWorkspace) =>
+                $lockedWorkspace->id === $workspace->id
+            );
+    }
+
+    public function teamLocked(
+        Team $team
+    ): bool {
+        return
+            $this->workspaceLocked(
+                $team->workspace
+            )
+            ||
+            $this->lockedTeams()
+            ->contains(
+                fn($locked) =>
+                $locked->id === $team->id
+            );
+    }
+
+    public function projectLocked(
+        Project $project
+    ): bool {
+        return
+            $this->workspaceLocked(
+                $project->workspace
+            )
+            ||
+            $this->teamLocked(
+                $project->team
+            )
+            ||
+            $this->lockedProjects()
+            ->contains(
+                fn($locked) =>
+                $locked->id === $project->id
+            );
+    }
+
+
+
+    public function taskLocked(
+        Task $task
+    ): bool {
+        return
+            $this->projectLocked(
+                $task->project
+            );
+    }
+
 
     public function lockedTeams()
     {

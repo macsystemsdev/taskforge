@@ -19,7 +19,7 @@ class TaskPolicy
             ->project
             ->workspace
             ->organization
-            ->lockedTasks(
+            ->taskLocked(
                 $task
             )
         ) {
@@ -41,7 +41,7 @@ class TaskPolicy
             ->project
             ->workspace
             ->organization
-            ->lockedTasks(
+            ->taskLocked(
                 $task
             )
         ) {
@@ -60,7 +60,7 @@ class TaskPolicy
             ->project
             ->workspace
             ->organization
-            ->lockedTasks(
+            ->taskLocked(
                 $task
             )
         ) {
@@ -80,7 +80,7 @@ class TaskPolicy
             ->project
             ->workspace
             ->organization
-            ->lockedTasks(
+            ->taskLocked(
                 $task
             )
         ) {

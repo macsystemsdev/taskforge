@@ -26,9 +26,12 @@ new class extends Component {
 
     public function mount(Workspace $workspace): void
     {
+        $this->authorize('view', $workspace);
+
         $this->workspace = $workspace->load(['organization', 'teams.members', 'projects'])->loadCount(['teams', 'projects']);
 
         $this->name = $workspace->name;
+
         $this->description = $workspace->description;
     }
 
@@ -123,13 +126,15 @@ new class extends Component {
         <div class="flex gap-2">
 
             @if (auth()->user()->can('update', $workspace))
-                <flux:button wire:click="openEditWorkspaceModal" wire:loading.attr="disabled" wire:target="openEditWorkspaceModal">
+                <flux:button wire:click="openEditWorkspaceModal" wire:loading.attr="disabled"
+                    wire:target="openEditWorkspaceModal">
                     Edit workspace
                 </flux:button>
             @endif
 
             @if (auth()->user()->can('delete', $workspace))
-                <flux:button variant="danger" wire:click="openDeleteWorkspaceModal" wire:loading.attr="disabled" wire:target="openDeleteWorkspaceModal">
+                <flux:button variant="danger" wire:click="openDeleteWorkspaceModal" wire:loading.attr="disabled"
+                    wire:target="openDeleteWorkspaceModal">
                     Delete workspace
                 </flux:button>
             @endif
@@ -143,6 +148,8 @@ new class extends Component {
         $organization = $workspace->organization;
         $teamLimit = $organization->currentPlan()?->max_teams;
         $projectLimit = $organization->currentPlan()?->max_projects;
+        $lockedTeams = $organization->lockedTeams();
+        $lockedProjects = $organization->lockedProjects();
     @endphp
 
     <div class="grid gap-4 md:grid-cols-2">
@@ -186,7 +193,8 @@ new class extends Component {
                         Create Team
                     </a>
                 @else
-                    <a href="{{ route('organizations.billing', $organization) }}" class="tf-button-secondary px-3 py-2" wire:navigate>
+                    <a href="{{ route('organizations.billing', $organization) }}" class="tf-button-secondary px-3 py-2"
+                        wire:navigate>
                         Upgrade plan
                     </a>
                 @endif
@@ -197,31 +205,75 @@ new class extends Component {
         <div class="grid gap-4 lg:grid-cols-2">
 
             @forelse ($workspace->teams as $team)
-                <a href="{{ route('teams.show', ['workspace' => $workspace, 'team' => $team]) }}"
-                    class="rounded-lg border border-zinc-200 p-4 transition hover:bg-zinc-50 dark:border-white/10 dark:hover:bg-white/[0.03]"
-                    wire:navigate>
+                @php
+                    $isTeamLocked = $lockedTeams->contains(fn($lockedTeam) => $lockedTeam->id === $team->id);
+                @endphp
 
-                    <div class="space-y-2">
+                @if ($isTeamLocked)
+                    <div
+                        class="rounded-lg border border-amber-200 bg-amber-50/40 p-4 opacity-70 dark:border-amber-500/20 dark:bg-amber-500/5">
 
-                        <h3 class="font-semibold text-zinc-950 dark:text-white">
-                            {{ $team->name }}
-                        </h3>
+                        <div class="flex items-start justify-between">
 
-                        <p class="text-sm text-zinc-600 dark:text-zinc-400">
-                            {{ $team->description ?: 'No team description.' }}
-                        </p>
+                            <div class="space-y-2">
+
+                                <h3 class="font-semibold text-zinc-950 dark:text-white">
+                                    {{ $team->name }}
+                                </h3>
+
+                                <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                                    {{ $team->description ?: 'No team description.' }}
+                                </p>
+
+                            </div>
+
+                            <span
+                                class="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400">
+                                Locked
+                            </span>
+
+                        </div>
+
+                        <div class="mt-4 border-t border-zinc-100 pt-4 dark:border-white/5">
+
+                            <span class="text-sm text-zinc-500 dark:text-zinc-400">
+
+                                {{ $team->members->count() }} members
+
+                            </span>
+
+                        </div>
 
                     </div>
+                @else
+                    <a href="{{ route('teams.show', ['workspace' => $workspace, 'team' => $team]) }}"
+                        class="rounded-lg border border-zinc-200 p-4 transition hover:bg-zinc-50 dark:border-white/10 dark:hover:bg-white/[0.03]"
+                        wire:navigate>
 
-                    <div class="mt-4 border-t border-zinc-100 pt-4 dark:border-white/5">
 
-                        <span class="text-sm text-zinc-500 dark:text-zinc-400">
-                            {{ $team->members->count() }} members
-                        </span>
 
-                    </div>
+                        <div class="space-y-2">
 
-                </a>
+                            <h3 class="font-semibold text-zinc-950 dark:text-white">
+                                {{ $team->name }}
+                            </h3>
+
+                            <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                                {{ $team->description ?: 'No team description.' }}
+                            </p>
+
+                        </div>
+
+                        <div class="mt-4 border-t border-zinc-100 pt-4 dark:border-white/5">
+
+                            <span class="text-sm text-zinc-500 dark:text-zinc-400">
+                                {{ $team->members->count() }} members
+                            </span>
+
+                        </div>
+
+                    </a>
+                @endif
 
             @empty
 
@@ -249,11 +301,13 @@ new class extends Component {
 
             @if (auth()->user()->can('createProject', $workspace))
                 @if ($organization->canCreateProject())
-                    <a href="{{ route('projects.create', $workspace) }}" class="tf-button-primary px-3 py-2" wire:navigate>
+                    <a href="{{ route('projects.create', $workspace) }}" class="tf-button-primary px-3 py-2"
+                        wire:navigate>
                         Create Project
                     </a>
                 @else
-                    <a href="{{ route('organizations.billing', $organization) }}" class="tf-button-secondary px-3 py-2" wire:navigate>
+                    <a href="{{ route('organizations.billing', $organization) }}" class="tf-button-secondary px-3 py-2"
+                        wire:navigate>
                         Upgrade plan
                     </a>
                 @endif
@@ -264,35 +318,69 @@ new class extends Component {
         <div class="grid gap-4 lg:grid-cols-2">
 
             @forelse ($workspace->projects as $project)
-                <a href="{{ route('projects.show', $project) }}"
-                    class="rounded-lg border border-zinc-200 p-4 transition hover:bg-zinc-50 dark:border-white/10 dark:hover:bg-white/[0.03]"
-                    wire:navigate>
+                @php
+                    $isProjectLocked = $lockedProjects->contains(
+                        fn($lockedProject) => $lockedProject->id === $project->id,
+                    );
+                @endphp
+                @if ($isProjectLocked)
+                    <div
+                        class="rounded-lg border border-amber-200 bg-amber-50/40 p-4 opacity-70 dark:border-amber-500/20 dark:bg-amber-500/5">
 
-                    <div class="space-y-2">
+                        <div class="flex items-start justify-between">
 
-                        @php
-                            $isProjectLocked = $organization->lockedProjects()->contains(fn($lockedProject) => $lockedProject->id === $project->id);
-                        @endphp
+                            <div class="space-y-2">
 
-                        <div class="flex items-center gap-2">
-                            <h3 class="font-semibold text-zinc-950 dark:text-white">
-                                {{ $project->name }}
-                            </h3>
+                                <h3 class="font-semibold text-zinc-950 dark:text-white">
+                                    {{ $project->name }}
+                                </h3>
 
-                            @if ($isProjectLocked)
-                                <span class="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.2em] text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400">
-                                    Locked
-                                </span>
-                            @endif
+                                <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                                    {{ $project->description ?: 'No project description.' }}
+                                </p>
+
+                            </div>
+
+                            <span
+                                class="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400">
+                                Locked
+                            </span>
+
                         </div>
 
-                        <p class="text-sm text-zinc-600 dark:text-zinc-400">
-                            {{ $project->description ?: 'No project description.' }}
-                        </p>
+                        <div class="mt-4 border-t border-zinc-100 pt-4 dark:border-white/5">
+
+                            <span class="text-sm text-zinc-500 dark:text-zinc-400">
+
+                                {{ $project->count() }} projects
+
+                            </span>
+
+                        </div>
 
                     </div>
+                @else
+                    <a href="{{ route('projects.show', $project) }}"
+                        class="rounded-lg border border-zinc-200 p-4 transition hover:bg-zinc-50 dark:border-white/10 dark:hover:bg-white/[0.03]"
+                        wire:navigate>
 
-                </a>
+                        <div class="space-y-2">
+
+                            <div class="flex items-center gap-2">
+                                <h3 class="font-semibold text-zinc-950 dark:text-white">
+                                    {{ $project->name }}
+                                </h3>
+
+                            </div>
+
+                            <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                                {{ $project->description ?: 'No project description.' }}
+                            </p>
+
+                        </div>
+
+                    </a>
+                @endif
 
             @empty
 
@@ -311,7 +399,7 @@ new class extends Component {
                 </flux:heading>
 
                 <flux:input wire:model="name" label="Workspace Name" />
-                
+
                 <flux:textarea wire:model="description" label="Description" />
 
                 <div class="flex justify-end gap-2">
@@ -320,12 +408,16 @@ new class extends Component {
                         Cancel
                     </flux:button>
 
-                    <flux:button wire:click="updateWorkspace" wire:loading.attr="disabled" wire:target="updateWorkspace" class="inline-flex items-center justify-center gap-2">
+                    <flux:button wire:click="updateWorkspace" wire:loading.attr="disabled" wire:target="updateWorkspace"
+                        class="inline-flex items-center justify-center gap-2">
                         <span wire:loading.remove wire:target="updateWorkspace">Save Changes</span>
                         <span wire:loading.flex wire:target="updateWorkspace" class="items-center justify-center gap-2">
                             <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z"></path>
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z">
+                                </path>
                             </svg>
                             <span>Saving...</span>
                         </span>
@@ -356,12 +448,17 @@ new class extends Component {
                         Cancel
                     </flux:button>
 
-                    <flux:button variant="danger" wire:click="deleteWorkspace" wire:loading.attr="disabled" wire:target="deleteWorkspace" class="inline-flex items-center justify-center gap-2">
+                    <flux:button variant="danger" wire:click="deleteWorkspace" wire:loading.attr="disabled"
+                        wire:target="deleteWorkspace" class="inline-flex items-center justify-center gap-2">
                         <span wire:loading.remove wire:target="deleteWorkspace">Delete</span>
-                        <span wire:loading.flex wire:target="deleteWorkspace" class="items-center justify-center gap-2">
+                        <span wire:loading.flex wire:target="deleteWorkspace"
+                            class="items-center justify-center gap-2">
                             <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z"></path>
+                                <circle class="opacity-25" cx="12" cy="12" r="10"
+                                    stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z">
+                                </path>
                             </svg>
                             <span>Deleting...</span>
                         </span>

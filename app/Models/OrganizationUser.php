@@ -22,6 +22,7 @@ class OrganizationUser extends Pivot
 
     protected $casts = [
         'joined_at' => 'datetime',
+        'role' => OrganizationRole::class,
     ];
 
     public function isOwner(): bool

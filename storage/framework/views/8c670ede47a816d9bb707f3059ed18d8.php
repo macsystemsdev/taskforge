@@ -97,6 +97,8 @@ use App\Models\Organization;
         $organization = $workspace->organization;
         $teamLimit = $organization->currentPlan()?->max_teams;
         $projectLimit = $organization->currentPlan()?->max_projects;
+        $lockedTeams = $organization->lockedTeams();
+        $lockedProjects = $organization->lockedProjects();
     ?>
 
     <div class="grid gap-4 md:grid-cols-2">
@@ -193,7 +195,8 @@ use App\Models\Organization;
                         Create Team
                     </a>
                 <?php else: ?>
-                    <a href="<?php echo e(route('organizations.billing', $organization)); ?>" class="tf-button-secondary px-3 py-2" wire:navigate>
+                    <a href="<?php echo e(route('organizations.billing', $organization)); ?>" class="tf-button-secondary px-3 py-2"
+                        wire:navigate>
                         Upgrade plan
                     </a>
                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
@@ -204,33 +207,79 @@ use App\Models\Organization;
         <div class="grid gap-4 lg:grid-cols-2">
 
             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $workspace->teams; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $team): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                <a href="<?php echo e(route('teams.show', ['workspace' => $workspace, 'team' => $team])); ?>"
-                    class="rounded-lg border border-zinc-200 p-4 transition hover:bg-zinc-50 dark:border-white/10 dark:hover:bg-white/[0.03]"
-                    wire:navigate>
+                <?php
+                    $isTeamLocked = $lockedTeams->contains(fn($lockedTeam) => $lockedTeam->id === $team->id);
+                ?>
 
-                    <div class="space-y-2">
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($isTeamLocked): ?>
+                    <div
+                        class="rounded-lg border border-amber-200 bg-amber-50/40 p-4 opacity-70 dark:border-amber-500/20 dark:bg-amber-500/5">
 
-                        <h3 class="font-semibold text-zinc-950 dark:text-white">
-                            <?php echo e($team->name); ?>
+                        <div class="flex items-start justify-between">
 
-                        </h3>
+                            <div class="space-y-2">
 
-                        <p class="text-sm text-zinc-600 dark:text-zinc-400">
-                            <?php echo e($team->description ?: 'No team description.'); ?>
+                                <h3 class="font-semibold text-zinc-950 dark:text-white">
+                                    <?php echo e($team->name); ?>
 
-                        </p>
+                                </h3>
+
+                                <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                                    <?php echo e($team->description ?: 'No team description.'); ?>
+
+                                </p>
+
+                            </div>
+
+                            <span
+                                class="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400">
+                                Locked
+                            </span>
+
+                        </div>
+
+                        <div class="mt-4 border-t border-zinc-100 pt-4 dark:border-white/5">
+
+                            <span class="text-sm text-zinc-500 dark:text-zinc-400">
+
+                                <?php echo e($team->members->count()); ?> members
+
+                            </span>
+
+                        </div>
 
                     </div>
+                <?php else: ?>
+                    <a href="<?php echo e(route('teams.show', ['workspace' => $workspace, 'team' => $team])); ?>"
+                        class="rounded-lg border border-zinc-200 p-4 transition hover:bg-zinc-50 dark:border-white/10 dark:hover:bg-white/[0.03]"
+                        wire:navigate>
 
-                    <div class="mt-4 border-t border-zinc-100 pt-4 dark:border-white/5">
 
-                        <span class="text-sm text-zinc-500 dark:text-zinc-400">
-                            <?php echo e($team->members->count()); ?> members
-                        </span>
 
-                    </div>
+                        <div class="space-y-2">
 
-                </a>
+                            <h3 class="font-semibold text-zinc-950 dark:text-white">
+                                <?php echo e($team->name); ?>
+
+                            </h3>
+
+                            <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                                <?php echo e($team->description ?: 'No team description.'); ?>
+
+                            </p>
+
+                        </div>
+
+                        <div class="mt-4 border-t border-zinc-100 pt-4 dark:border-white/5">
+
+                            <span class="text-sm text-zinc-500 dark:text-zinc-400">
+                                <?php echo e($team->members->count()); ?> members
+                            </span>
+
+                        </div>
+
+                    </a>
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
 
@@ -299,11 +348,13 @@ use App\Models\Organization;
 
             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(auth()->user()->can('createProject', $workspace)): ?>
                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($organization->canCreateProject()): ?>
-                    <a href="<?php echo e(route('projects.create', $workspace)); ?>" class="tf-button-primary px-3 py-2" wire:navigate>
+                    <a href="<?php echo e(route('projects.create', $workspace)); ?>" class="tf-button-primary px-3 py-2"
+                        wire:navigate>
                         Create Project
                     </a>
                 <?php else: ?>
-                    <a href="<?php echo e(route('organizations.billing', $organization)); ?>" class="tf-button-secondary px-3 py-2" wire:navigate>
+                    <a href="<?php echo e(route('organizations.billing', $organization)); ?>" class="tf-button-secondary px-3 py-2"
+                        wire:navigate>
                         Upgrade plan
                     </a>
                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
@@ -314,37 +365,73 @@ use App\Models\Organization;
         <div class="grid gap-4 lg:grid-cols-2">
 
             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $workspace->projects; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $project): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                <a href="<?php echo e(route('projects.show', $project)); ?>"
-                    class="rounded-lg border border-zinc-200 p-4 transition hover:bg-zinc-50 dark:border-white/10 dark:hover:bg-white/[0.03]"
-                    wire:navigate>
+                <?php
+                    $isProjectLocked = $lockedProjects->contains(
+                        fn($lockedProject) => $lockedProject->id === $project->id,
+                    );
+                ?>
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($isProjectLocked): ?>
+                    <div
+                        class="rounded-lg border border-amber-200 bg-amber-50/40 p-4 opacity-70 dark:border-amber-500/20 dark:bg-amber-500/5">
 
-                    <div class="space-y-2">
+                        <div class="flex items-start justify-between">
 
-                        <?php
-                            $isProjectLocked = $organization->lockedProjects()->contains(fn($lockedProject) => $lockedProject->id === $project->id);
-                        ?>
+                            <div class="space-y-2">
 
-                        <div class="flex items-center gap-2">
-                            <h3 class="font-semibold text-zinc-950 dark:text-white">
-                                <?php echo e($project->name); ?>
+                                <h3 class="font-semibold text-zinc-950 dark:text-white">
+                                    <?php echo e($project->name); ?>
 
-                            </h3>
+                                </h3>
 
-                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($isProjectLocked): ?>
-                                <span class="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.2em] text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400">
-                                    Locked
-                                </span>
-                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                                    <?php echo e($project->description ?: 'No project description.'); ?>
+
+                                </p>
+
+                            </div>
+
+                            <span
+                                class="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400">
+                                Locked
+                            </span>
+
                         </div>
 
-                        <p class="text-sm text-zinc-600 dark:text-zinc-400">
-                            <?php echo e($project->description ?: 'No project description.'); ?>
+                        <div class="mt-4 border-t border-zinc-100 pt-4 dark:border-white/5">
 
-                        </p>
+                            <span class="text-sm text-zinc-500 dark:text-zinc-400">
+
+                                <?php echo e($project->count()); ?> projects
+
+                            </span>
+
+                        </div>
 
                     </div>
+                <?php else: ?>
+                    <a href="<?php echo e(route('projects.show', $project)); ?>"
+                        class="rounded-lg border border-zinc-200 p-4 transition hover:bg-zinc-50 dark:border-white/10 dark:hover:bg-white/[0.03]"
+                        wire:navigate>
 
-                </a>
+                        <div class="space-y-2">
+
+                            <div class="flex items-center gap-2">
+                                <h3 class="font-semibold text-zinc-950 dark:text-white">
+                                    <?php echo e($project->name); ?>
+
+                                </h3>
+
+                            </div>
+
+                            <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                                <?php echo e($project->description ?: 'No project description.'); ?>
+
+                            </p>
+
+                        </div>
+
+                    </a>
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
 
@@ -436,7 +523,7 @@ use App\Models\Organization;
 <?php $component = $__componentOriginal26c546557cdc09040c8dd00b2090afd0; ?>
 <?php unset($__componentOriginal26c546557cdc09040c8dd00b2090afd0); ?>
 <?php endif; ?>
-                
+
                 <?php if (isset($component)) { $__componentOriginal0ee30026125d1a66523211147b00e4dc = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal0ee30026125d1a66523211147b00e4dc = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::textarea','data' => ['wire:model' => 'description','label' => 'Description']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -501,8 +588,11 @@ use App\Models\Organization;
                         <span wire:loading.remove wire:target="updateWorkspace">Save Changes</span>
                         <span wire:loading.flex wire:target="updateWorkspace" class="items-center justify-center gap-2">
                             <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z"></path>
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z">
+                                </path>
                             </svg>
                             <span>Saving...</span>
                         </span>
@@ -615,10 +705,14 @@ use App\Models\Organization;
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                         <span wire:loading.remove wire:target="deleteWorkspace">Delete</span>
-                        <span wire:loading.flex wire:target="deleteWorkspace" class="items-center justify-center gap-2">
+                        <span wire:loading.flex wire:target="deleteWorkspace"
+                            class="items-center justify-center gap-2">
                             <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z"></path>
+                                <circle class="opacity-25" cx="12" cy="12" r="10"
+                                    stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z">
+                                </path>
                             </svg>
                             <span>Deleting...</span>
                         </span>

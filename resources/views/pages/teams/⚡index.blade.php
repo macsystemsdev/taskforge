@@ -20,22 +20,14 @@ new #[Title('Teams')] class extends Component {
     {
         $workspace = Auth::user()->currentTeam?->workspace ?? Auth::user()->personalTeam()?->workspace;
 
-        abort_if(! $workspace, 422, __('No workspace is available for this team.'));
+        abort_if(!$workspace, 422, __('No workspace is available for this team.'));
 
         $validated = $this->validate([
-            'name' => ['required', 'string', 'max:255', new TeamName],
+            'name' => ['required', 'string', 'max:255', new TeamName()],
             'description' => ['nullable', 'string'],
         ]);
 
-        $team = $createTeam->handle(
-            $workspace,
-            new CreateTeamData(
-                name: $validated['name'],
-                description: $validated['description'] ?? null,
-                leaderId: Auth::id(),
-                memberIds: [],
-            )
-        );
+        $team = $createTeam->handle($workspace, new CreateTeamData(name: $validated['name'], description: $validated['description'] ?? null, leaderId: Auth::id(), memberIds: []));
 
         $this->dispatch('close-modal', name: 'create-team');
 
@@ -65,7 +57,12 @@ new #[Title('Teams')] class extends Component {
 
         <div class="mt-6 space-y-3">
             @forelse ($this->teams as $team)
-                <div class="flex items-center justify-between rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900" data-test="team-row">
+            
+                @if ($organization->teamLocked($team))
+                    <flux:button variant="ghost" size="sm" icon="lock-closed" disabled />
+                @endif
+                <div class="flex items-center justify-between rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900"
+                    data-test="team-row">
                     <div class="flex items-center gap-4">
                         <div>
                             <div class="flex items-center gap-2">
@@ -74,20 +71,17 @@ new #[Title('Teams')] class extends Component {
                                     <flux:badge color="zinc">{{ __('Personal') }}</flux:badge>
                                 @endif
                             </div>
-                            <flux:text class="text-sm text-zinc-500 dark:text-zinc-400">{{ $team->roleLabel }}</flux:text>
+                            <flux:text class="text-sm text-zinc-500 dark:text-zinc-400">{{ $team->roleLabel }}
+                            </flux:text>
                         </div>
                     </div>
 
                     <div class="flex items-center gap-1">
                         <flux:tooltip :content="$team->role === 'member' ? __('View team') : __('Edit team')">
-                            <flux:button
-                                variant="ghost"
-                                size="sm"
+                            <flux:button variant="ghost" size="sm"
                                 :icon="$team->role === 'member' ? 'eye' : 'pencil'"
-                                :href="route('teams.edit', $team->slug)"
-                                wire:navigate
-                                :data-test="$team->role === 'member' ? 'team-view-button' : 'team-edit-button'"
-                            />
+                                :href="route('teams.edit', $team->slug)" wire:navigate
+                                :data-test="$team->role === 'member' ? 'team-view-button' : 'team-edit-button'" />
                         </flux:tooltip>
                     </div>
                 </div>
@@ -106,9 +100,11 @@ new #[Title('Teams')] class extends Component {
                 <flux:subheading>{{ __('Give your team a name to get started.') }}</flux:subheading>
             </div>
 
-            <flux:input wire:model="name" :label="__('Team name')" type="text" required autofocus data-test="create-team-name" />
+            <flux:input wire:model="name" :label="__('Team name')" type="text" required autofocus
+                data-test="create-team-name" />
 
-            <flux:textarea wire:model="description" :label="__('Description')" placeholder="{{ __('What is this team responsible for?') }}" />
+            <flux:textarea wire:model="description" :label="__('Description')"
+                placeholder="{{ __('What is this team responsible for?') }}" />
 
             <div class="flex justify-end space-x-2 rtl:space-x-reverse">
                 <flux:modal.close>

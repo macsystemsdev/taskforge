@@ -17,7 +17,7 @@ class WorkspacePolicy
         if (
             $workspace
             ->organization
-            ->lockedWorkspaces(
+            ->workspaceLocked(
                 $workspace
             )
         ) {
@@ -38,7 +38,7 @@ class WorkspacePolicy
         if (
             $workspace
             ->organization
-            ->lockedWorkspaces(
+            ->workspaceLocked(
                 $workspace
             )
         ) {
@@ -57,7 +57,7 @@ class WorkspacePolicy
         if (
             $workspace
             ->organization
-            ->lockedWorkspaces(
+            ->workspaceLocked(
                 $workspace
             )
         ) {

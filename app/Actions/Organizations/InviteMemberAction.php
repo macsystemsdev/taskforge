@@ -48,7 +48,7 @@ class InviteMemberAction
             ]);
         }
 
-        if (! $data->organization->canInviteMember()) {
+        if (! $data->organization->canAddMember()) {
             throw new FeatureLimitExceededException(
                 'Your subscription has reached the maximum number of members.'
             );
@@ -74,7 +74,7 @@ class InviteMemberAction
         );
 
         Mail::to($invitation->email)
-            ->send(
+            ->queue(
                 new OrganizationInvitationMail($invitation)
             );
 
