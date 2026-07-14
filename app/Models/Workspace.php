@@ -44,5 +44,10 @@ class Workspace extends Model
         return 'slug';
     }
 
-    
+    public function leadershipMembers()
+    {
+        return $this
+            ->organization
+            ->administratorUsers();
+    }
 }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\NotificationRedirectController;
 use App\Http\Controllers\OrganizationInvitationController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Livewire\Billing\ShowBillingCancel;
@@ -128,10 +129,18 @@ Route::middleware(['auth'])->group(function () {
     Route::view('/notifications', 'pages.notifications.index')->name('notifications.index');
 
     Route::post('/notifications/mark-all-read', function () {
+
         auth()->user()->unreadNotifications->markAsRead();
 
         return back();
     })->name('notifications.read-all');
+
+    Route::get(
+        '/notifications/{notification}',
+        NotificationRedirectController::class
+    )->name(
+        'notifications.redirect'
+    );
 
     Route::get(
         '/organizations/{organization}/billing',
@@ -153,7 +162,8 @@ Route::middleware(['auth'])->group(function () {
 
 // Stripe webhook route
 Route::post(
-    '/stripe/webhook', StripeWebhookController::class
+    '/stripe/webhook',
+    StripeWebhookController::class
 )->name('stripe.webhook');
 
 require __DIR__ . '/settings.php';

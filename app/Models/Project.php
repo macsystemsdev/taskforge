@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Facades\Notification;
 
 #[Table('projects')]
 
@@ -164,5 +165,25 @@ class Project extends Model
 
         return $this->status->isActive()
             && $this->due_date->isPast();
+    }
+
+    public function notificationRecipients()
+    {
+        return $this
+            ->workspace
+            ->organization
+            ->administratorUsers();
+    }
+
+    public function notifyLeadership(
+        object $notification
+    ): void {
+
+        Notification::send(
+            $this
+                ->notificationRecipients(),
+
+            $notification
+        );
     }
 }

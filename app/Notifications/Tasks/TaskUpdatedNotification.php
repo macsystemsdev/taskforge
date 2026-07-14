@@ -1,21 +1,20 @@
 <?php
 
-namespace App\Notifications;
+namespace App\Notifications\Tasks;
 
-use App\Models\Task;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class TaskCompletedNotification extends Notification implements ShouldQueue
+class TaskUpdatedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct(public Task $task)
+    public function __construct()
     {
         //
     }
@@ -27,7 +26,7 @@ class TaskCompletedNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['mail'];
     }
 
     /**
@@ -49,9 +48,7 @@ class TaskCompletedNotification extends Notification implements ShouldQueue
     public function toArray(object $notifiable): array
     {
         return [
-            'task_id' => $this->task->id,
-            'task_title' => $this->task->title,
-            'message' => 'Task completed.',
+            //
         ];
     }
 }

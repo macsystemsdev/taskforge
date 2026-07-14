@@ -5,7 +5,7 @@ namespace App\Actions\Projects;
 use App\Actions\ActivityLogs\CreateActivityLogAction;
 use App\Domain\Projects\Enums\ProjectStatus;
 use App\Models\Project;
-use App\Notifications\ProjectCompletedNotification;
+use App\Notifications\Projects\ProjectCompletedNotification;
 use Illuminate\Validation\ValidationException;
 
 class CompleteProjectAction
@@ -30,9 +30,15 @@ class CompleteProjectAction
             'status' => ProjectStatus::Completed,
         ]);
 
-        $project->creator?->notify(
-            new ProjectCompletedNotification($project)
-        );
+        $project
+            ->workspace
+            ->organization
+            ->notifyAdministrators(
+                new ProjectCompletedNotification(
+                    $project
+                ),
+                auth()->user()
+            );
 
         $this->activity->handle(
             event: 'project_completed',

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Facades\Notification;
 
 #[Table('tasks')]
 #[Fillable(['project_id', 'slug', 'assignee_id', 'creator_id', 'title', 'description', 'status', 'due_date', 'completed_at'])]
@@ -154,5 +155,54 @@ class Task extends Model
                     now()->addDays($days),
                 ]
             );
+    }
+
+    public function leadershipRecipients()
+    {
+        return $this
+            ->project
+            ->workspace
+            ->organization
+            ->administratorUsers();
+    }
+
+    public function leadershipRecipientsExcept(
+        User $user
+    ) {
+        return $this
+            ->leadershipRecipients()
+            ->reject(
+                fn($member) =>
+                $member->id === $user->id
+            );
+    }
+
+    public function notifyLeadership(
+        object $notification,
+        ?User $except = null
+    ): void {
+
+        $recipients =
+            $except
+            ? $this
+            ->leadershipRecipientsExcept(
+                $except
+            )
+            : $this
+            ->leadershipRecipients();
+
+        Notification::send(
+            $recipients,
+            $notification
+        );
+    }
+
+    public function notifyAssignee(
+        object $notification
+    ): void {
+
+        $this->assignee?->notify(
+            $notification
+        );
     }
 }

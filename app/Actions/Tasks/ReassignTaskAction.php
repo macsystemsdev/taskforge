@@ -6,6 +6,8 @@ use App\Models\Task;
 use App\Models\User;
 use DomainException;
 use App\Actions\ActivityLogs\CreateActivityLogAction;
+use App\Notifications\Tasks\TaskAssignedNotification;
+use App\Notifications\Tasks\TaskReassignedNotification;
 
 class ReassignTaskAction
 {
@@ -46,10 +48,18 @@ class ReassignTaskAction
             'assignee_id' => $assignee->id,
         ]);
 
-        $assignee->notify(
-            new \App\Notifications\TaskReassignedNotification($task)
+        $previousAssignee?->notify(
+            new TaskReassignedNotification(
+                $task
+            )
         );
-        
+
+        $task->notifyAssignee(
+            new TaskAssignedNotification(
+                $task
+            )
+        );
+
         $this->activity->handle(
             event: 'task_reassigned',
             properties: [

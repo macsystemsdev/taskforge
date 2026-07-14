@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Notifications;
+namespace App\Notifications\Tasks;
 
 use App\Models\Task;
 use Illuminate\Bus\Queueable;
@@ -48,11 +48,42 @@ class TaskReassignedNotification extends Notification implements ShouldQueue
      */
     public function toArray(object $notifiable): array
     {
-        return [
-            'task_id' => $this->task->id,
-            'task_title' => $this->task->title,
-            'project_name' => $this->task->project->name,
-            'message' => 'A task was reassigned to you.',
+ return [
+
+            'title' =>
+            'Task Assigned',
+
+            'message' =>
+            "You were reassigned from the task'{$this->task->title}'.",
+
+            'icon' =>
+            'clipboard-document',
+
+            'url' => route(
+                'tasks.show',
+                [
+                    'workspace' =>
+                    $this->task
+                        ->workspace,
+
+                    'project' =>
+                    $this->task
+                        ->project,
+
+                    'task' =>
+                    $this->task,
+                ]
+            ),
+
+            'entity_type' => 'task',
+
+            'entity_id' =>
+            $this->task->id,
+
+            'organization_id' =>
+            $this->task
+                ->workspace
+                ->organization_id,
         ];
     }
 }

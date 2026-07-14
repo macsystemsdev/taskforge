@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Notifications;
+namespace App\Notifications\Tasks;
 
 use App\Models\Task;
 use Illuminate\Bus\Queueable;
@@ -8,7 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class TaskAssignedNotification extends Notification implements ShouldQueue
+class TaskOverdueNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -48,16 +48,42 @@ class TaskAssignedNotification extends Notification implements ShouldQueue
      */
     public function toArray(object $notifiable): array
     {
-                return [
-            'task_id' => $this->task->id,
+        return [
 
-            'task_title' => $this->task->title,
+            'title' =>
+            'Task Overdue',
 
-            'project_name' => $this->task
-                ->project
-                ->name,
+            'message' =>
+            "'{$this->task->title}' is overdue.",
 
-            'message' => 'You were assigned a task.',
+            'icon' =>
+            'exclamation-circle',
+
+            'url' => route(
+                'tasks.show',
+                [
+                    'workspace' =>
+                    $this->task
+                        ->workspace,
+
+                    'project' =>
+                    $this->task
+                        ->project,
+
+                    'task' =>
+                    $this->task,
+                ]
+            ),
+
+            'entity_type' => 'task',
+
+            'entity_id' =>
+            $this->task->id,
+
+            'organization_id' =>
+            $this->task
+                ->workspace
+                ->organization_id,
         ];
     }
 }

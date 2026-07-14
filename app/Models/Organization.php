@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Support\Facades\Notification;
 use Override;
 
 #[Table('organizations')]
@@ -38,6 +39,67 @@ class Organization extends Model
             ->withTimestamps();
     }
 
+    public function administrators()
+    {
+        return $this->members()
+            ->wherePivotIn(
+                'role',
+                ['owner', 'admin']
+            );
+    }
+
+    public function administratorUsers()
+    {
+        return $this->administrators()->get();
+    }
+
+    public function administratorUsersExcept(
+        User $user
+    ) {
+        return $this
+            ->administratorUsers()
+            ->reject(
+                fn($member) =>
+                $member->id === $user->id
+            );
+    }
+
+    public function notifyAdministrators(
+        object $notification,
+        ?User $except = null
+    ): void {
+
+        $recipients =
+            $except
+            ? $this->administratorUsersExcept(
+                $except
+            )
+            : $this->administratorUsers();
+
+        Notification::send(
+            $recipients,
+            $notification
+        );
+    }
+
+    public function owner()
+    {
+        return $this->members()
+            ->wherePivot(
+                'role',
+                'owner'
+            )
+            ->first();
+    }
+
+    public function notifyOwner(
+        object $notification
+    ): void {
+
+        $this->owner()?->notify(
+            $notification
+        );
+    }
 
     public function workspaces(): HasMany
     {

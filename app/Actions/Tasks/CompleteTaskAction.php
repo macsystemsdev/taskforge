@@ -5,7 +5,7 @@ namespace App\Actions\Tasks;
 use App\Actions\ActivityLogs\CreateActivityLogAction;
 use App\Domain\Task\TaskStatus;
 use App\Models\Task;
-use App\Notifications\TaskCompletedNotification;
+use App\Notifications\Tasks\TaskCompletedNotification;
 use DomainException;
 
 class CompleteTaskAction
@@ -33,8 +33,11 @@ class CompleteTaskAction
             'completed_at' => now(),
         ]);
 
-        $task->creator?->notify(
-            new TaskCompletedNotification($task)
+        $task->notifyLeadership(
+            new TaskCompletedNotification(
+                $task
+            ),
+            auth()->user()
         );
 
         $this->activity->handle(

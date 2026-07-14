@@ -7,7 +7,7 @@ use App\Data\Tasks\CreateTaskData;
 use App\Domain\Task\TaskStatus;
 use App\Models\Project;
 use App\Models\Task;
-use App\Notifications\TaskAssignedNotification;
+use App\Notifications\Tasks\TaskAssignedNotification;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -52,11 +52,11 @@ class CreateTaskAction
             'due_date' => $data->dueDate,
         ]);
 
-        if ($task->assignee) {
-            $task->assignee->notify(
-                new TaskAssignedNotification($task)
-            );
-        }
+        $task->notifyAssignee(
+            new TaskAssignedNotification(
+                $task
+            )
+        );
 
         $this->activity->handle(
             event: 'task_created',

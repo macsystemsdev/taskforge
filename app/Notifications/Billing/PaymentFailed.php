@@ -1,21 +1,20 @@
 <?php
 
-namespace App\Notifications;
+namespace App\Notifications\Billing;
 
-use App\Models\Project;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class ProjectCancelledNotification extends Notification implements ShouldQueue
+class PaymentFailed extends Notification implements ShouldQueue
 {
     use Queueable;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct(public Project $project)
+    public function __construct()
     {
         //
     }
@@ -27,7 +26,7 @@ class ProjectCancelledNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['mail, database'];
     }
 
     /**
@@ -49,9 +48,7 @@ class ProjectCancelledNotification extends Notification implements ShouldQueue
     public function toArray(object $notifiable): array
     {
         return [
-            'project_id' => $this->project->id,
-            'project_title' => $this->project->title,
-            'message' => 'Project cancelled.',
+            //
         ];
     }
 }

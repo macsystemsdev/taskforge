@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Notification;
 
 #[Fillable(['name', 'slug', 'is_personal', 'workspace_id', 'description'])]
 class Team extends Model
@@ -100,5 +101,41 @@ class Team extends Model
     public function projects()
     {
         return $this->hasMany(Project::class);
+    }
+
+    public function notifyMembers(
+        object $notification
+    ): void {
+
+        Notification::send(
+            $this->members,
+            $notification
+        );
+    }
+
+    public function leaders()
+    {
+        return $this->members()
+            ->wherePivot(
+                'role',
+                'leader'
+            );
+    }
+
+    public function leaderUsers()
+    {
+        return $this
+            ->leaders()
+            ->get();
+    }
+
+    public function notifyLeaders(
+        object $notification
+    ): void {
+
+        Notification::send(
+            $this->leaderUsers(),
+            $notification
+        );
     }
 }
