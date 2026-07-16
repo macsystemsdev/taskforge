@@ -1,14 +1,13 @@
 <?php
 
-namespace App\Notifications\Tasks;
+namespace App\Notifications\Billing;
 
-use App\Models\Task;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class TaskAssignedNotification extends Notification implements ShouldQueue
+class ProjectLocked extends Notification
 {
     use Queueable;
 
@@ -16,12 +15,12 @@ class TaskAssignedNotification extends Notification implements ShouldQueue
 
 public function backoff(): array
 {
-    return [10,30,60];
+    return [10, 30, 60];
 }
     /**
      * Create a new notification instance.
      */
-    public function __construct(public Task $task)
+    public function __construct()
     {
         //
     }
@@ -43,6 +42,7 @@ public function backoff(): array
         'mail' => 'emails',
     ];
 }
+
     /**
      * Get the mail representation of the notification.
      */
@@ -62,41 +62,7 @@ public function backoff(): array
     public function toArray(object $notifiable): array
     {
         return [
-
-            'title' =>
-            'Task Assigned',
-
-            'message' =>
-            "You were assigned '{$this->task->title}'.",
-
-            'icon' =>
-            'clipboard-document',
-
-            'url' => route(
-                'tasks.show',
-                [
-                    'workspace' =>
-                    $this->task
-                        ->workspace,
-
-                    'project' =>
-                    $this->task
-                        ->project,
-
-                    'task' =>
-                    $this->task,
-                ]
-            ),
-
-            'entity_type' => 'task',
-
-            'entity_id' =>
-            $this->task->id,
-
-            'organization_id' =>
-            $this->task
-                ->workspace
-                ->organization_id,
+            //
         ];
     }
 }

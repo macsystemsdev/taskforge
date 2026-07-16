@@ -1,20 +1,27 @@
 <?php
 
-namespace App\Notifications\Billing;
+namespace App\Notifications\Organization;
 
+use App\Models\Organization;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class GracePeriodStarted extends Notification implements ShouldQueue
+class OrganizationRoleUpdatedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
+    public int $tries = 3;
+
+    public function backoff(): array
+    {
+        return [10, 30, 60];
+    }
     /**
      * Create a new notification instance.
      */
-    public function __construct()
+    public function __construct(public Organization $organization)
     {
         //
     }
@@ -26,16 +33,8 @@ class GracePeriodStarted extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['mail, database'];
+        return ['database'];
     }
-
-    public function viaQueues(): array
-{
-    return [
-        'database' => 'notifications',
-        'mail' => 'emails',
-    ];
-}
 
     /**
      * Get the mail representation of the notification.
@@ -56,7 +55,14 @@ class GracePeriodStarted extends Notification implements ShouldQueue
     public function toArray(object $notifiable): array
     {
         return [
-            //
+            'title' => __('Organization role updated'),
+
+            'icon' => 'building-office',
+
+            'url' => route(
+                'organizations.show',
+                $this->organization
+            )
         ];
     }
 }

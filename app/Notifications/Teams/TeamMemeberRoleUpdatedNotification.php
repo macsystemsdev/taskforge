@@ -1,14 +1,16 @@
 <?php
 
-namespace App\Notifications\Tasks;
+namespace App\Notifications\Teams;
 
-use App\Models\Task;
+use App\Domain\Teams\Enums\TeamRole;
+use App\Models\Team;
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class TaskAssignedNotification extends Notification implements ShouldQueue
+class TeamMemeberRoleUpdatedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -21,7 +23,7 @@ public function backoff(): array
     /**
      * Create a new notification instance.
      */
-    public function __construct(public Task $task)
+    public function __construct(public Team $team, public TeamRole $role, public User $updatedBy)
     {
         //
     }
@@ -43,6 +45,7 @@ public function backoff(): array
         'mail' => 'emails',
     ];
 }
+
     /**
      * Get the mail representation of the notification.
      */
@@ -63,40 +66,29 @@ public function backoff(): array
     {
         return [
 
-            'title' =>
-            'Task Assigned',
+            'title' => __('Team role updated'),
 
-            'message' =>
-            "You were assigned '{$this->task->title}'.",
+            'team_id' => $this->team->id,
 
-            'icon' =>
-            'clipboard-document',
+            'team_name' => $this->team->name,
 
-            'url' => route(
-                'tasks.show',
+            'message' => __(
+                'Your role in :team was changed to :role.',
                 [
-                    'workspace' =>
-                    $this->task
-                        ->workspace,
-
-                    'project' =>
-                    $this->task
-                        ->project,
-
-                    'task' =>
-                    $this->task,
+                    'team' => $this->team->name,
+                    'role' => $this->role->label(),
                 ]
             ),
 
-            'entity_type' => 'task',
+            'icon' => 'shield-check',
 
-            'entity_id' =>
-            $this->task->id,
-
-            'organization_id' =>
-            $this->task
-                ->workspace
-                ->organization_id,
+            'url' => route(
+                'teams.show',
+                [
+                    'workspace' => $this->team->workspace,
+                    'team' => $this->team,
+                ]
+            ),
         ];
     }
 }

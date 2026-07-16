@@ -5,6 +5,7 @@ namespace App\Actions\Projects;
 use App\Actions\ActivityLogs\CreateActivityLogAction;
 use App\Domain\Task\TaskStatus;
 use App\Models\Project;
+use App\Notifications\Projects\ProjectDeletedNotification;
 use Illuminate\Validation\ValidationException;
 
 class DeleteProjectAction
@@ -17,14 +18,30 @@ class DeleteProjectAction
         Project $project
     ): void {
 
-    if ($project->hasIncompleteTasks()) {
-        throw ValidationException::withMessages([
-            'project' => __('A project with incomplete tasks cannot be deleted.'),
-        ]);
-    }
+        if ($project->hasIncompleteTasks()) {
+            throw ValidationException::withMessages([
+                'project' => __('A project with incomplete tasks cannot be deleted.'),
+            ]);
+        }
 
-         $project->delete();
-         
+        $project->team?->notifyMembers(
+            new ProjectDeletedNotification(
+                $project
+            ),
+            auth()->user()
+        );
+
+        $project
+            ->workspace
+            ->organization
+            ->notifyAdministrators(
+                new ProjectDeletedNotification(
+                    $project
+                ),
+                auth()->user()
+            );
+        $project->delete();
+
         $this->activity->handle(
             event: 'project_deleted',
             properties: [
@@ -32,7 +49,5 @@ class DeleteProjectAction
             ],
             subject: $project,
         );
-
-        
     }
 }

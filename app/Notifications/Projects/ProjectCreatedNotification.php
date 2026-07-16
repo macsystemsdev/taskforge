@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Notifications\Tasks;
+namespace App\Notifications\Projects;
 
-use App\Models\Task;
+use App\Models\Project;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class TaskAssignedNotification extends Notification implements ShouldQueue
+class ProjectCreatedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -16,12 +16,12 @@ class TaskAssignedNotification extends Notification implements ShouldQueue
 
 public function backoff(): array
 {
-    return [10,30,60];
+    return [10, 30, 60];
 }
     /**
      * Create a new notification instance.
      */
-    public function __construct(public Task $task)
+    public function __construct(public Project $project)
     {
         //
     }
@@ -37,12 +37,12 @@ public function backoff(): array
     }
 
     public function viaQueues(): array
-{
-    return [
-        'database' => 'notifications',
-        'mail' => 'emails',
-    ];
-}
+    {
+        return [
+            'database' => 'notifications',
+            'mail' => 'emails',
+        ];
+    }
     /**
      * Get the mail representation of the notification.
      */
@@ -63,40 +63,35 @@ public function backoff(): array
     {
         return [
 
-            'title' =>
-            'Task Assigned',
+            'title' => __('Project created'),
 
-            'message' =>
-            "You were assigned '{$this->task->title}'.",
+            'project_id' => $this->project->id,
 
-            'icon' =>
-            'clipboard-document',
+            'project_name' => $this->project->name,
 
-            'url' => route(
-                'tasks.show',
+            'team_name' => $this->project
+                ->team
+                ->name,
+
+            'message' => __(
+                'A new project ":project" has been created for :team.',
                 [
-                    'workspace' =>
-                    $this->task
-                        ->workspace,
-
                     'project' =>
-                    $this->task
-                        ->project,
+                    $this->project->name,
 
-                    'task' =>
-                    $this->task,
+                    'team' =>
+                    $this->project
+                        ->team
+                        ->name,
                 ]
             ),
 
-            'entity_type' => 'task',
+            'icon' => 'folder',
 
-            'entity_id' =>
-            $this->task->id,
-
-            'organization_id' =>
-            $this->task
-                ->workspace
-                ->organization_id,
+            'url' => route(
+                'projects.show',
+                $this->project
+            ),
         ];
     }
 }

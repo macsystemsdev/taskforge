@@ -11,6 +11,12 @@ class PaymentSuccessful extends Notification implements ShouldQueue
 {
     use Queueable;
 
+    public int $tries = 5;
+
+public function backoff(): array
+{
+    return [60, 300, 600];
+}
     /**
      * Create a new notification instance.
      */
@@ -28,6 +34,14 @@ class PaymentSuccessful extends Notification implements ShouldQueue
     {
         return ['mail, database'];
     }
+
+    public function viaQueues(): array
+{
+    return [
+        'database' => 'notifications',
+        'mail' => 'emails',
+    ];
+}
 
     /**
      * Get the mail representation of the notification.

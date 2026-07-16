@@ -12,6 +12,12 @@ class TaskReassignedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
+    public int $tries = 3;
+
+public function backoff(): array
+{
+    return [10,30,60];
+}
     /**
      * Create a new notification instance.
      */
@@ -30,6 +36,13 @@ class TaskReassignedNotification extends Notification implements ShouldQueue
         return ['database'];
     }
 
+    public function viaQueues(): array
+{
+    return [
+        'database' => 'notifications',
+        'mail' => 'emails',
+    ];
+}
     /**
      * Get the mail representation of the notification.
      */

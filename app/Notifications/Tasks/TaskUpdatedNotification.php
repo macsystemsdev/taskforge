@@ -2,6 +2,7 @@
 
 namespace App\Notifications\Tasks;
 
+use App\Models\Task;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -11,10 +12,16 @@ class TaskUpdatedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
+    public int $tries = 5;
+
+    public function backoff(): array
+    {
+        return [60, 300, 600];
+    }
     /**
      * Create a new notification instance.
      */
-    public function __construct()
+    public function __construct(public Task $task)
     {
         //
     }
@@ -26,9 +33,16 @@ class TaskUpdatedNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['database'];
     }
 
+    public function viaQueues(): array
+    {
+        return [
+            'database' => 'notifications',
+            'mail' => 'emails',
+        ];
+    }
     /**
      * Get the mail representation of the notification.
      */
@@ -48,7 +62,38 @@ class TaskUpdatedNotification extends Notification implements ShouldQueue
     public function toArray(object $notifiable): array
     {
         return [
-            //
+
+            'title' => __('Task updated'),
+
+            'task_id' => $this->task->id,
+
+            'task_title' => $this->task->title,
+
+            'message' => __(
+                ':task was updated.',
+                [
+                    'task' => $this->task->title,
+                ]
+            ),
+
+            'icon' => 'clipboard-document-list',
+
+            'url' => route(
+                'tasks.show',
+                [
+                    'workspace' =>
+                    $this->task
+                        ->project
+                        ->workspace,
+
+                    'project' =>
+                    $this->task
+                        ->project,
+
+                    'task' =>
+                    $this->task,
+                ]
+            ),
         ];
     }
 }

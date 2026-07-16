@@ -2,6 +2,7 @@
 
 namespace App\Notifications\Tasks;
 
+use App\Models\Task;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -11,10 +12,16 @@ class TaskDeletedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
+    public int $tries = 5;
+
+    public function backoff(): array
+    {
+        return [60, 300, 600];
+    }
     /**
      * Create a new notification instance.
      */
-    public function __construct()
+    public function __construct(public Task $task)
     {
         //
     }
@@ -26,7 +33,15 @@ class TaskDeletedNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['database', 'mail'];
+    }
+
+    public function viaQueues(): array
+    {
+        return [
+            'database' => 'notifications',
+            'mail' => 'emails',
+        ];
     }
 
     /**
@@ -48,7 +63,23 @@ class TaskDeletedNotification extends Notification implements ShouldQueue
     public function toArray(object $notifiable): array
     {
         return [
-            //
+
+            'title' => __('Task deleted'),
+
+            'task_title' => $this->task->title,
+
+            'message' => __(
+                ':task was deleted.',
+                [
+                    'task' => $this->task->title,
+                ]
+            ),
+
+            'icon' => 'trash',
+
+            'url' => route(
+                'notifications.index'
+            ),
         ];
     }
 }

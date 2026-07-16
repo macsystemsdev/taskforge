@@ -25,7 +25,13 @@ class DeleteTaskAction
             );
         }
 
+        $task->notifyAssignee(
+            new \App\Notifications\Tasks\TaskDeletedNotification(
+                $task
+            )
+        );
         $task->delete();
+
 
         $this->activity->handle(
             subject: $task,

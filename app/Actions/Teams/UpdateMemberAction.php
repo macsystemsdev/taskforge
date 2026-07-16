@@ -6,6 +6,7 @@ use App\Actions\ActivityLogs\CreateActivityLogAction;
 use App\Domain\Teams\Enums\TeamRole;
 use App\Models\Team;
 use App\Models\User;
+use App\Notifications\Teams\TeamMemeberRoleUpdatedNotification;
 use DomainException;
 
 class UpdateMemberAction
@@ -53,9 +54,24 @@ class UpdateMemberAction
             'role' => $role,
         ]);
 
-            $this->activity->handle(
+        $member = User::findOrFail(
+            $memberId
+        );
+
+        $member->notify(
+
+            new TeamMemeberRoleUpdatedNotification(
+                team: $team,
+                role: $role,
+                updatedBy: $actor
+            )
+        );
+
+        $this->activity->handle(
             subject: $team,
-            event: 'Updated role of {$member->name} to {$role->value} in organization {$organization->name}',
+            event: "Updated role of {$member->name}
+                to {$role->value}
+                in team {$team->name}",
             properties: [
                 'member_id' => $memberId,
                 'role' => $role->value,

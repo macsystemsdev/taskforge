@@ -7,6 +7,7 @@ use App\Domain\Task\TaskStatus;
 
 
 use App\Models\Task;
+use App\Notifications\Tasks\TaskUpdatedNotification;
 
 class UpdateTaskStatusAction
 {
@@ -24,6 +25,10 @@ class UpdateTaskStatusAction
         $task->update([
             'status' => $status,
         ]);
+
+        $task->notifyAssignee(
+            new TaskUpdatedNotification($task)
+        );
 
         $this->activity->handle(
             subject: $task,

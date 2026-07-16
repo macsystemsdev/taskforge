@@ -11,6 +11,12 @@ class TrialEndingNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
+    public int $tries = 5;
+
+    public function backoff(): array
+    {
+        return [60, 300, 600];
+    }
     /**
      * Create a new notification instance.
      */
@@ -27,6 +33,14 @@ class TrialEndingNotification extends Notification implements ShouldQueue
     public function via(object $notifiable): array
     {
         return ['mail, database'];
+    }
+
+    public function viaQueues(): array
+    {
+        return [
+            'database' => 'notifications',
+            'mail' => 'emails',
+        ];
     }
 
     /**

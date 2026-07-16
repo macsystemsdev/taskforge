@@ -11,6 +11,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use App\Domain\Projects\Enums\ProjectStatus;
 use App\Exceptions\FeatureLimitExceededException;
+use App\Notifications\Projects\ProjectCreatedNotification;
 use DomainException;
 
 class CreateProjectAction
@@ -26,7 +27,7 @@ class CreateProjectAction
     ): Project {
 
         $organization = $workspace->organization;
-        
+
         if (! $organization->canCreateProject()) {
             throw new FeatureLimitExceededException(
                 'Your subscription has reached the maximum number of projects.'
@@ -61,6 +62,23 @@ class CreateProjectAction
             'status' => ProjectStatus::Active,
             'due_date' => $data->dueDate,
         ]);
+
+        $project->team?->notifyMembers(
+            new ProjectCreatedNotification(
+                $project
+            ),
+            auth()->user()
+        );
+
+        $project
+            ->workspace
+            ->organization
+            ->notifyAdministrators(
+                new ProjectCreatedNotification(
+                    $project
+                ),
+                auth()->user()
+            );
 
         $this->activity->handle(
             event: 'project_created',

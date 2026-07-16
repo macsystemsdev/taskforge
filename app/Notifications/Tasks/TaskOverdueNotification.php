@@ -12,6 +12,12 @@ class TaskOverdueNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
+    public int $tries = 5;
+
+    public function backoff(): array
+    {
+        return [60, 300, 600];
+    }
     /**
      * Create a new notification instance.
      */
@@ -27,9 +33,16 @@ class TaskOverdueNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', 'mail'];
     }
 
+    public function viaQueues(): array
+    {
+        return [
+            'database' => 'notifications',
+            'mail' => 'emails',
+        ];
+    }
     /**
      * Get the mail representation of the notification.
      */

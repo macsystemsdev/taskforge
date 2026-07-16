@@ -5,6 +5,7 @@ use App\Models\User;
 use Flux\Flux;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
+use App\Notifications\Teams\TeamMemberRemovedNotification;
 
 new class extends Component {
     public Team $team;
@@ -37,6 +38,15 @@ new class extends Component {
         if ($this->memberName === '') {
             $this->memberName = $user->name;
         }
+
+         $user->notify(
+
+                new TeamMemberRemovedNotification(
+                    team: $team,
+                    role: $user->role,
+                    removedBy: auth()->user()
+                )
+            );
 
         $this->team->memberships()
             ->where('user_id', $user->id)

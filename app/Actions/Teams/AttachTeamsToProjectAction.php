@@ -6,6 +6,8 @@ use App\Actions\ActivityLogs\CreateActivityLogAction;
 use App\Data\Teams\AttachTeamsToProjectData;
 use App\Models\Project;
 use App\Models\ProjectTeam;
+use App\Models\Team;
+use App\Notifications\Projects\ProjectCreatedNotification;
 
 class AttachTeamsToProjectAction
 {
@@ -17,7 +19,7 @@ class AttachTeamsToProjectAction
         Project $project,
         AttachTeamsToProjectData $data,
     ): void {
-        
+
         $oldTeams = $project->teams()->pluck('teams.id')->toArray();
 
         $project->teams()->sync($data->team_ids);
@@ -33,6 +35,15 @@ class AttachTeamsToProjectAction
         );
         foreach ($addedTeams as $teamId) {
 
+            $team = Team::find($teamId);
+
+            $team?->notifyMembers(
+                new ProjectCreatedNotification(
+                    $project
+                ),
+                auth()->user()
+            );
+
             $this->logAction->handle(
                 subject: $project,
                 event: 'team_attached_to_project',
@@ -41,6 +52,7 @@ class AttachTeamsToProjectAction
                 ],
             );
         }
+        
         foreach ($removedTeams as $teamId) {
 
             $this->logAction->handle(

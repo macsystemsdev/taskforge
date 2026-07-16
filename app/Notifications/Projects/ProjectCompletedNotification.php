@@ -12,6 +12,12 @@ class ProjectCompletedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
+    public int $tries = 3;
+
+public function backoff(): array
+{
+    return [10, 30, 60];
+}
     /**
      * Create a new notification instance.
      */
@@ -28,6 +34,14 @@ class ProjectCompletedNotification extends Notification implements ShouldQueue
     public function via(object $notifiable): array
     {
         return ['database'];
+    }
+
+    public function viaQueues(): array
+    {
+        return [
+            'database' => 'notifications',
+            'mail' => 'emails',
+        ];
     }
 
     /**

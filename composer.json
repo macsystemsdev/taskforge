@@ -13,9 +13,11 @@
         "doctrine/dbal": "*",
         "laravel/fortify": "^1.34",
         "laravel/framework": "^13.7",
+        "laravel/horizon": "*",
         "laravel/tinker": "^3.0",
         "livewire/flux": "^2.13.1",
         "livewire/livewire": "^4.1",
+        "predis/predis": "*",
         "spatie/laravel-data": "*",
         "stripe/stripe-php": "*"
     },

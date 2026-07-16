@@ -378,3 +378,27 @@ TaskForge now contains:
 * Billing-aware authorization
 
 Billing MVP is now complete and provides the commercial foundation required for future production deployment.
+
+
+## Horizon Limitation
+
+Attempted Horizon installation.
+
+Discovered Horizon depends on Unix extensions:
+
+- ext-pcntl
+- ext-posix
+
+These are unavailable on Windows.
+
+Decision:
+
+Continue local development using:
+
+php artisan queue:work
+
+Production Horizon deployment will be implemented during Docker infrastructure work in Week 10.
+
+Lessons:
+
+Infrastructure tooling often assumes Linux environments. Development environments should mirror production as closely as possible.

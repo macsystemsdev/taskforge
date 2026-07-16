@@ -12,10 +12,16 @@ class ProjectDeletedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
+    public int $tries = 3;
+
+public function backoff(): array
+{
+    return [10, 30, 60];
+}
     /**
      * Create a new notification instance.
      */
-       public function __construct(public Project $project)
+    public function __construct(public Project $project)
     {
         //
     }
@@ -29,6 +35,14 @@ class ProjectDeletedNotification extends Notification implements ShouldQueue
     {
         return ['database'];
     }
+
+    public function viaQueues(): array
+{
+    return [
+        'database' => 'notifications',
+        'mail' => 'emails',
+    ];
+}
 
     /**
      * Get the mail representation of the notification.
@@ -49,7 +63,24 @@ class ProjectDeletedNotification extends Notification implements ShouldQueue
     public function toArray(object $notifiable): array
     {
         return [
-            
+
+            'title' => __('Project deleted'),
+
+            'project_name' => $this->project->name,
+
+            'message' => __(
+                ':project was deleted.',
+                [
+                    'project' =>
+                    $this->project->name,
+                ]
+            ),
+
+            'icon' => 'trash',
+
+            'url' => route(
+                'projects.index'
+            ),
         ];
     }
 }

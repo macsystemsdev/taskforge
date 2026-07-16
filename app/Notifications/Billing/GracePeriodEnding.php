@@ -29,6 +29,14 @@ class GracePeriodEnding extends Notification implements ShouldQueue
         return ['mail, database'];
     }
 
+    public function viaQueues(): array
+{
+    return [
+        'database' => 'notifications',
+        'mail' => 'emails',
+    ];
+}
+
     /**
      * Get the mail representation of the notification.
      */

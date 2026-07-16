@@ -103,22 +103,14 @@ class Team extends Model
         return $this->hasMany(Project::class);
     }
 
-    public function notifyMembers(
-        object $notification
-    ): void {
-
-        Notification::send(
-            $this->members,
-            $notification
-        );
-    }
-
     public function leaders()
     {
         return $this->members()
-            ->wherePivot(
+            ->wherePivotIn(
                 'role',
-                'leader'
+                [
+                    TeamRole::LEADER,
+                ]
             );
     }
 
@@ -129,12 +121,51 @@ class Team extends Model
             ->get();
     }
 
+    public function leaderUsersExcept(
+        User $user
+    ) {
+        return $this
+            ->leaderUsers()
+            ->where(
+                'id',
+                '!=',
+                $user->id
+            );
+    }
+
     public function notifyLeaders(
-        object $notification
+        object $notification,
+        ?User $except = null,
     ): void {
 
         Notification::send(
-            $this->leaderUsers(),
+            $except
+                ? $this->leaderUsersExcept($except)
+                : $this->leaderUsers(),
+            $notification
+        );
+    }
+
+    public function memberUsersExcept(
+        User $user
+    ) {
+        return $this->members
+            ->where(
+                'id',
+                '!=',
+                $user->id
+            );
+    }
+
+    public function notifyMembers(
+        object $notification,
+        ?User $except = null
+    ): void {
+
+        Notification::send(
+            $except
+                ? $this->memberUsersExcept($except)
+                : $this->members,
             $notification
         );
     }

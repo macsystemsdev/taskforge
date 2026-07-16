@@ -2,6 +2,7 @@
 
 namespace App\Actions\ActivityLogs;
 
+use App\Jobs\LogActivityJob;
 use App\Models\ActivityLog;
 use Illuminate\Database\Eloquent\Model;
 
@@ -11,11 +12,16 @@ class CreateActivityLogAction
         string $event,
         array $properties = [],
         Model $subject,
-    ): ActivityLog {
-        return $subject->activityLogs()->create([
-            'user_id' => auth()->id(),
-            'event' => $event,
-            'properties' => $properties,
-        ]);
+    ): void {
+
+        LogActivityJob::dispatch(
+            event: $event,
+            properties: $properties,
+            subjectType: $subject::class,
+            subjectId: $subject->id,
+            userId: auth()->id(),
+        )
+        ->onQueue('activities')
+        ->delay(now()->addSeconds(5));
     }
 }

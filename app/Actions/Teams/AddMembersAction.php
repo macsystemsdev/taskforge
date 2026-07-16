@@ -6,7 +6,8 @@ use App\Actions\ActivityLogs\CreateActivityLogAction;
 use App\Data\Teams\AddMembersData;
 use App\Domain\Teams\Enums\TeamRole;
 use App\Models\Team;
-
+use App\Models\User;
+use App\Notifications\Teams\TeamMemberAddedNotification;
 
 class AddMembersAction
 {
@@ -30,6 +31,23 @@ class AddMembersAction
 
         $team->memberships()
             ->syncWithoutDetaching($attachData);
+
+        $members = User::whereIn(
+            'id',
+            $data->memberIds
+        )->get();
+
+        foreach ($members as $member) {
+
+            $member->notify(
+
+                new TeamMemberAddedNotification(
+                    team: $team,
+                    role: TeamRole::MEMBER,
+                    addedBy: auth()->user()
+                )
+            );
+        }
 
         $this->logAction->handle(
             subject: $team,
