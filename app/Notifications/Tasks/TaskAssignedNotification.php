@@ -14,10 +14,10 @@ class TaskAssignedNotification extends Notification implements ShouldQueue
 
     public int $tries = 3;
 
-public function backoff(): array
-{
-    return [10,30,60];
-}
+    public function backoff(): array
+    {
+        return [10, 30, 60];
+    }
     /**
      * Create a new notification instance.
      */
@@ -37,12 +37,12 @@ public function backoff(): array
     }
 
     public function viaQueues(): array
-{
-    return [
-        'database' => 'notifications',
-        'mail' => 'emails',
-    ];
-}
+    {
+        return [
+            'database' => 'notifications',
+            'mail' => 'emails',
+        ];
+    }
     /**
      * Get the mail representation of the notification.
      */

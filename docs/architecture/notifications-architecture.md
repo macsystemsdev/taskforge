@@ -106,6 +106,18 @@ Examples:
 * Billing emails
 * Reminder emails
 
+# Notification Payload Standard
+
+[
+    'title',
+    'message',
+    'icon',
+    'url',
+    'actor_id',
+    'actor_name',
+    'created_at'
+]
+
 Queue driver:
 
 ```env
@@ -160,3 +172,13 @@ Important events interrupt users through email.
 Operational events remain inside the application.
 
 This prevents notification fatigue while maintaining visibility.
+
+
+# Future Features
+
+- Notification Preferences
+- Notification Digests
+- Browser Push Notifications
+- Mobile Push Notifications
+- Notification Categories
+- Real-time Broadcasting

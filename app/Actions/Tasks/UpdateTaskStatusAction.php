@@ -26,9 +26,6 @@ class UpdateTaskStatusAction
             'status' => $status,
         ]);
 
-        $task->notifyAssignee(
-            new TaskUpdatedNotification($task)
-        );
 
         $this->activity->handle(
             subject: $task,

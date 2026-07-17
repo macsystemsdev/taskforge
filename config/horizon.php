@@ -207,7 +207,7 @@ return [
             'maxJobs' => 0,
             'memory' => 128,
             'tries' => 3,
-            'timeout' => 120,
+            'timeout' => 60,
             'nice' => 0,
         ],
     ],
@@ -216,41 +216,73 @@ return [
 
         'production' => [
 
-            'supervisor-1' => [
-
+            'notifications' => [
                 'connection' => 'redis',
-
-                'queue' => ['default'],
-
+                'queue' => ['notifications'],
                 'balance' => 'auto',
-
-                'autoScalingStrategy' => 'time',
-
-                'maxProcesses' => 10,
-
-                'minProcesses' => 1,
-
+                'maxProcesses' => 3,
+                'timeout' => 30,
+                'memory' => 128,
                 'tries' => 3,
+            ],
 
+            'emails' => [
+                'connection' => 'redis',
+                'queue' => ['emails'],
+                'balance' => 'auto',
+                'maxProcesses' => 5,
                 'timeout' => 120,
+                'memory' => 256,
+                'tries' => 5,
+            ],
+
+            'activities' => [
+                'connection' => 'redis',
+                'queue' => ['activities'],
+                'balance' => 'simple',
+                'maxProcesses' => 2,
+                'timeout' => 30,
+                'memory' => 64,
+                'tries' => 2,
             ],
         ],
 
         'local' => [
 
-            'supervisor-1' => [
 
+            'notifications' => [
                 'connection' => 'redis',
-
-                'queue' => ['default'],
-
+                'queue' => ['notifications'],
                 'balance' => 'auto',
-
-                'processes' => 5,
-
+                'maxProcesses' => 2,
+                'timeout' => 30,
+                'memory' => 128,
                 'tries' => 3,
             ],
-        ],
+
+            'emails' => [
+                'connection' => 'redis',
+                'queue' => ['emails'],
+                'balance' => 'auto',
+                'maxProcesses' => 2,
+                'timeout' => 120,
+                'memory' => 256,
+                'tries' => 5,
+            ],
+
+
+
+            'activities' => [
+                'connection' => 'redis',
+                'queue' => ['activities'],
+                'balance' => 'simple',
+                'maxProcesses' => 1,
+                'timeout' => 30,
+                'memory' => 64,
+                'tries' => 2,
+            ],
+
+        ]
     ],
 
     /*

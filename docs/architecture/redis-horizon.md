@@ -75,3 +75,18 @@ Port:
 Queue Driver:
 
 redis
+
+# Horizon Supervisors
+
+emails
+notifications
+activities
+
+Current environment:
+
+Windows development.
+
+Production:
+
+Linux Docker containers.
+Horizon dashboard available only in Linux environments.
