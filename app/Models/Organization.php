@@ -461,4 +461,8 @@ class Organization extends Model
             ->latest('paid_at')
             ->first();
     }
+
+    // Orgnaization Metrics
+
+    
 }
