@@ -2,7 +2,12 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Widgets\InfrastructureWidget;
 use App\Filament\Widgets\OverviewStatsWidget;
+use App\Filament\Widgets\RevenueGrowthChart;
+use App\Filament\Widgets\RevenueOverview;
+use App\Filament\Widgets\SubscriptionBreakdownChart;
+use App\Filament\Widgets\UsageStatsWidget;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -37,8 +42,22 @@ class AdminPanelProvider extends PanelProvider
             ->pages([
                 Dashboard::class,
             ])
-            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
-           
+            //->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
+            ->widgets([
+
+                OverviewStatsWidget::class,
+
+                RevenueOverview::class,
+
+                RevenueGrowthChart::class,
+
+                SubscriptionBreakdownChart::class,
+
+                UsageStatsWidget::class,
+
+                InfrastructureWidget::class,
+
+            ])
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

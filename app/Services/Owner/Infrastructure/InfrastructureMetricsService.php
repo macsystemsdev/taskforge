@@ -3,36 +3,15 @@
 namespace App\Services\Owner\Infrastructure;
 
 use App\Services\Owner\DTO\MetricData;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Redis;
 
 class InfrastructureMetricsService
 {
-    public function metrics(): array
+    public function healthMetrics(): array
     {
         return [
-
-            'storageUsed' => new MetricData(
-                label: 'Storage Used',
-                value: $this->storageUsed(),
-                description: 'Total platform storage consumption',
-                icon: 'heroicon-o-server-stack',
-                color: 'warning',
-            ),
-
-            'storageLimit' => new MetricData(
-                label: 'Storage Limit',
-                value: $this->storageLimit(),
-                description: 'Maximum available storage',
-                icon: 'heroicon-o-circle-stack',
-                color: 'primary',
-            ),
-
-            'storageUsagePercentage' => new MetricData(
-                label: 'Storage Usage',
-                value: $this->storageUsagePercentage(),
-                description: 'Percentage of storage consumed',
-                icon: 'heroicon-o-chart-pie',
-                color: 'warning',
-            ),
 
             'queuedJobs' => new MetricData(
                 label: 'Queued Jobs',
@@ -77,43 +56,86 @@ class InfrastructureMetricsService
         ];
     }
 
-    private function storageUsed(): int
-    {
-        return 0;
-    }
+    // private function storageUsed(): int
+    // {
+    //     return 0;
+    // }
 
-    private function storageLimit(): int
-    {
-        return 0;
-    }
+    // private function storageLimit(): int
+    // {
+    //     return 0;
+    // }
 
-    private function storageUsagePercentage(): int
-    {
-        return 0;
-    }
+    // private function storageUsagePercentage(): int
+    // {
+    //     return 0;
+    // }
+
+        // 'storageUsed' => new MetricData(
+            //     label: 'Storage Used',
+            //     value: $this->storageUsed(),
+            //     description: 'Total platform storage consumption',
+            //     icon: 'heroicon-o-server-stack',
+            //     color: 'warning',
+            // ),
+
+            // 'storageLimit' => new MetricData(
+            //     label: 'Storage Limit',
+            //     value: $this->storageLimit(),
+            //     description: 'Maximum available storage',
+            //     icon: 'heroicon-o-circle-stack',
+            //     color: 'primary',
+            // ),
+
+            // 'storageUsagePercentage' => new MetricData(
+            //     label: 'Storage Usage',
+            //     value: $this->storageUsagePercentage(),
+            //     description: 'Percentage of storage consumed',
+            //     icon: 'heroicon-o-chart-pie',
+            //     color: 'warning',
+            // ),
 
     private function queuedJobs(): int
     {
-        return 0;
+        return Queue::size('default')
+            + Queue::size('emails')
+            + Queue::size('notifications')
+            + Queue::size('activities');
     }
 
     private function failedJobs(): int
     {
-        return 0;
+        return DB::table('failed_jobs')->count();
     }
 
     private function redisStatus(): string
     {
-        return 'Operational';
+        try {
+            Redis::connection()->ping();
+
+            return 'Operational';
+        } catch (\Throwable) {
+            return 'Offline';
+        }
     }
 
     private function databaseStatus(): string
     {
-        return 'Operational';
+        try {
+
+            DB::connection()->getPdo();
+
+            return 'Operational';
+        } catch (\Throwable) {
+
+            return 'Offline';
+        }
     }
 
     private function mailStatus(): string
     {
-        return 'Operational';
+        return config('mail.default')
+            ? 'Configured'
+            : 'Not Configured';
     }
 }

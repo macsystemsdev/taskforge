@@ -17,7 +17,7 @@ class DashboardMetricsCacheService
         $serialized = Cache::remember(
             'owner.dashboard.metrics',
             now()->addMinutes(5),
-            fn() => serialize($this->metrics->overview())
+            fn() => serialize($this->metrics->platformMetrics())
         );
 
         return unserialize($serialized);

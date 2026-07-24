@@ -7,39 +7,34 @@ use Filament\Widgets\ChartWidget;
 
 class SubscriptionBreakdownChart extends ChartWidget
 {
-    protected ?string $heading = 'Subscription Breakdown Chart';
-
-    protected int|string|array $columnSpan = 1;
+    protected ?string $heading = 'Subscription Distribution';
     
+    protected int|string|array $columnSpan = 1;
+    protected ?string $maxHeight = '320px';
+    protected  ?string $pollingInterval = '2m';
+
     protected function getData(): array
     {
-        $metrics =
-            app(
-                RevenueMetricsCacheService::class
-            )->overview();
+        // Get subscription breakdown data
+        $breakdownData = app(RevenueMetricsCacheService::class)->subscriptionBreakdown();
+
+        // Prepare the data
+        $revenues = [];
+        $subscriptionNames = [];
+
+        foreach ($breakdownData as $item) {
+            $revenues[] = $item['total_revenue'];
+            $subscriptionNames[] = 'Sub #' . $item['subscription_plan_id'];
+        }
 
         return [
-
             'datasets' => [
                 [
-                    'label' => 'Organizations',
-
-                    'data' => [
-
-                        $metrics['freeOrganizations']->value,
-
-                        $metrics['trialOrganizations']->value,
-
-                        $metrics['payingOrganizations']->value,
-                    ],
+                    'label' => 'Revenue by Subscription',
+                    'data' => $revenues,
                 ],
             ],
-
-            'labels' => [
-                'Free',
-                'Trial',
-                'Paid',
-            ],
+            'labels' => $subscriptionNames,
         ];
     }
 

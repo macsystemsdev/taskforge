@@ -10,36 +10,28 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 class RevenueOverview extends StatsOverviewWidget
 {
     protected int|string|array $columnSpan = 'full';
-    
+    protected ?string $heading = 'Revenue Overview';
+    protected ?string $pollingInterval = '30s';
+
     protected function getStats(): array
-{
-    $metrics =
-        app(
-            RevenueMetricsCacheService::class
-        )->overview();
-
-    return collect($metrics)
-
-        ->map(
-            fn (MetricData $metric) =>
-
-            Stat::make(
-                $metric->label,
-                $metric->value
-            )
-                ->description(
-                    $metric->description
-                )
-                ->icon(
-                    $metric->icon
-                )
-                ->color(
-                    $metric->color
-                )
+    {
+        return collect(
+            app(
+                RevenueMetricsCacheService::class
+            )->overviewMetrics()
         )
+            ->map(
+                fn(MetricData $metric) =>
 
-        ->values()
+                Stat::make(
+                    $metric->label,
+                    $metric->value,
+                )
+                    ->description($metric->description)
+                    ->icon($metric->icon)
+                    ->color($metric->color)
 
-        ->all();
-}
+            )
+            ->toArray();
+    }
 }

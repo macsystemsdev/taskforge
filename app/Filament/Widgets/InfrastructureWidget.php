@@ -2,26 +2,23 @@
 
 namespace App\Filament\Widgets;
 
-use App\Services\Owner\DashboardMetricsCacheService;
 use App\Services\Owner\DTO\MetricData;
-use App\Services\Owner\Organization\OrganizationCacheService;
+use App\Services\Owner\Infrastructure\InfrastructureCacheService;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
-class OverviewStatsWidget extends StatsOverviewWidget
+class InfrastructureWidget extends StatsOverviewWidget
 {
-    protected ?string $heading = 'Platform Overview';
-
     protected int|string|array $columnSpan = 'full';
-
-     protected  ?string $pollingInterval = '30s';
+    protected ?string $heading = 'Infrastructure Health';
+    protected ?string $pollingInterval = '30s';
 
     protected function getStats(): array
     {
         return collect(
             app(
-                OrganizationCacheService::class
-            )->platformMetrics()
+                InfrastructureCacheService::class
+            )->healthMetrics()
         )
             ->map(
                 fn(MetricData $metric) =>

@@ -8,10 +8,12 @@ use App\Models\Organization;
 use App\Models\PaymentTransaction;
 use App\Models\Subscription;
 use App\Services\Owner\DTO\MetricData;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class RevenueMetricsService
 {
-    public function metrics(): array
+    public function revenueMetrics(): array
     {
         return [
 
@@ -71,7 +73,10 @@ class RevenueMetricsService
                 color: 'primary',
             ),
 
-            'freeOrganizations' => new MetricData(label: 'Free Organizations', value: $this->freeOrganizations(), description: 'Organizations on a free plan', color: 'warning', icon: 'heroicon-o-clock'),
+            'freeOrganizations' => new MetricData(label: 'Free Organizations', value: $this->freeOrganizations(), description: 'Organizations on a free plan', 
+            icon: 'heroicon-o-clock',
+            color: 'warning', 
+            ),
 
 
         ];
@@ -212,37 +217,90 @@ class RevenueMetricsService
         );
     }
 
-    public function monthlyRevenueTrend(): array
+    public function monthlyRevenueTrend(): Collection
     {
-        return PaymentTransaction::query()
+        $driver = DB::connection()->getDriverName();
 
-            ->where(
-                'status',
-                PaymentStatus::SUCCESSFUL
-            )
+        $query = PaymentTransaction::query()
+            ->where('status', PaymentStatus::SUCCESSFUL)
+            ->where('paid_at', '>=', now()->subMonths(11)->startOfMonth())
+            ->where('amount', '>', 0); // Exclude zero/negative amounts
 
-            ->where(
-                'paid_at',
-                '>=',
-                now()->subMonths(11)->startOfMonth()
-            )
+        if ($driver === 'sqlite') {
+            return $query
+                ->selectRaw("
+                strftime('%Y', paid_at) as year,
+                strftime('%m', paid_at) as month,
+                SUM(amount) as revenue
+            ")
+                ->groupByRaw("
+                strftime('%Y', paid_at),
+                strftime('%m', paid_at)
+            ")
+                ->orderByRaw("
+                strftime('%Y', paid_at),
+                strftime('%m', paid_at)
+            ")
+                ->get();
+        }
 
-            ->selectRaw('
+        return $query
+            ->selectRaw("
             YEAR(paid_at) as year,
             MONTH(paid_at) as month,
             SUM(amount) as revenue
-        ')
-
-            ->groupByRaw('
+        ")
+            ->groupByRaw("
             YEAR(paid_at),
             MONTH(paid_at)
-        ')
-
-            ->orderByRaw('
+        ")
+            ->orderByRaw("
             YEAR(paid_at),
             MONTH(paid_at)
-        ')
+        ")
+            ->get();
+    }
 
+    public function subscriptionBreakdown(): Collection
+    {
+        $driver = DB::connection()->getDriverName();
+
+        $query = PaymentTransaction::query()
+            ->where('status', PaymentStatus::SUCCESSFUL)
+            ->whereNotNull('subscription_plan_id') // Only subscription payments
+            ->where('paid_at', '>=', now()->subMonths(11)->startOfMonth()) // Same date range as monthlyRevenueTrend
+            ->where('amount', '>', 0); // Exclude zero/negative amounts
+
+        if ($driver === 'sqlite') {
+            return $query
+                ->selectRaw("
+                subscription_plan_id,
+                COUNT(*) as transaction_count,
+                SUM(amount) as total_revenue,
+                strftime('%Y-%m', paid_at) as period
+            ")
+                ->groupByRaw("
+                subscription_plan_id,
+                strftime('%Y-%m', paid_at)
+            ")
+                ->orderBy('total_revenue', 'desc')
+                ->limit(100) // Limit to top 100 for dashboard performance
+                ->get();
+        }
+
+        return $query
+            ->selectRaw("
+            subscription_id,
+            COUNT(*) as transaction_count,
+            SUM(amount) as total_revenue,
+            DATE_FORMAT(paid_at, '%Y-%m') as period
+        ")
+            ->groupByRaw("
+            subscription_id,
+            DATE_FORMAT(paid_at, '%Y-%m')
+        ")
+            ->orderBy('total_revenue', 'desc')
+            ->limit(100) // Limit to top 100 for dashboard performance
             ->get();
     }
 }

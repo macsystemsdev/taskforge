@@ -17,12 +17,23 @@ class DashboardMetricsService
         protected InfrastructureMetricsService $infrastructure,
     ) {}
 
-    public function overview(): array
+    public function platformMetrics(): array
     {
-        return array_merge(
-            $this->organizations->metrics(),
-            $this->revenue->metrics(),
-            $this->infrastructure->metrics(),
-        );
+        return $this->organizations->platformMetrics();
+    }
+
+    public function usageMetrics(): array
+    {
+        return $this->organizations->usageMetrics();
+    }
+
+    public function revenueMetrics(): array
+    {
+        return $this->revenue->revenueMetrics();
+    }
+
+    public function infrastructureMetrics(): array
+    {
+        return $this->infrastructure->healthMetrics();
     }
 }

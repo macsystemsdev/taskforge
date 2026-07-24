@@ -9,7 +9,6 @@ use App\Models\Project;
 use App\Models\Task;
 use App\Models\Team;
 use App\Models\User;
-use App\Models\Workspace;
 use App\Services\Owner\DTO\MetricData;
 
 class OrganizationMetricsService
@@ -23,11 +22,6 @@ class OrganizationMetricsService
     private function users(): int
     {
         return User::count();
-    }
-
-    private function workspaces(): int
-    {
-        return Workspace::count();
     }
 
     private function teams(): int
@@ -177,87 +171,114 @@ class OrganizationMetricsService
 
 
 
-    public function metrics(): array
+    public function platformMetrics(): array
+    {
+        return  [
+
+                'organizations' => new MetricData(
+                    label: 'Organizations',
+                    value: $this->organizations(),
+                    description: 'Registered organizations',
+                    icon: 'heroicon-o-building-office-2',
+                    color: 'primary',
+                ),
+
+                'users' => new MetricData(
+                    label: 'Users',
+                    value: $this->users(),
+                    description: 'Registered platform users',
+                    icon: 'heroicon-o-users',
+                    color: 'info',
+                ),
+
+                'projects' => new MetricData(
+                    label: 'Projects',
+                    value: $this->projects(),
+                    description: 'Projects created',
+                    icon: 'heroicon-o-folder',
+                    color: 'primary',
+                ),
+
+                'tasks' => new MetricData(
+                    label: 'Tasks',
+                    value: $this->tasks(),
+                    description: 'Tasks created',
+                    icon: 'heroicon-o-check-circle',
+                    color: 'gray',
+                ),
+
+            ];
+        
+    }
+
+    public function usageMetrics(): array
     {
         return [
 
-            'organizations' => new MetricData(label: 'Organizations', value: $this->organizations(), description: 'Registered Organizations', icon: 'heroicon-o-building-office-2', color: 'primary'),
+                'averageProjectsPerOrganization' => new MetricData(
+                    label: 'Avg Projects / Organization',
+                    value: $this->averageProjectsPerOrganization(),
+                    description: 'Average projects created per organization',
+                    icon: 'heroicon-o-chart-bar',
+                    color: 'info',
+                ),
 
-            'users' => new MetricData(label: 'Users', value: $this->users(), description: 'Registered users on platform', color: 'info', icon: 'heroicon-o-users'),
+                'averageTeamsPerOrganization' => new MetricData(
+                    label: 'Avg Teams / Organization',
+                    value: $this->averageTeamsPerOrganization(),
+                    description: 'Average teams per organization',
+                    icon: 'heroicon-o-user-group',
+                    color: 'info',
+                ),
 
-            'workspaces' => new MetricData(label: 'Workspaces', value: $this->workspaces(), description: 'Number of workspaces on platform', color: 'primary', icon: 'heroicon-o-squares-2x2'),
+                'averageMembersPerOrganization' => new MetricData(
+                    label: 'Avg Members / Organization',
+                    value: $this->averageMembersPerOrganization(),
+                    description: 'Average members per organization',
+                    icon: 'heroicon-o-users',
+                    color: 'info',
+                ),
 
-            'teams' => new MetricData(label: 'Teams', value: $this->teams(), description: 'Number of teams on platform', color: 'info', icon: 'heroicon-o-user-group'),
+                'averageTasksPerProject' => new MetricData(
+                    label: 'Avg Tasks / Project',
+                    value: $this->averageTasksPerProject(),
+                    description: 'Average tasks created per project',
+                    icon: 'heroicon-o-check-circle',
+                    color: 'primary',
+                ),
 
-            'projects' => new MetricData(label: 'Projects', value: $this->projects(), description: 'Number of created projects on platform', color: 'primary', icon: 'heroicon-o-folder'),
+                'projectCompletionRate' => new MetricData(
+                    label: 'Project Completion',
+                    value: $this->projectCompletionRate(),
+                    description: 'Projects fully completed',
+                    icon: 'heroicon-o-folder-open',
+                    color: 'success',
+                ),
 
-            'tasks' => new MetricData(label: 'Tasks', value: $this->tasks(), description: 'Number of created tasks on platform', color: 'gray', icon: 'heroicon-o-check-circle'),
+                'taskCompletionRate' => new MetricData(
+                    label: 'Task Completion',
+                    value: $this->taskCompletionRate(),
+                    description: 'Percentage of completed tasks',
+                    icon: 'heroicon-o-check-badge',
+                    color: 'success',
+                ),
 
-            'averageProjectsPerOrganization' => new MetricData(
-                label: 'Avg Projects / Organization',
-                value: $this->averageProjectsPerOrganization(),
-                description: 'Average projects created per organization',
-                icon: 'heroicon-o-chart-bar',
-                color: 'info',
-            ),
+                'activeOrganizations' => new MetricData(
+                    label: 'Active Organizations',
+                    value: $this->activeOrganizations(),
+                    description: 'Organizations active in the last 30 days',
+                    icon: 'heroicon-o-fire',
+                    color: 'success',
+                ),
 
-            'averageTeamsPerOrganization' => new MetricData(
-                label: 'Avg Teams / Organization',
-                value: $this->averageTeamsPerOrganization(),
-                description: 'Average teams per organization',
-                icon: 'heroicon-o-user-group',
-                color: 'info',
-            ),
+                'averageTaskCompletionPerOrganization' => new MetricData(
+                    label: 'Avg Completed Tasks / Organization',
+                    value: $this->averageTaskCompletionPerOrganization(),
+                    description: 'Average completed tasks per organization',
+                    icon: 'heroicon-o-check-badge',
+                    color: 'success',
+                ),
 
-            'averageTasksPerProject' => new MetricData(
-                label: 'Avg Tasks / Project',
-                value: $this->averageTasksPerProject(),
-                description: 'Average tasks created per project',
-                icon: 'heroicon-o-check-circle',
-                color: 'primary',
-            ),
-
-            'averageMembersPerOrganization' => new MetricData(
-                label: 'Avg Members / Organization',
-                value: $this->averageMembersPerOrganization(),
-                description: 'Average members per organization',
-                icon: 'heroicon-o-users',
-                color: 'info',
-            ),
-            'projectCompletionRate' => new MetricData(
-                label: 'Project Completion',
-                value: $this->projectCompletionRate(),
-                description: 'Projects fully completed',
-                icon: 'heroicon-o-folder-open',
-                color: 'success',
-            ),
-
-            'taskCompletionRate' => new MetricData(
-                label: 'Task Completion',
-                value: $this->taskCompletionRate(),
-                description: 'Percentage of completed tasks',
-                icon: 'heroicon-o-check-badge',
-                color: 'success',
-            ),
-
-            'activeOrganizations' => new MetricData(
-                label: 'Active Organizations',
-                value: $this->activeOrganizations(),
-                description: 'Organizations active in the last 30 days',
-                icon: 'heroicon-o-fire',
-                color: 'success',
-            ),
-
-            'averageTaskCompletionPerOrganization' => new MetricData(
-                label: 'Avg Completed Tasks / Organization',
-                value: $this->averageTaskCompletionPerOrganization(),
-                description: 'Average completed tasks per organization',
-                icon: 'heroicon-o-check-badge',
-                color: 'success',
-            ),
-
-
-
-        ];
+            ];
     }
 }

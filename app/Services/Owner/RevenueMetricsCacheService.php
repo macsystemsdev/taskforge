@@ -11,28 +11,48 @@ class RevenueMetricsCacheService
         private RevenueMetricsService $metrics,
     ) {}
 
-    public function overview(): array
+    public function overviewMetrics(): array
     {
         $serialized = Cache::remember(
-            'owner.dashboard.revenue',
+            'owner.dashboard.revenue.overview',
             now()->addMinutes(10),
-            fn() => serialize($this->metrics->metrics())
+            fn () => serialize(
+                $this->metrics->revenueMetrics()
+            ),
         );
 
         return unserialize($serialized);
     }
 
+    public function monthlyRevenueTrend(): array
+    {
+        return Cache::remember(
+            'owner.dashboard.revenue.trend',
+            now()->addMinutes(10),
+            fn () => $this->metrics->monthlyRevenueTrend()->toArray(),
+        );
+    }
+
+    public function subscriptionBreakdown(): array
+    {
+        return Cache::remember(
+            'owner.dashboard.revenue.breakdown',
+            now()->addMinutes(10),
+            fn () => $this->metrics->subscriptionBreakdown()->toArray(),
+        );
+    }
+
     public function forget(): void
     {
-        Cache::forget(
-            'owner.dashbaord.revenue'
-        );
+        Cache::forget('owner.dashboard.revenue.overview');
+        Cache::forget('owner.dashboard.revenue.trend');
+        Cache::forget('owner.dashboard.revenue.breakdown');
     }
 
     public function refresh(): array
     {
         $this->forget();
 
-        return $this->overview();
+        return $this->overviewMetrics();
     }
 }

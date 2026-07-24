@@ -2,26 +2,24 @@
 
 namespace App\Filament\Widgets;
 
-use App\Services\Owner\DashboardMetricsCacheService;
 use App\Services\Owner\DTO\MetricData;
 use App\Services\Owner\Organization\OrganizationCacheService;
+use App\Services\Owner\Organization\OrganizationMetricsService;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
-class OverviewStatsWidget extends StatsOverviewWidget
+class UsageStatsWidget extends StatsOverviewWidget
 {
-    protected ?string $heading = 'Platform Overview';
-
     protected int|string|array $columnSpan = 'full';
-
-     protected  ?string $pollingInterval = '30s';
+    protected ?string $heading = 'Usage Analytics';
+    protected ?string $pollingInterval = '30s';
 
     protected function getStats(): array
     {
         return collect(
             app(
                 OrganizationCacheService::class
-            )->platformMetrics()
+            )->usageMetrics()
         )
             ->map(
                 fn(MetricData $metric) =>
