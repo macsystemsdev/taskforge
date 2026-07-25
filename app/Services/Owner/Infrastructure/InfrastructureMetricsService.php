@@ -7,6 +7,14 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Redis;
 
+// Storage from uploaded files
+
+// Redis latency
+
+// Queue processing time
+
+// Mail latency
+
 class InfrastructureMetricsService
 {
     public function healthMetrics(): array

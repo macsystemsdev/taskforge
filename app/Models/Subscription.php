@@ -242,6 +242,11 @@ class Subscription extends Model
             $this->isFree();
     }
 
+    public function trialEndsAt()
+    {
+        return $this->trial_ends_at;
+    }
+
     public function hasTrialExpired(): bool
     {
         return

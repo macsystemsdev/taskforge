@@ -21,9 +21,12 @@ class Organization extends Model
 {
 
 
-    public function user(): BelongsTo
+    public function owner(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'owner_id', 'id');
+        return $this->belongsTo(
+            User::class,
+            'owner_id'
+        );
     }
 
     public function members(): BelongsToMany
@@ -82,15 +85,6 @@ class Organization extends Model
         );
     }
 
-    public function owner()
-    {
-        return $this->members()
-            ->wherePivot(
-                'role',
-                'owner'
-            )
-            ->first();
-    }
 
     public function notifyOwner(
         object $notification
@@ -178,6 +172,8 @@ class Organization extends Model
                 )
             );
     }
+
+   
 
     // Role-based access control for organization members
 
@@ -464,5 +460,5 @@ class Organization extends Model
 
     // Orgnaization Metrics
 
-    
+
 }

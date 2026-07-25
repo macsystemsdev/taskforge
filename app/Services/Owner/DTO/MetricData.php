@@ -2,9 +2,7 @@
 
 namespace App\Services\Owner\DTO;
 
-use Spatie\LaravelData\Data;
-
-class MetricData extends Data
+class MetricData
 {
     /**
      * Create a new class instance.

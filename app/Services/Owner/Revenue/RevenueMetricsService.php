@@ -11,6 +11,14 @@ use App\Services\Owner\DTO\MetricData;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
+
+// LTV
+
+// CAC
+
+// Churn
+
+// Retention
 class RevenueMetricsService
 {
     public function revenueMetrics(): array

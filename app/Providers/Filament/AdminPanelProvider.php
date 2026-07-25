@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Widgets\InfrastructureWidget;
+use App\Filament\Widgets\OrganizationHealthTable;
 use App\Filament\Widgets\OverviewStatsWidget;
 use App\Filament\Widgets\RevenueGrowthChart;
 use App\Filament\Widgets\RevenueOverview;
@@ -52,6 +53,8 @@ class AdminPanelProvider extends PanelProvider
                 RevenueGrowthChart::class,
 
                 SubscriptionBreakdownChart::class,
+
+                OrganizationHealthTable::class,
 
                 UsageStatsWidget::class,
 
