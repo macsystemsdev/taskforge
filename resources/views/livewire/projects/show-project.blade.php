@@ -49,7 +49,7 @@ new class extends Component {
 <x-ui.page>
     @php
         $tasks = $project->tasks;
-        $openTasks = $project->activeTaskCount();
+        $openTasks = $project->inProgressTaskCount();
         $completedTasks = $project->completedTaskCount();
         $dueDate = $project->due_date ? $project->due_date->format('M d, Y') : __('No due date');
     @endphp

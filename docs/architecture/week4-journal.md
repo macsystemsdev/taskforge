@@ -209,7 +209,7 @@ Provides a single source of truth for overdue task detection.
 * hasUpcomingDeadlines()
 * overdueTaskCount()
 * dueSoonTaskCount()
-* activeTaskCount()
+* inProgressTaskCount()
 * completedTaskCount()
 
 ---

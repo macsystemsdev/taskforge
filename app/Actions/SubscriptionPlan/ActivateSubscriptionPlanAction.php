@@ -5,7 +5,6 @@ namespace App\Actions\SubscriptionPlan;
 use App\Actions\ActivityLogs\CreateActivityLogAction;
 use App\Domain\Billing\SubscriptionPlanStatus;
 use App\Models\SubscriptionPlan;
-use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use DomainException;
 

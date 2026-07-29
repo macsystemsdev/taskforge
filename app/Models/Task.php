@@ -61,14 +61,6 @@ class Task extends Model
         );
     }
 
-    public function isOverdue(): bool
-    {
-        return $this->status !== TaskStatus::DONE
-            && $this->status !== TaskStatus::CANCELLED
-            && $this->due_date !== null
-            && now()->greaterThan($this->due_date);
-    }
-
     public function canBeAssignedTo(
         User $user
     ): bool {
@@ -80,6 +72,29 @@ class Task extends Model
                 $user->id
             )
             ->exists();
+    }
+
+    public function isOverdue(): bool
+    {
+        return $this->status !== TaskStatus::DONE
+            && $this->status !== TaskStatus::CANCELLED
+            && $this->due_date !== null
+            && now()->greaterThan($this->due_date);
+    }
+
+    public function isBlocked(): bool
+    {
+        return $this->status->isBlocked();
+    }
+
+    public function isOpen(): bool
+    {
+        return $this->status->isOpen();
+    }
+
+    public function isCompleted(): bool
+    {
+        return $this->status->isDone();
     }
 
     public function isDueSoon(
@@ -98,18 +113,25 @@ class Task extends Model
             );
     }
 
-    public function scopeOpen(
-        $query
-    ) {
-        return $query->whereNotIn(
+    public function scopeOpen($query)
+    {
+        return $query->whereIn(
             'status',
             [
-                TaskStatus::DONE,
-                TaskStatus::CANCELLED,
+                TaskStatus::TODO,
+                TaskStatus::IN_PROGRESS,
+                TaskStatus::BLOCKED,
             ]
         );
     }
 
+    public function scopeBlocked($query)
+    {
+        return $query->where(
+            'status',
+            TaskStatus::BLOCKED,
+        );
+    }
     public function scopeCompleted(
         $query
     ) {

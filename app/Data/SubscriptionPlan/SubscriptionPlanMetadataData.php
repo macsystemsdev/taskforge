@@ -8,7 +8,7 @@ class SubscriptionPlanMetadataData extends Data
 {
     public function __construct(
 
-        public readonly string $displayName,
+        public string $displayName,
 
     ) {
     }

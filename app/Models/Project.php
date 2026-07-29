@@ -75,6 +75,7 @@ class Project extends Model
 
     public function hasIncompleteTasks(): bool
     {
+
         return $this->tasks()
             ->whereNot('status', TaskStatus::DONE)
             ->exists();
@@ -85,16 +86,23 @@ class Project extends Model
         'due_date' => 'date',
     ];
 
-    public function activeTaskCount(): int
+    public function inProgressTaskCount(): int
     {
+
         return $this->tasks()
-            ->open()
+            ->where(
+                'status',
+                TaskStatus::IN_PROGRESS,
+            )
             ->count();
     }
 
 
     public function cancelledTaskCount(): int
     {
+         if (isset($this->cancelled_tasks_count)) {
+        return $this->cancelled_tasks_count;
+    }
         return $this->tasks()
             ->cancelled()
             ->count();
@@ -102,6 +110,10 @@ class Project extends Model
 
     public function overdueTaskCount(): int
     {
+         if (isset($this->overdue_tasks_count)) {
+        return $this->overdue_tasks_count;
+    }
+
         return $this->tasks()
             ->whereNotIn('status', [
                 TaskStatus::DONE,
@@ -113,6 +125,10 @@ class Project extends Model
 
     public function completedTaskCount(): int
     {
+        if (isset($this->completed_tasks_count)) {
+            return $this->completed_tasks_count;
+        }
+
         return $this->tasks()
             ->where('status', TaskStatus::DONE)
             ->count();
@@ -120,6 +136,10 @@ class Project extends Model
 
     public function dueSoonTaskCount(): int
     {
+         if (isset($this->due_soon_tasks_count)) {
+        return $this->due_soon_tasks_count;
+    }
+
         return $this->tasks()
             ->whereNotIn('status', [
                 TaskStatus::DONE,
@@ -157,6 +177,13 @@ class Project extends Model
             ->exists();
     }
 
+    public function hasBlockedTasks(): bool
+    {
+        return $this->tasks()
+            ->blocked()
+            ->exists();
+    }
+
     public function isOverdue(): bool
     {
         if (! $this->due_date) {
@@ -165,6 +192,45 @@ class Project extends Model
 
         return $this->status->isActive()
             && $this->due_date->isPast();
+    }
+
+    public function blockedTaskCount(): int
+    {
+         if (isset($this->blocked_tasks_count)) {
+        return $this->blocked_tasks_count;
+    }
+        return $this->tasks()
+            ->blocked()
+            ->count();
+    }
+
+    public function openTaskCount(): int
+    {
+         if (isset($this->open_tasks_count)) {
+        return $this->open_tasks_count;
+    }
+
+        return $this->tasks()
+            ->open()
+            ->count();
+    }
+
+    public function totalTaskCount(): int
+    {
+        return $this->tasks()->count();
+    }
+
+    public function completionPercentage(): int
+    {
+        $total = $this->totalTaskCount();
+
+        if ($total === 0) {
+            return 0;
+        }
+
+        return (int) round(
+            ($this->completedTaskCount() / $total) * 100,
+        );
     }
 
     public function notificationRecipients()

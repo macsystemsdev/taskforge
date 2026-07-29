@@ -8,15 +8,16 @@ enum TaskStatus: string
 
     case IN_PROGRESS = 'in_progress';
 
-    case CANCELLED = 'cancelled';
+    case BLOCKED = 'blocked';
 
     case DONE = 'done';
 
-    //case Blocked = 'blocked';
+    case CANCELLED = 'cancelled';
 
     public function canTransitionTo(
-        TaskStatus $status
+        TaskStatus $status,
     ): bool {
+
         return match ($this) {
 
             self::TODO => in_array(
@@ -24,22 +25,48 @@ enum TaskStatus: string
                 [
                     self::IN_PROGRESS,
                     self::CANCELLED,
-                ]
+                ],
+                true,
             ),
 
             self::IN_PROGRESS => in_array(
                 $status,
                 [
-                    self::TODO,
+                    self::BLOCKED,
                     self::DONE,
                     self::CANCELLED,
-                ]
+                ],
+                true,
+            ),
+
+            self::BLOCKED => in_array(
+                $status,
+                [
+                    self::IN_PROGRESS,
+                    self::CANCELLED,
+                ],
+                true,
             ),
 
             self::DONE => false,
 
             self::CANCELLED => false,
         };
+    }
+
+    public function isTodo(): bool
+    {
+        return $this === self::TODO;
+    }
+
+    public function isInProgress(): bool
+    {
+        return $this === self::IN_PROGRESS;
+    }
+
+    public function isBlocked(): bool
+    {
+        return $this === self::BLOCKED;
     }
 
     public function isDone(): bool
@@ -52,14 +79,17 @@ enum TaskStatus: string
         return $this === self::CANCELLED;
     }
 
-    public function isInProgress(): bool
+    public function isOpen(): bool
     {
-        return $this === self::IN_PROGRESS;
-    }
-
-    public function isTodo(): bool
-    {
-        return $this === self::TODO;
+        return in_array(
+            $this,
+            [
+                self::TODO,
+                self::IN_PROGRESS,
+                self::BLOCKED,
+            ],
+            true,
+        );
     }
 
     public function canDelete(): bool
@@ -67,9 +97,10 @@ enum TaskStatus: string
         return in_array(
             $this,
             [
-                TaskStatus::TODO,
-                TaskStatus::CANCELLED,
-            ]
+                self::TODO,
+                self::CANCELLED,
+            ],
+            true,
         );
     }
 }
