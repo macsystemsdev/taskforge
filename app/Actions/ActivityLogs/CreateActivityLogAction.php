@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class CreateActivityLogAction
 {
+    // optional use of ?User $user = null in webhooks when needed future
     public function handle(
         string $event,
         array $properties = [],

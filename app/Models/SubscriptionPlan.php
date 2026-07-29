@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Domain\Billing\BillingInterval;
+use App\Domain\Billing\SubscriptionPlanStatus;
+use App\Domain\Billing\SubscriptionStatus;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Model;
@@ -22,7 +24,11 @@ use Carbon\CarbonInterface;
     'max_teams',
     'max_tasks',
     'max_storage_mb',
-    'is_active',
+    'status',
+    'activated_at',
+    'retired_at',
+    'retirement_effective_at',
+    'archived_at',
 ])]
 
 class SubscriptionPlan extends Model
@@ -31,8 +37,13 @@ class SubscriptionPlan extends Model
     protected function casts(): array
     {
         return [
+
+            'status' => SubscriptionPlanStatus::class,
+            'activated_at' => 'datetime',
+            'retired_at' => 'datetime',
+            'retirement_effective_at' => 'datetime',
+            'archived_at' => 'datetime',
             'price' => 'decimal:2',
-            'is_active' => 'boolean',
             'billing_interval' => BillingInterval::class,
         ];
     }
@@ -40,6 +51,13 @@ class SubscriptionPlan extends Model
     public function subscriptions()
     {
         return $this->hasMany(Subscription::class);
+    }
+
+    public function metadata()
+    {
+        return $this->hasOne(
+            SubscriptionPlanMetadata::class
+        );
     }
 
     private function formatLimit(?int $limit): string
@@ -156,9 +174,10 @@ class SubscriptionPlan extends Model
     public function scopePurchasable($query)
     {
         return $query
-            ->where('is_active', true)
+            ->where('status', '=', SubscriptionPlanStatus::ACTIVE)
             ->where('billing_interval', '!=', BillingInterval::NONE);
     }
+
 
     public static function trialPlan(): self
     {
@@ -183,7 +202,37 @@ class SubscriptionPlan extends Model
             'max_workspaces' => null,
             'max_projects' => null,
             'max_members' => null,
-            'is_active' => true,
+            'status' => SubscriptionPlanStatus::ACTIVE,
         ]);
+    }
+
+    public function canBeActivated(): bool
+    {
+        return $this->status->isDraft();
+    }
+
+    public function canBeRetired(): bool
+    {
+        return $this->status->isActive();
+    }
+
+    public function canBeArchived(): bool
+    {
+        return $this->status->isRetired();
+    }
+
+    public function isPurchasable(): bool
+    {
+        return $this->status->isPurchasable();
+    }
+
+    public function isVisible(): bool
+    {
+        return $this->status->isVisible();
+    }
+
+    public function acceptsRenewals(): bool
+    {
+        return $this->status->acceptsRenewals();
     }
 }

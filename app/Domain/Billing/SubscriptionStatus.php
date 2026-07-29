@@ -15,6 +15,8 @@ enum SubscriptionStatus: string
 
     case EXPIRED = 'expired';
 
+
+
     public function isTrial(): bool
     {
         return $this === self::TRIAL;

@@ -21,24 +21,69 @@ class SubscriptionPlansTable
                 TextColumn::make('slug')
                     ->searchable(),
                 TextColumn::make('price')
-                    ->money()
+                    ->money(
+                        fn($record) => $record->currency
+                    )
                     ->sortable(),
                 TextColumn::make('currency')
                     ->searchable(),
                 TextColumn::make('billing_interval')
                     ->badge()
+                    ->formatStateUsing(
+                        fn($state) => $state->getLabel()
+                    )
                     ->searchable(),
                 TextColumn::make('max_workspaces')
                     ->numeric()
+                    ->formatStateUsing(
+                        fn($state) => $state ?? 'Unlimited'
+                    )
                     ->sortable(),
                 TextColumn::make('max_projects')
                     ->numeric()
+                    ->formatStateUsing(
+                        fn($state) => $state ?? 'Unlimited'
+                    )
                     ->sortable(),
                 TextColumn::make('max_members')
                     ->numeric()
+                    ->formatStateUsing(
+                        fn($state) => $state ?? 'Unlimited'
+                    )
                     ->sortable(),
-                IconColumn::make('is_active')
-                    ->boolean(),
+                TextColumn::make('max_teams')
+                    ->numeric()
+                    ->formatStateUsing(
+                        fn($state) => $state ?? 'Unlimited'
+                    )
+                    ->sortable(),
+                TextColumn::make('max_tasks')
+                    ->numeric()
+                    ->formatStateUsing(
+                        fn($state) => $state ?? 'Unlimited'
+                    )
+                    ->sortable(),
+                TextColumn::make('max_storage_mb')
+                    ->numeric()
+                    ->formatStateUsing(
+                        fn($state) => $state ?? 'Unlimited'
+                    )
+                    ->sortable(),
+                TextColumn::make('storage_used_bytes')
+                    ->numeric()
+                    ->sortable(),
+                TextColumn::make('is_active')
+                    ->badge()
+                    ->formatStateUsing(
+                        fn(bool $state) => $state
+                            ? 'Active'
+                            : 'Inactive'
+                    )
+                    ->color(
+                        fn(bool $state) => $state
+                            ? 'success'
+                            : 'gray'
+                    ),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -47,18 +92,7 @@ class SubscriptionPlansTable
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('max_teams')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('max_tasks')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('max_storage_mb')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('storage_used_bytes')
-                    ->numeric()
-                    ->sortable(),
+
             ])
             ->filters([
                 //

@@ -3,8 +3,8 @@
 namespace App\Filament\Resources\SubscriptionPlans;
 
 use App\Filament\Resources\SubscriptionPlans\Pages\CreateSubscriptionPlan;
-use App\Filament\Resources\SubscriptionPlans\Pages\EditSubscriptionPlan;
 use App\Filament\Resources\SubscriptionPlans\Pages\ListSubscriptionPlans;
+use App\Filament\Resources\SubscriptionPlans\Pages\ManageSubscriptionPlanMetadata;
 use App\Filament\Resources\SubscriptionPlans\Pages\ViewSubscriptionPlan;
 use App\Filament\Resources\SubscriptionPlans\Schemas\SubscriptionPlanForm;
 use App\Filament\Resources\SubscriptionPlans\Schemas\SubscriptionPlanInfolist;
@@ -52,7 +52,7 @@ class SubscriptionPlanResource extends Resource
             'index' => ListSubscriptionPlans::route('/'),
             'create' => CreateSubscriptionPlan::route('/create'),
             'view' => ViewSubscriptionPlan::route('/{record}'),
-            'edit' => EditSubscriptionPlan::route('/{record}/edit'),
+            'metadata' => ManageSubscriptionPlanMetadata::route('/{record}/metadata'),
         ];
     }
 }

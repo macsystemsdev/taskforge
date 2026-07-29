@@ -44,6 +44,36 @@ Downgrade to Free
 
 ---
 
+Subscription Plan Lifecycle
+
+Draft
+↓
+
+Active
+↓
+
+Retired
+↓
+
+Archived
+
+Draft — Being configured. Cannot be purchased.
+Active — Visible and available for purchase.
+Retired — Existing subscribers remain. No new purchases or plan changes.
+Archived — No active subscribers remain. Hidden from normal administration but preserved for invoices and audit history.
+
+Plan Retirement
+
+Retiring a plan:
+
+• Stops new subscriptions.
+• Stops scheduled plan changes into that plan.
+• Existing subscribers remain active.
+• Existing subscriptions are never modified.
+• Customers receive in-app and email notifications.
+• Customers select an active replacement plan.
+• Automatic migration is never performed.
+
 # Subscription States
 
 ## Free
@@ -146,6 +176,23 @@ Payment Failure
 Start Grace Period
 ↓
 Billing Notifications
+
+
+Renewal Policy
+
+A retired plan has a Retirement Effective Date.
+
+Before that date:
+
+• Renewals continue.
+
+After that date:
+
+• Renewal is blocked.
+
+• Customer selects another plan.
+
+• Existing pending subscription logic activates the replacement.
 
 ---
 
@@ -291,28 +338,43 @@ Future features:
 
 ---
 
-## Usage Analytics
+Future Billing Integrations
 
-Planned:
+Stripe
+✓ Checkout
+⬜ Customer Portal
+⬜ Proration
+⬜ Subscription Schedules
+⬜ Tax Support
 
-* Storage consumption
-* Organization activity metrics
-* Billing dashboards
-* Growth metrics
+Mobile Money
+⬜ MTN MoMo
+⬜ Orange Money
 
----
+Payments
+⬜ Refund workflow
+⬜ Partial refunds
+⬜ Invoice PDFs
+⬜ Credit Notes
 
-## Seat Billing
+Lifecycle
+⬜ Plan retirement automation
+⬜ Billing notifications
+⬜ Dunning workflows
+⬜ Renewal scheduler
 
-Currently:
+Analytics
+⬜ MRR
+⬜ ARR
+⬜ Churn
+⬜ LTV
+⬜ Revenue forecasting
 
-* max_members
-
-Future:
-
-* Per-seat pricing
-* Team expansion pricing
-
+Enterprise
+⬜ Seat billing
+⬜ Metered usage
+⬜ Storage billing
+⬜ API billing
 ---
 
 ## Coupons and Discounts
@@ -335,26 +397,6 @@ Planned:
 
 ---
 
-## Mobile Money
-
-Planned payment providers:
-
-* MTN Mobile Money
-* Orange Money
-* Cards
-
----
-
-# Future Integrations
-
-* Stripe Customer Portal
-* Dunning Workflows
-* Failed Payment Recovery
-* Subscription Analytics
-* Revenue Reporting
-
----
-
 # Billing Philosophy
 
 Billing should never destroy customer data.
@@ -364,3 +406,38 @@ Downgrades lock access.
 They do not delete resources.
 
 This preserves customer trust and enables reactivation without data loss.
+
+
+Commercial Plan Policy
+
+Subscription Plans are immutable commercial contracts.
+
+The following fields can never be modified once at least one subscription exists:
+
+• Price
+• Billing interval
+• Workspace limits
+• Project limits
+• Team limits
+• Member limits
+• Task limits
+• Storage limits
+• Included commercial features
+
+Changing any commercial attribute creates a new Subscription Plan.
+
+
+Metadata Policy
+
+Metadata may be edited without affecting subscriptions.
+
+Examples:
+
+• Display Name
+• Description
+• Badge
+• Card Color
+• Card Order
+• Popular
+• Recommended
+• Marketing Copy
