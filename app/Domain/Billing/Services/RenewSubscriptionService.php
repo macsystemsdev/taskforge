@@ -19,7 +19,14 @@ class RenewSubscriptionService
         Subscription $subscription,
     ): void {
 
-        $plan = $subscription->plan;
+        $plan = $subscription->renewalPlan();
+
+        if (! $subscription->renewalPlan()->allowsRenewal()) {
+
+            // notify
+
+            return;
+        }
 
         $data =  new CheckoutData(
             organization: $subscription->organization,

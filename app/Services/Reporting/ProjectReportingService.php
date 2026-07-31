@@ -9,6 +9,7 @@ use App\Services\Project\ProjectHealthService;
 use Illuminate\Support\Collection;
 use App\Data\Reporting\Project\ProjectReportFilterData;
 use App\Data\Reporting\Project\ProjectHealthData;
+use App\Services\Reporting\Concerns\LoadsTaskReportingCounts;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
@@ -25,6 +26,8 @@ use Illuminate\Database\Eloquent\Builder;
  */
 class ProjectReportingService
 {
+
+    use LoadsTaskReportingCounts;
 
     public function __construct(
         protected ProjectHealthService $healthService,
@@ -74,27 +77,9 @@ class ProjectReportingService
 
         return $this->projectQuery($filters)
 
-            ->withCount([
-                'tasks',
-
-                'tasks as completed_tasks_count' => fn($query) =>
-                $query->completed(),
-
-                'tasks as in_progress_tasks_count' => fn($query) =>
-                $query->inProgress(),
-
-                'tasks as blocked_tasks_count' => fn($query) =>
-                $query->blocked(),
-
-                'tasks as cancelled_tasks_count' => fn($query) =>
-                $query->cancelled(),
-
-                'tasks as overdue_tasks_count' => fn($query) =>
-                $query->overdue(),
-
-                'tasks as due_soon_tasks_count' => fn($query) =>
-                $query->dueSoon(),
-            ])
+            ->withCount(
+                 $this->taskReportingCounts('tasks')
+            )
 
             ->lazyById()
 

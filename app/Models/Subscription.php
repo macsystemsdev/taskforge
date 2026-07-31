@@ -143,7 +143,9 @@ class Subscription extends Model
     public function shouldActivatePendingPlan(): bool
     {
         return $this->hasPendingPlan()
-            && $this->pending_effective_at?->isPast();
+            && $this->pending_effective_at !== null
+            && now()->greaterThanOrEqualTo($this->pending_effective_at)
+            && $this->shouldRenew();
     }
 
     public function shouldActivateImmediately(): bool
@@ -211,6 +213,15 @@ class Subscription extends Model
         return $this->hasPendingPlan()
             ? $this->pendingPlan
             : $this->plan;
+    }
+
+    public function allowsRenewal(): bool
+    {
+        if (! $this->isRetired()) {
+            return true;
+        }
+
+        return $this->retirement_effective_at?->isFuture() ?? false;
     }
 
     public function renewalProvider(): PaymentProvider

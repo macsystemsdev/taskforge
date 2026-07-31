@@ -88,7 +88,9 @@ class Project extends Model
 
     public function inProgressTaskCount(): int
     {
-
+        if (isset($this->in_progress_tasks_count)) {
+            return $this->in_progress_tasks_count;
+        }
         return $this->tasks()
             ->where(
                 'status',
@@ -100,9 +102,9 @@ class Project extends Model
 
     public function cancelledTaskCount(): int
     {
-         if (isset($this->cancelled_tasks_count)) {
-        return $this->cancelled_tasks_count;
-    }
+        if (isset($this->cancelled_tasks_count)) {
+            return $this->cancelled_tasks_count;
+        }
         return $this->tasks()
             ->cancelled()
             ->count();
@@ -110,9 +112,9 @@ class Project extends Model
 
     public function overdueTaskCount(): int
     {
-         if (isset($this->overdue_tasks_count)) {
-        return $this->overdue_tasks_count;
-    }
+        if (isset($this->overdue_tasks_count)) {
+            return $this->overdue_tasks_count;
+        }
 
         return $this->tasks()
             ->whereNotIn('status', [
@@ -136,9 +138,9 @@ class Project extends Model
 
     public function dueSoonTaskCount(): int
     {
-         if (isset($this->due_soon_tasks_count)) {
-        return $this->due_soon_tasks_count;
-    }
+        if (isset($this->due_soon_tasks_count)) {
+            return $this->due_soon_tasks_count;
+        }
 
         return $this->tasks()
             ->whereNotIn('status', [
@@ -196,9 +198,9 @@ class Project extends Model
 
     public function blockedTaskCount(): int
     {
-         if (isset($this->blocked_tasks_count)) {
-        return $this->blocked_tasks_count;
-    }
+        if (isset($this->blocked_tasks_count)) {
+            return $this->blocked_tasks_count;
+        }
         return $this->tasks()
             ->blocked()
             ->count();
@@ -206,9 +208,9 @@ class Project extends Model
 
     public function openTaskCount(): int
     {
-         if (isset($this->open_tasks_count)) {
-        return $this->open_tasks_count;
-    }
+        if (isset($this->open_tasks_count)) {
+            return $this->open_tasks_count;
+        }
 
         return $this->tasks()
             ->open()

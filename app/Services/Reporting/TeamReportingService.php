@@ -2,42 +2,148 @@
 
 namespace App\Services\Reporting;
 
-use App\Data\Reporting\ChartSeriesData;
-use App\Data\Reporting\ReportFilterData;
-use App\Data\Reporting\ReportMetricData;
+use App\Data\Reporting\Team\TeamProductivityData;
+use App\Data\Reporting\Team\TeamReportFilterData;
+use App\Domain\Teams\Enums\TeamProductivityStatus;
+use App\Models\Team;
+use App\Services\Reporting\Concerns\LoadsTaskReportingCounts;
+use App\Services\Team\TeamProductivityService;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
 /**
- * Produces team productivity analytics.
+ * Produces team analytics for dashboards, reports and exports.
  *
  * Responsibilities:
  * - Team KPIs
- * - Productivity trends
- * - Workload distribution
+ * - Productivity reporting
+ * - Completion trends
+ * - Executive summaries
+ *
+ * Business rules remain inside TeamProductivityService.
  */
 class TeamReportingService
 {
+    use LoadsTaskReportingCounts;
+
+    public function __construct(
+        protected TeamProductivityService $productivityService,
+    ) {}
+
     /**
-     * @return array<ReportMetricData>
+     * Build the reporting query.
+     */
+    protected function teamQuery(
+        TeamReportFilterData $filters,
+    ): Builder {
+
+        return Team::query()
+
+            ->when(
+                $filters->organizationId,
+                fn($query, $organizationId) =>
+                $query->where(
+                    'organization_id',
+                    $organizationId
+                )
+            )
+
+            ->when(
+                $filters->workspaceId,
+                fn($query, $workspaceId) =>
+                $query->where(
+                    'workspace_id',
+                    $workspaceId
+                )
+            )
+
+            ->when(
+                $filters->teamId,
+                fn($query, $teamId) =>
+                $query->whereKey($teamId)
+            );
+    }
+
+    /**
+     * Team productivity report.
+     *
+     * @return Collection<int, TeamProductivityData>
+     */
+    public function productivity(
+        TeamReportFilterData $filters,
+    ): Collection {
+
+        return $this->teamQuery($filters)
+
+            ->withCount(
+                 $this->taskReportingCounts('projects.tasks') // ✅ Pass the relationship pat
+                )
+
+            ->lazyById()
+
+            ->map(
+                fn(Team $team) =>
+                $this->productivityService
+                    ->evaluate($team)
+            )
+
+            ->collect();
+    }
+
+    /**
+     * Executive summary.
+     *
+     * @return array<string,int>
      */
     public function overview(
-        ReportFilterData $filters,
+        TeamReportFilterData $filters,
     ): array {
-        return [];
+
+        $teams = $this->productivity($filters);
+
+        return [
+
+            'total_teams' => $teams->count(),
+
+            'high_productivity' => $teams
+                ->where(
+                    'status',
+                    TeamProductivityStatus::HIGH,
+                )
+                ->count(),
+
+            'normal_productivity' => $teams
+                ->where(
+                    'status',
+                    TeamProductivityStatus::NORMAL,
+                )
+                ->count(),
+
+            'low_productivity' => $teams
+                ->where(
+                    'status',
+                    TeamProductivityStatus::LOW,
+                )
+                ->count(),
+
+            'idle_teams' => $teams
+                ->where(
+                    'status',
+                    TeamProductivityStatus::IDLE,
+                )
+                ->count(),
+
+        ];
     }
 
-    public function productivityTrend(
-        ReportFilterData $filters,
-    ): ChartSeriesData {
-        // TODO
-        throw new \BadMethodCallException(
-            'Not implemented yet.'
-        );
-    }
-
-    public function workloadDistribution(
-        ReportFilterData $filters,
-    ): ChartSeriesData {
-        // TODO
+    /**
+     * Completion trend.
+     *
+     * Phase 3.4
+     */
+    public function completionTrend(
+        TeamReportFilterData $filters,
+    ) {
         throw new \BadMethodCallException(
             'Not implemented yet.'
         );

@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Reporting;
 use App\Filament\Widgets\InfrastructureWidget;
 use App\Filament\Widgets\OrganizationHealthTable;
 use App\Filament\Widgets\OverviewStatsWidget;
@@ -42,6 +43,7 @@ class AdminPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
                 Dashboard::class,
+                Reporting::class,
             ])
             //->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
@@ -58,7 +60,11 @@ class AdminPanelProvider extends PanelProvider
 
                 UsageStatsWidget::class,
 
+                
+
                 InfrastructureWidget::class,
+
+                
 
             ])
             ->middleware([

@@ -35,52 +35,56 @@ class SubscriptionPlansTable
                     ->searchable(),
                 TextColumn::make('max_workspaces')
                     ->numeric()
-                    ->formatStateUsing(
-                        fn($state) => $state ?? 'Unlimited'
-                    )
+                    ->placeholder('Unlimited')  // ✅ Shows when null
                     ->sortable(),
+
                 TextColumn::make('max_projects')
                     ->numeric()
-                    ->formatStateUsing(
-                        fn($state) => $state ?? 'Unlimited'
-                    )
+                    ->placeholder('Unlimited')
                     ->sortable(),
+
                 TextColumn::make('max_members')
                     ->numeric()
-                    ->formatStateUsing(
-                        fn($state) => $state ?? 'Unlimited'
-                    )
+                    ->placeholder('Unlimited')
                     ->sortable(),
+
                 TextColumn::make('max_teams')
                     ->numeric()
-                    ->formatStateUsing(
-                        fn($state) => $state ?? 'Unlimited'
-                    )
+                    ->placeholder('Unlimited')
                     ->sortable(),
+
                 TextColumn::make('max_tasks')
                     ->numeric()
-                    ->formatStateUsing(
-                        fn($state) => $state ?? 'Unlimited'
-                    )
+                    ->placeholder('Unlimited')
                     ->sortable(),
+
                 TextColumn::make('max_storage_mb')
                     ->numeric()
-                    ->formatStateUsing(
-                        fn($state) => $state ?? 'Unlimited'
-                    )
+                    ->placeholder('Unlimited')
+                    ->formatStateUsing(fn($state) => $state ? "{$state} MB" : null)  // ✅ Format when not null
                     ->sortable(),
+
                 TextColumn::make('storage_used_bytes')
                     ->numeric()
+                    ->placeholder('Unlimited')
+                    ->formatStateUsing(function ($state) {
+                        if ($state === null) return null;  // Let placeholder handle it
+
+                        if ($state < 1024) return $state . ' B';
+                        if ($state < 1024 * 1024) return round($state / 1024, 1) . ' KB';
+                        if ($state < 1024 * 1024 * 1024) return round($state / (1024 * 1024), 1) . ' MB';
+                        return round($state / (1024 * 1024 * 1024), 1) . ' GB';
+                    })
                     ->sortable(),
-                TextColumn::make('is_active')
+                TextColumn::make('status')
                     ->badge()
                     ->formatStateUsing(
-                        fn(bool $state) => $state
+                        fn($state) => $state
                             ? 'Active'
-                            : 'Inactive'
+                            : 'Draft'
                     )
                     ->color(
-                        fn(bool $state) => $state
+                        fn($state) => $state
                             ? 'success'
                             : 'gray'
                     ),

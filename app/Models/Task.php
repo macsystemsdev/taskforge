@@ -141,6 +141,15 @@ class Task extends Model
         );
     }
 
+    public function scopeInProgress(
+        $query
+    ) {
+        return $query->where(
+            'status',
+            TaskStatus::IN_PROGRESS
+        );
+    }
+
     public function scopeCancelled(
         $query
     ) {

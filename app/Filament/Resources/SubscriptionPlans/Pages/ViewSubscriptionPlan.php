@@ -61,6 +61,11 @@ class ViewSubscriptionPlan extends ViewRecord
                         ->minDate(now()->addDay()),
                 ])
                 ->requiresConfirmation()
+                ->hidden(
+                    fn($record) =>
+                    $record->status->isRetired()
+                        || $record->status->isArchived()
+                )
                 ->action(function (array $data) {
 
                     app(RetireSubscriptionPlanAction::class)
@@ -88,7 +93,7 @@ class ViewSubscriptionPlan extends ViewRecord
                     fn() => in_array(
                         $this->record->status,
                         [
-                            SubscriptionPlanStatus::ACTIVE,
+                            SubscriptionPlanStatus::RETIRED,
                         ]
                     )
                 )

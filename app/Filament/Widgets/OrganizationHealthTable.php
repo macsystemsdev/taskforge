@@ -2,8 +2,12 @@
 
 namespace App\Filament\Widgets;
 
+use App\Domain\Billing\Actions\ExtendTrialAction;
+use App\Filament\Resources\SubscriptionPlans\SubscriptionPlanResource;
 use App\Models\Organization;
 use App\Services\Owner\Organization\OrganizationHealthCacheService;
+use Filament\Actions\Action;
+use Filament\Forms\Components\Select;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -44,26 +48,26 @@ class OrganizationHealthTable extends TableWidget
              | Eloquent queries.
              |
              */
-            
-         ->records(function (): Collection {
-            return $this->health()->overview()->map(fn($item) => [
-                'organizationName' => $item->organizationName ?? $item->name ?? null,
-                'owner' => $item->owner ?? null,
-                'plan' => $item->plan ?? null,
-                'health' => $item->health ?? null,
-                'members' => $item->members ?? 0,
-                'workspaces' => $item->workspaces ?? 0,
-                'teams' => $item->teams ?? 0,
-                'projects' => $item->projects ?? 0,
-                'tasks' => $item->tasks ?? 0,
-                'storageUsed' => $item->storageUsed ?? 0,
-                'storageLimit' => $item->storageLimit ?? 0,
-                'storagePercentage' => $item->storagePercentage ?? 0,
-                'lastActivity' => $item->lastActivity ?? null,
-                'trialEndsAt' => $item->trialEndsAt ?? null,
-                'subscriptionEndsAt' => $item->subscriptionEndsAt ?? null,
-            ]);
-        })
+
+            ->records(function (): Collection {
+                return $this->health()->overview()->map(fn($item) => [
+                    'organizationName' => $item->organizationName ?? $item->name ?? null,
+                    'owner' => $item->owner ?? null,
+                    'plan' => $item->plan ?? null,
+                    'health' => $item->health ?? null,
+                    'members' => $item->members ?? 0,
+                    'workspaces' => $item->workspaces ?? 0,
+                    'teams' => $item->teams ?? 0,
+                    'projects' => $item->projects ?? 0,
+                    'tasks' => $item->tasks ?? 0,
+                    'storageUsed' => $item->storageUsed ?? 0,
+                    'storageLimit' => $item->storageLimit ?? 0,
+                    'storagePercentage' => $item->storagePercentage ?? 0,
+                    'lastActivity' => $item->lastActivity ?? null,
+                    'trialEndsAt' => $item->trialEndsAt ?? null,
+                    'subscriptionEndsAt' => $item->subscriptionEndsAt ?? null,
+                ]);
+            })
             ->columns(
                 $this->columns()
             )
@@ -154,10 +158,12 @@ class OrganizationHealthTable extends TableWidget
 
             TextColumn::make('trialEndsAt')
                 ->label('Trial Ends')
+                ->placeholder('No Active Trial')
                 ->date(),
 
             TextColumn::make('subscriptionEndsAt')
                 ->label('Subscription Ends')
+                ->placeholder('No Active Subscription')
                 ->date(),
         ];
     }
@@ -175,7 +181,58 @@ class OrganizationHealthTable extends TableWidget
     {
         return [
 
-            // Day 4
+
+
+            // Action::make('view')
+            //     ->label('View')
+            //     ->icon('heroicon-o-eye')
+            //     ->url(fn($record) => OrganizationResource::getUrl('view', [
+            //         'record' => $record->organizationId,
+            //     ])),
+
+            Action::make('subscription')
+                ->label('Subscription')
+                ->icon('heroicon-o-credit-card')
+                //->url(fn($record) => SubscriptionPlanResource::getUrl('view', [
+                   // 'record' => $record->subscriptionId,
+                //])),
+,
+            Action::make('extendTrial')
+
+                ->form([
+
+                    Select::make('days')
+                        ->options([
+                            7 => '+7 Days',
+                            14 => '+14 Days',
+                            30 => '+30 Days',
+                        ])
+                        ->required(),
+
+                ])
+
+                ->requiresConfirmation()
+
+                ->action(function (
+                    array $data,
+                    $record
+                ) {
+
+                    app(ExtendTrialAction::class)
+                        ->handle(
+                            Organization::findOrFail(
+                                $record->organizationId
+                            ),
+                            $data['days'],
+                        );
+                })
+                ->label('Extend Trial')
+                ->icon('heroicon-o-clock'),
+
+            // Action::make('changePlan')
+            //     ->label('Change Plan')
+            //     ->icon('heroicon-o-arrow-path'),
+
 
         ];
     }

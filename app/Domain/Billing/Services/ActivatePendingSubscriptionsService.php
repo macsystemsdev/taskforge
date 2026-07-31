@@ -11,7 +11,7 @@ class ActivatePendingSubscriptionsService
     
         Subscription::query()
             ->whereNotNull('pending_subscription_plan_id')
-            ->lazy()
+            ->lazyById()
             ->each(function (Subscription $subscription) {
 
                 if (! $subscription->shouldActivatePendingPlan()) {
