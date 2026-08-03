@@ -1,0 +1,52 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Table;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
+
+#[Table('file_attachments')]
+#[Fillable([
+    'stored_file_id',
+    'comment_id',
+    'created_by',
+    'is_pinned',
+])]
+class FileAttachment extends Model
+{
+    protected function casts(): array
+    {
+        return [
+            'is_pinned' => 'boolean',
+        ];
+    }
+
+    public function file(): BelongsTo
+    {
+        return $this->belongsTo(
+            StoredFile::class,
+            'stored_file_id',
+        );
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(
+            User::class,
+            'created_by',
+        );
+    }
+
+    public function comment(): BelongsTo
+    {
+        return $this->belongsTo(Comment::class);
+    }
+
+    public function attachable(): MorphTo
+    {
+        return $this->morphTo();
+    }
+}

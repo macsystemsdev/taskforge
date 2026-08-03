@@ -88,4 +88,44 @@ readonly class OrganizationPermissions
             true
         );
     }
+
+    public function canViewLibrary(
+        ?OrganizationRole $role
+    ): bool {
+        return in_array(
+            $role,
+            [
+                OrganizationRole::OWNER,
+                OrganizationRole::ADMIN,
+                OrganizationRole::MEMBER,
+            ],
+            true
+        );
+    }
+
+    public function canUploadToLibrary(
+        ?OrganizationRole $role
+    ): bool {
+        return in_array(
+            $role,
+            [
+                OrganizationRole::OWNER,
+                OrganizationRole::ADMIN,
+            ],
+            true
+        );
+    }
+
+    public function canManageLibrary(
+        ?OrganizationRole $role
+    ): bool {
+        return in_array(
+            $role,
+            [
+                OrganizationRole::OWNER,
+                OrganizationRole::ADMIN,
+            ],
+            true
+        );
+    }
 }

@@ -65,4 +65,6 @@ readonly class WorkspacePermissions
             ]
         );
     }
+
+    
 }
