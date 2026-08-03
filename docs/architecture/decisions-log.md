@@ -656,3 +656,61 @@ Every new interface—REST API, GraphQL, CLI or queue worker—can interact with
 4. ADRs document architectural intent rather than implementation details.
 5. Bug fixes, progress updates and troubleshooting belong in the engineering journal or knowledge base, not in this document.
 6. Every future architectural decision that permanently influences TaskForge should be appended as a new ADR.
+
+
+
+# Week 7 — Decision Log
+Architectural Decisions
+Reporting is a separate bounded context
+
+Reporting was separated from the metrics subsystem.
+
+Metrics describe the current state.
+Reporting analyzes historical and operational performance.
+Reporting hierarchy follows the domain
+
+Reporting services aggregate upward.
+
+Project Reporting
+        ↓
+Team Reporting
+        ↓
+Organization Reporting
+        ↓
+Platform Reporting
+
+Higher layers orchestrate lower layers instead of recalculating data.
+
+Shared reporting cache
+
+Introduced BaseReportingCacheService to centralize:
+
+cache retrieval
+cache corruption recovery
+TTL handling
+
+All reporting cache services now follow the same implementation pattern.
+
+Widgets contain no business logic
+
+Reporting widgets only display data.
+
+Widget
+    ↓
+Cache
+    ↓
+Reporting Service
+    ↓
+Domain Service
+
+Business calculations remain inside services.
+
+Deferred Work
+
+The following were intentionally postponed because they belong to Billing Phase III:
+
+Gifted subscription plans
+Organization acceptance/decline workflow
+CSV exports
+PDF exports
+Scheduled reports

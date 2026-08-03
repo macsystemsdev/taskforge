@@ -69,26 +69,17 @@ class TeamReportingService
      *
      * @return Collection<int, TeamProductivityData>
      */
-    public function productivity(
-        TeamReportFilterData $filters,
-    ): Collection {
-
-        return $this->teamQuery($filters)
-
-            ->withCount(
-                 $this->taskReportingCounts('projects.tasks') // ✅ Pass the relationship pat
-                )
-
+    public function productivity(TeamReportFilterData $filters): Collection
+    {
+        return $this->applyTaskReportingCounts(
+            $this->teamQuery($filters),
+            'team'
+        )
             ->lazyById()
-
-            ->map(
-                fn(Team $team) =>
-                $this->productivityService
-                    ->evaluate($team)
-            )
-
+            ->map(fn(Team $team) => $this->productivityService->evaluate($team))
             ->collect();
     }
+
 
     /**
      * Executive summary.

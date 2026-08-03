@@ -12,6 +12,7 @@ readonly class OrganizationHealthData
 
    public function __construct(
     public int $organizationId,
+    public int $subscriptionId,
     public string $organizationName,
     public string $owner,
     public string $plan,

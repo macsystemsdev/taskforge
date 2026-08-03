@@ -219,6 +219,10 @@ class Project extends Model
 
     public function totalTaskCount(): int
     {
+         if (isset($this->total_tasks_count)) {
+            return $this->total_tasks_count;
+        }
+
         return $this->tasks()->count();
     }
 

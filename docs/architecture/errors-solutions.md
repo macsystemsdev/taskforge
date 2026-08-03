@@ -696,3 +696,158 @@ State machines should reflect business reality rather than editing convenience.
 9. Favor extending existing workflows over introducing parallel implementations.
 
 10. Every architectural shortcut becomes future technical debt if accepted without challenge.
+
+
+
+# Week 7 — Reporting & Platform Intelligence
+
+---
+
+## KB-016 — __PHP_Incomplete_Class Returned From Cache
+
+### Context
+
+Reporting DTOs retrieved from cache occasionally returned
+`__PHP_Incomplete_Class`.
+
+### Root Cause
+
+Serialized DTOs were not being restored correctly by the cache driver.
+
+### Fix
+
+Introduced `BaseReportingCacheService` to centralize cache retrieval,
+detect corrupted cache entries, clear them automatically and regenerate
+fresh data.
+
+### Why The Fix Works
+
+Every reporting cache now shares the same retrieval and recovery logic.
+
+### Prevention
+
+Never duplicate cache retrieval logic. Shared infrastructure should own
+cache validation and recovery.
+
+### Files Affected
+
+- BaseReportingCacheService
+- ProjectReportingCacheService
+- TeamReportingCacheService
+- OrganizationReportingCacheService
+
+### Lessons Learned
+
+Cache infrastructure belongs in one reusable abstraction.
+
+---
+
+## KB-017 — Reporting Widgets Should Not Consume DTO Objects Directly
+
+### Context
+
+Filament `TableWidget` failed when provided with reporting DTO collections.
+
+### Root Cause
+
+Table widgets expect Eloquent models or arrays rather than DTO objects.
+
+### Fix
+
+Converted reporting DTO collections into arrays before supplying them to
+the widget.
+
+### Why The Fix Works
+
+Widgets receive data in a format Filament can render while reporting
+services remain DTO-based.
+
+### Prevention
+
+Keep DTOs inside the service layer. Convert them at the presentation
+boundary when required.
+
+### Files Affected
+
+- ProjectHealthTableWidget
+- TeamProductivityTableWidget
+
+### Lessons Learned
+
+Presentation boundaries often require transformation even when the
+application layer uses DTOs.
+
+---
+
+## KB-018 — Team Productivity Relationship Was Incorrect
+
+### Context
+
+Initial productivity calculations attempted to count tasks directly from
+teams.
+
+### Root Cause
+
+Tasks belong to Projects, not Teams.
+
+### Fix
+
+Refactored productivity calculations to traverse:
+
+Team → Projects → Tasks
+
+### Why The Fix Works
+
+The reporting layer now follows the actual domain model.
+
+### Prevention
+
+Reporting should aggregate existing relationships rather than invent new
+ones for convenience.
+
+### Files Affected
+
+- TeamReportingService
+
+### Lessons Learned
+
+Reporting should mirror the domain hierarchy instead of bypassing it.
+
+---
+
+## KB-019 — Retired Plans Could Still Renew
+
+### Context
+
+Renewal jobs continued processing subscriptions whose plans had already
+been retired.
+
+### Root Cause
+
+Renewal logic only checked subscription expiry and ignored plan status.
+
+### Fix
+
+Added retirement validation before renewal while preserving existing
+customer agreements until their scheduled retirement date.
+
+### Why The Fix Works
+
+Existing subscribers continue uninterrupted while retired plans cannot
+receive future renewals.
+
+### Prevention
+
+Lifecycle rules should always validate both the subscription and the
+commercial product it references.
+
+### Files Affected
+
+- RenewSubscriptionService
+- Subscription
+- RenewSubscriptionsService
+
+### Lessons Learned
+
+Commercial lifecycle rules should be enforced at every entry point, not
+only during administration.

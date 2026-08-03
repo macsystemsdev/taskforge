@@ -15,7 +15,8 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
  */
 class TeamOverviewWidget extends StatsOverviewWidget
 {
-    protected ?string $pollingInterval = '5m';
+    protected ?string $pollingInterval = '2m';
+    protected static ?string $slug = 'reporting/teams-overview';
 
     protected function filters(): TeamReportFilterData
     {

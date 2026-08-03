@@ -9,7 +9,8 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class ProjectOverviewWidget extends StatsOverviewWidget
 {
-    protected ?string $pollingInterval = '5m';
+    protected ?string $pollingInterval = '2m';
+    protected static ?string $slug = 'reporting/projects-overview';
 
     protected function getStats(): array
     {

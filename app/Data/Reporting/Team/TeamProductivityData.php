@@ -27,11 +27,11 @@ class TeamProductivityData extends Data
 
         public int $completedTasks,
 
-        public int $inProgressTasks,
+        public ?int $inProgressTasks,
 
-        public int $blockedTasks,
+        public ?int $blockedTasks,
 
-        public int $overdueTasks,
+        public ?int $overdueTasks,
 
         /**
          * Percentage of completed tasks.

@@ -9,7 +9,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
-class ProjectReportingCacheService
+class ProjectReportingCacheService extends BaseReportingCacheService
 {
     private const OVERVIEW = 'overview';
     private const HEALTH = 'health';
@@ -25,37 +25,31 @@ class ProjectReportingCacheService
     public function health(
         ProjectReportFilterData $filters,
     ): Collection {
-        $key = $this->cacheKey(self::HEALTH, $filters);
-        
-        // Check if cache exists and is valid
-        if (Cache::has($key)) {
-            $cached = Cache::get($key);
-            
-            // Check for corrupted cache
-            if (is_object($cached) && get_class($cached) === '__PHP_Incomplete_Class') {
-                Cache::forget($key);
-                Log::warning('Corrupted cache removed for key: ' . $key);
-            } elseif ($cached instanceof Collection) {
-                return $cached;
-            }
-        }
-        
-        // Generate fresh data
-        $data = $this->reporting->health($filters);
-        
-        // Store in cache
-        Cache::put($key, $data, $this->ttl());
-        
-        return $data;
+
+        return $this->remember(
+
+            $this->cacheKey(
+                self::HEALTH,
+                $filters,
+            ),
+
+            fn() => $this->reporting
+                ->health($filters),
+        );
     }
 
     public function overview(
         ProjectReportFilterData $filters,
     ): array {
-        return Cache::remember(
-            $this->cacheKey(self::OVERVIEW, $filters),
-            $this->ttl(),
-            fn() => $this->reporting->overview($filters),
+          return $this->remember(
+
+            $this->cacheKey(
+                self::OVERVIEW,
+                $filters,
+            ),
+
+            fn() => $this->reporting
+                ->overview($filters),
         );
     }
 
@@ -69,7 +63,7 @@ class ProjectReportingCacheService
 
     protected function ttl(): CarbonInterval
     {
-        return CarbonInterval::minutes(5);
+        return CarbonInterval::minutes(2);
     }
 
     protected function cacheKey(
@@ -83,19 +77,5 @@ class ProjectReportingCacheService
             $filters->workspaceId ?? 'all',
             $filters->teamId ?? 'all',
         );
-    }
-
-    public function forget(ProjectReportFilterData $filters): void
-    {
-        Cache::forget($this->cacheKey(self::OVERVIEW, $filters));
-        Cache::forget($this->cacheKey(self::HEALTH, $filters));
-        Cache::forget($this->cacheKey(self::COMPLETION_TREND, $filters));
-    }
-
-    public function refresh(ProjectReportFilterData $filters): void
-    {
-        $this->forget($filters);
-        $this->overview($filters);
-        $this->health($filters);
     }
 }

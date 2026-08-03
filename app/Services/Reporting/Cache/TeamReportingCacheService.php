@@ -9,6 +9,7 @@ use App\Services\Reporting\TeamReportingService;
 use Carbon\CarbonInterval;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,12 +21,11 @@ use Illuminate\Support\Facades\Cache;
 |
 */
 
-class TeamReportingCacheService
+class TeamReportingCacheService extends BaseReportingCacheService
 {
     public function __construct(
         protected TeamReportingService $reporting,
-    ) {
-    }
+    ) {}
 
     /**
      * Executive overview.
@@ -42,7 +42,7 @@ class TeamReportingCacheService
                 $filters,
             ),
             $this->ttl(),
-            fn () => $this->reporting
+            fn() => $this->reporting
                 ->overview($filters),
         );
     }
@@ -52,18 +52,16 @@ class TeamReportingCacheService
      *
      * @return Collection<int, TeamProductivityData>
      */
+    // In TeamReportingCacheService.php
     public function productivity(
         TeamReportFilterData $filters,
     ): Collection {
-
-        return Cache::remember(
+         return $this->remember(
             $this->cacheKey(
                 'productivity',
                 $filters,
             ),
-            $this->ttl(),
-            fn () => $this->reporting
-                ->productivity($filters),
+            fn() => $this->reporting->productivity($filters),
         );
     }
 
@@ -80,17 +78,16 @@ class TeamReportingCacheService
                 $filters,
             ),
             $this->ttl(),
-            fn () => $this->reporting
+            fn() => $this->reporting
                 ->completionTrend($filters),
         );
     }
-
     /**
      * Reporting cache lifetime.
      */
     protected function ttl(): CarbonInterval
     {
-        return CarbonInterval::minutes(5);
+        return CarbonInterval::minutes(2);
     }
 
     /**
@@ -102,7 +99,7 @@ class TeamReportingCacheService
     ): string {
 
         return sprintf(
-            'reports.teams.%s.org-%s.workspace-%s.team-%s',
+            'reports.v3.teams.%s.org-%s.workspace-%s.team-%s',
             $metric,
             $filters->organizationId ?? 'all',
             $filters->workspaceId ?? 'all',

@@ -22,7 +22,8 @@ use Illuminate\Support\Collection;
 class OrganizationHealthTable extends TableWidget
 {
     protected static ?string $heading = 'Organization Health';
-
+    protected ?string $pollingInterval = '20s';
+    protected static ?string $slug = 'metrics/organization-health';
     protected int|string|array $columnSpan = 'full';
 
     protected function health(): OrganizationHealthCacheService
@@ -51,6 +52,8 @@ class OrganizationHealthTable extends TableWidget
 
             ->records(function (): Collection {
                 return $this->health()->overview()->map(fn($item) => [
+                    'organizationId' => $item->organizationId ?? $item->id ?? null,
+                    'subscriptionId' => $item->subscriptionId ?? null,
                     'organizationName' => $item->organizationName ?? $item->name ?? null,
                     'owner' => $item->owner ?? null,
                     'plan' => $item->plan ?? null,
@@ -180,27 +183,22 @@ class OrganizationHealthTable extends TableWidget
     protected function actions(): array
     {
         return [
-
-
-
             // Action::make('view')
             //     ->label('View')
             //     ->icon('heroicon-o-eye')
             //     ->url(fn($record) => OrganizationResource::getUrl('view', [
-            //         'record' => $record->organizationId,
+            //         'record' => $record['organizationId'] ?? $record['id'],
             //     ])),
 
             Action::make('subscription')
                 ->label('Subscription')
                 ->icon('heroicon-o-credit-card')
-                //->url(fn($record) => SubscriptionPlanResource::getUrl('view', [
-                   // 'record' => $record->subscriptionId,
-                //])),
-,
+                ->url(fn($record) => SubscriptionPlanResource::getUrl('view', [
+                    'record' => $record['subscriptionId'],
+                ])),
+
             Action::make('extendTrial')
-
                 ->form([
-
                     Select::make('days')
                         ->options([
                             7 => '+7 Days',
@@ -208,32 +206,27 @@ class OrganizationHealthTable extends TableWidget
                             30 => '+30 Days',
                         ])
                         ->required(),
-
                 ])
-
                 ->requiresConfirmation()
-
-                ->action(function (
-                    array $data,
-                    $record
-                ) {
-
+                ->action(function (array $data, $record) {
                     app(ExtendTrialAction::class)
                         ->handle(
-                            Organization::findOrFail(
-                                $record->organizationId
-                            ),
+                            Organization::findOrFail($record['organizationId'] ?? $record['id']),
                             $data['days'],
                         );
+
+                    $this->dispatch('refresh');
                 })
                 ->label('Extend Trial')
-                ->icon('heroicon-o-clock'),
+                ->icon('heroicon-o-clock')
+                ->color('warning')
+                ->visible(
+                    fn($record) =>
+                    empty($record['subscriptionEndsAt']) && // ✅ No paid subscription end date
+                        !empty($record['trialEndsAt']) // ✅ Has trial end date
+                ),
 
-            // Action::make('changePlan')
-            //     ->label('Change Plan')
-            //     ->icon('heroicon-o-arrow-path'),
-
-
+                // gift plan future action
         ];
     }
 

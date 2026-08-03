@@ -14,7 +14,7 @@ class OrganizationHealthCacheService
     {
         $serialized = Cache::remember(
             'owner.dashboard.organization-health',
-            now()->addMinutes(5),
+            now()->addMinutes(1),
             fn() => serialize(
                 $this->health->organizations()
             )

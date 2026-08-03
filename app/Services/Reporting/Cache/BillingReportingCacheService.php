@@ -20,12 +20,11 @@ use Illuminate\Support\Facades\Cache;
 |
 */
 
-class ProjectReportingCacheService
+class ProjectReportingCacheService extends BaseReportingCacheService
 {
     public function __construct(
         protected BillingReportingService $reporting,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<ReportMetricData>
@@ -34,10 +33,15 @@ class ProjectReportingCacheService
         ReportFilterData $filters,
     ): array {
 
-        return Cache::remember(
-            $this->cacheKey('overview', $filters),
-            $this->ttl(),
-            fn() => $this->reporting->overview($filters),
+        return $this->remember(
+
+            $this->cacheKey(
+                'overview',
+                $filters,
+            ),
+
+            fn() => $this->reporting
+                ->overview($filters),
         );
     }
 
@@ -45,9 +49,11 @@ class ProjectReportingCacheService
         ReportFilterData $filters,
     ): ChartSeriesData {
 
-        return Cache::remember(
-            $this->cacheKey('revenue-trend', $filters),
-            $this->ttl(),
+        return $this->remember(
+            $this->cacheKey(
+                'revenue-trend',
+                $filters,
+            ),
             fn() => $this->reporting->revenueTrend($filters),
         );
     }
@@ -56,9 +62,11 @@ class ProjectReportingCacheService
         ReportFilterData $filters,
     ): Collection {
 
-        return Cache::remember(
-            $this->cacheKey('plan-distribution', $filters),
-            $this->ttl(),
+        return $this->remember(
+            $this->cacheKey(
+                'plan-distribution',
+                $filters,
+            ),
             fn() => $this->reporting->planDistribution($filters),
         );
     }
@@ -68,19 +76,19 @@ class ProjectReportingCacheService
         return CarbonInterval::minutes(5);
     }
 
-protected function cacheKey(
-    string $metric,
-    ReportFilterData $filters,
-): string {
+    protected function cacheKey(
+        string $metric,
+        ReportFilterData $filters,
+    ): string {
 
-    return sprintf(
-        'reports.billing.%s.%s.org-%s.workspace-%s.team-%s.project-%s',
-        $metric,
-        $filters->period->value,
-        $filters->organizationId ?? 'all',
-        $filters->workspaceId ?? 'all',
-        $filters->teamId ?? 'all',
-        $filters->projectId ?? 'all',
-    );
-}
+        return sprintf(
+            'reports.billing.%s.%s.org-%s.workspace-%s.team-%s.project-%s',
+            $metric,
+            $filters->period->value,
+            $filters->organizationId ?? 'all',
+            $filters->workspaceId ?? 'all',
+            $filters->teamId ?? 'all',
+            $filters->projectId ?? 'all',
+        );
+    }
 }

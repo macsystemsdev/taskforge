@@ -59,7 +59,7 @@ class RevenueMetricsService
 
             'conversionRate' => new MetricData(
                 label: 'Conversion Rate',
-                value: $this->conversionRate(),
+                value: $this->conversionRate() . '%',
                 description: 'Trial to paid conversion rate',
                 icon: 'heroicon-o-arrow-trending-up',
                 color: 'info',
@@ -67,7 +67,7 @@ class RevenueMetricsService
 
             'monthlyGrowth' => new MetricData(
                 label: 'Monthly Growth',
-                value: $this->monthlyGrowth(),
+                value: $this->getMonthlyGrowthFormatted(),
                 description: 'Platform growth this month',
                 icon: 'heroicon-o-arrow-trending-up',
                 color: 'primary',
@@ -81,9 +81,12 @@ class RevenueMetricsService
                 color: 'primary',
             ),
 
-            'freeOrganizations' => new MetricData(label: 'Free Organizations', value: $this->freeOrganizations(), description: 'Organizations on a free plan', 
-            icon: 'heroicon-o-clock',
-            color: 'warning', 
+            'freeOrganizations' => new MetricData(
+                label: 'Free Organizations',
+                value: $this->freeOrganizations(),
+                description: 'Organizations on a free plan',
+                icon: 'heroicon-o-clock',
+                color: 'warning',
             ),
 
 
@@ -182,47 +185,57 @@ class RevenueMetricsService
         )->count();
     }
 
+    /**
+     * Calculate conversion rate from trial to paying organizations.
+     */
     private function conversionRate(): float
     {
-        $trials =
-            $this->trialOrganizations();
+        $trials = $this->trialOrganizations();
+        $paying = $this->payingOrganizations();
 
-        if ($trials === 0) {
+        if ($trials === 0 || $paying === 0) {
             return 0;
         }
 
-        return round(
-            (
-                $this->payingOrganizations()
-                /
-                $trials
-            ) * 100,
-            1
-        );
+        return round(($paying / $trials) * 100, 1);
     }
 
+    /**
+     * Calculate monthly growth rate.
+     */
     private function monthlyGrowth(): float
     {
-        $last =
-            $this->organizationsLastMonth();
+        $last = $this->organizationsLastMonth();
+        $current = $this->organizationsThisMonth();
 
-        $current =
-            $this->organizationsThisMonth();
-
-        if ($last === 0) {
-
-            return $current > 0
-                ? 100
-                : 0;
+        // No change
+        if ($last === $current) {
+            return 0;
         }
 
-        return round(
-            (
-                ($current - $last)
-                / $last
-            ) * 100,
-            1
-        );
+        // No organizations last month, but some this month
+        if ($last === 0 && $current > 0) {
+            return 100;
+        }
+
+        // Some organizations last month, but none this month
+        if ($last > 0 && $current === 0) {
+            return -100;
+        }
+
+        // Normal growth calculation
+        return round((($current - $last) / $last) * 100, 1);
+    }
+
+    private function getMonthlyGrowthFormatted(): string
+    {
+        $growth = $this->monthlyGrowth();
+
+        if ($growth === 0) {
+            return '0%';
+        }
+
+        return ($growth > 0 ? '+' : '') . $growth . '%';
     }
 
     public function monthlyRevenueTrend(): Collection

@@ -66,6 +66,8 @@ class OrganizationHealthService
 
             organizationId: $organization->id,
 
+            subscriptionId: $organization->subscription?->id ?? 0,
+
             organizationName: $organization->name,
 
             owner: $organization->owner->name,

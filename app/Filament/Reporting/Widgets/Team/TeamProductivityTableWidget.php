@@ -20,9 +20,17 @@ class TeamProductivityTableWidget extends TableWidget
 {
     protected static ?string $heading = 'Team Productivity';
 
-    protected ?string $pollingInterval = '5m';
+    protected ?string $pollingInterval = '2m';
 
     protected int|string|array $columnSpan = 'full';
+    protected static ?string $slug = 'reporting/teams-productivity';
+
+    protected TeamReportingCacheService $reporting;
+
+    public function boot(TeamReportingCacheService $reporting): void
+    {
+        $this->reporting = $reporting;
+    }
 
     protected function filters(): TeamReportFilterData
     {
@@ -33,70 +41,91 @@ class TeamProductivityTableWidget extends TableWidget
         );
     }
 
-    protected function teams(): Collection
+    protected function reportData(): Collection
     {
-        return app(TeamReportingCacheService::class)
-            ->productivity(
-                $this->filters(),
-            );
-    }
-
-    public function records(): Collection
-    {
-        return $this->teams();
+        return $this->reporting->productivity($this->filters());
     }
 
     public function table(Table $table): Table
     {
         return $table
 
-            ->records(fn () => $this->records())
+            ->records(function (): Collection {
+               return $this->reportData()->map(fn(TeamProductivityData $dto) => [
 
-            ->columns([
+                    'team_id' => $dto->teamId,
 
-                TextColumn::make('teamName')
-                    ->label('Team')
-                    ->searchable(),
+                    'team_name' => $dto->teamName,
 
-                TextColumn::make('status')
-                    ->badge()
-                    ->color(fn (TeamProductivityData $record) => $record->status->color())
-                    ->formatStateUsing(
-                        fn (TeamProductivityData $record) => $record->status->label(),
-                    ),
+                    'status' => $dto->status,
 
-                TextColumn::make('productivityScore')
-                    ->label('Score')
-                    ->suffix('%')
-                    ->sortable(),
+                    'score' => $dto->score,
 
-                TextColumn::make('completionPercentage')
-                    ->label('Completion')
-                    ->suffix('%'),
+                    'member_count' => $dto->memberCount,
 
-                TextColumn::make('members')
-                    ->numeric(),
+                    'project_count' => $dto->projectCount,
 
-                TextColumn::make('projects')
-                    ->numeric(),
+                    'total_tasks' => $dto->totalTasks,
 
-                TextColumn::make('tasks')
-                    ->numeric(),
+                    'completed_tasks' => $dto->completedTasks,
 
-                TextColumn::make('blockedTasks')
-                    ->label('Blocked')
-                    ->badge()
-                    ->color('warning'),
+                    'in_progress_tasks' => $dto->inProgressTasks,
 
-                TextColumn::make('overdueTasks')
-                    ->label('Overdue')
-                    ->badge()
-                    ->color('danger'),
+                    'blocked_tasks' => $dto->blockedTasks,
 
-                TextColumn::make('reason')
-                    ->limit(40)
-                    ->wrap(),
+                    'overdue_tasks' => $dto->overdueTasks,
 
-            ]);
+                    'completion_percentage' => $dto->completionPercentage,
+
+                    'reason' => $dto->reason,
+
+                ]);
+            })
+
+             ->columns([
+            TextColumn::make('team_name')  
+                ->label('Team')
+                ->searchable(),
+
+            TextColumn::make('status')
+                ->badge()
+                ->color(fn($state) => $state->color())
+                ->formatStateUsing(fn($state) => $state->label()),
+
+            TextColumn::make('score') 
+                ->label('Score')
+                ->suffix('%')
+                ->sortable(),
+
+            TextColumn::make('completion_percentage') 
+                ->label('Completion')
+                ->suffix('%'),
+
+            TextColumn::make('member_count') 
+                ->label('Members')
+                ->numeric(),
+
+            TextColumn::make('project_count') 
+                ->label('Projects')
+                ->numeric(),
+
+            TextColumn::make('total_tasks') 
+                ->label('Tasks')
+                ->numeric(),
+
+            TextColumn::make('blocked_tasks') 
+                ->label('Blocked')
+                ->badge()
+                ->color('warning'),
+
+            TextColumn::make('overdue_tasks') 
+                ->label('Overdue')
+                ->badge()
+                ->color('danger'),
+
+            TextColumn::make('reason')
+                ->limit(40)
+                ->wrap(),
+        ]);
     }
 }

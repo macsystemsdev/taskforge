@@ -35,11 +35,11 @@ class TeamProductivityService
 
             score: $score,
 
-            memberCount: $team->members_count,
+            memberCount: $team->members_count ?? 0,
 
-            projectCount: $team->projects_count,
+            projectCount: $team->projects_count ?? 0,
 
-            totalTasks: $team->tasks_count,
+            totalTasks: $team->tasks_count ?? 0,
 
             completedTasks: $team->completed_tasks_count,
 

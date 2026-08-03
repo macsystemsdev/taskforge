@@ -24,12 +24,13 @@ class ProjectHealthTableWidget extends TableWidget
      * Reporting data is cached independently, therefore polling only
      * refreshes the widget rather than recalculating every request.
      */
-    protected static ?string $pollingInterval = '5m';
+    protected static ?string $pollingInterval = '2m';
 
     /**
      * Display the widget across the full page width.
      */
     protected int|string|array $columnSpan = 'full';
+    protected static ?string $slug = 'reporting/projects-health';
 
     protected ProjectReportingCacheService $reporting;
 

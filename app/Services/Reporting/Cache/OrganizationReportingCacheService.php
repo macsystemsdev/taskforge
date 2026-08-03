@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\Cache;
 |
 */
 
-class OrganizationReportingCacheService
+class OrganizationReportingCacheService extends BaseReportingCacheService
 {
     public function __construct(
         protected OrganizationReportingService $reporting,
@@ -38,10 +38,15 @@ class OrganizationReportingCacheService
         ReportFilterData $filters,
     ): array {
 
-        return Cache::remember(
-            $this->cacheKey('overview', $filters),
-            $this->ttl(),
-            fn() => $this->reporting->overview($filters),
+        return $this->remember(
+
+            $this->cacheKey(
+                'overview',
+                $filters,
+            ),
+
+            fn() => $this->reporting
+                ->overview($filters),
         );
     }
 
@@ -50,10 +55,15 @@ class OrganizationReportingCacheService
         ReportFilterData $filters,
     ): ChartSeriesData {
 
-        return Cache::remember(
-            $this->cacheKey('growth-trend', $filters),
-            $this->ttl(),
-            fn() => $this->reporting->growthTrend($filters),
+       return $this->remember(
+
+            $this->cacheKey(
+                'growth-trend',
+                $filters,
+            ),
+
+            fn() => $this->reporting
+                ->growthTrend($filters),
         );
     }
 
@@ -65,9 +75,11 @@ class OrganizationReportingCacheService
         ReportFilterData $filters,
     ): Collection {
 
-        return Cache::remember(
-            $this->cacheKey('health', $filters),
-            $this->ttl(),
+        return $this->remember(
+            $this->cacheKey(
+                'health',
+                $filters,
+            ),
             fn() => $this->reporting->health($filters),
         );
     }

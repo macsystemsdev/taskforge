@@ -71,23 +71,14 @@ class ProjectReportingService
      *
      * @return Collection<int, ProjectHealthData>
      */
-    public function health(
-        ProjectReportFilterData $filters,
-    ): Collection {
-
-        return $this->projectQuery($filters)
-
-            ->withCount(
-                 $this->taskReportingCounts('tasks')
-            )
-
+    public function health(ProjectReportFilterData $filters): Collection
+    {
+        return $this->applyTaskReportingCounts(
+            $this->projectQuery($filters),
+            'project'
+        )
             ->lazyById()
-
-            ->map(
-                fn(Project $project) =>
-                $this->healthService->evaluate($project)
-            )
-
+            ->map(fn(Project $project) => $this->healthService->evaluate($project))
             ->collect();
     }
 

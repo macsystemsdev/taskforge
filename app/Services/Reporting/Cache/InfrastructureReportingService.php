@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\Cache;
 |
 */
 
-class ProjectReportingCacheService
+class ProjectReportingCacheService extends BaseReportingCacheService
 {
     public function __construct(
         protected InfrastructureReportingService $reporting,
@@ -34,10 +34,15 @@ class ProjectReportingCacheService
         ReportFilterData $filters,
     ): array {
 
-        return Cache::remember(
-            $this->cacheKey('overview', $filters),
-            $this->ttl(),
-            fn() => $this->reporting->overview($filters),
+        return $this->remember(
+
+            $this->cacheKey(
+                'overview',
+                $filters,
+            ),
+
+            fn() => $this->reporting
+                ->overview($filters),
         );
     }
 
@@ -45,10 +50,15 @@ class ProjectReportingCacheService
         ReportFilterData $filters,
     ): ChartSeriesData {
 
-        return Cache::remember(
-            $this->cacheKey('storage-trend', $filters),
-            $this->ttl(),
-            fn() => $this->reporting->storageTrend($filters),
+        return $this->remember(
+
+            $this->cacheKey(
+                'storage-trend',
+                $filters,
+            ),
+
+            fn() => $this->reporting
+                ->storageTrend($filters),
         );
     }
 
@@ -56,10 +66,15 @@ class ProjectReportingCacheService
         ReportFilterData $filters,
     ): Collection {
 
-        return Cache::remember(
-            $this->cacheKey('capacity', $filters),
-            $this->ttl(),
-            fn() => $this->reporting->capacity($filters),
+        return $this->remember(
+
+            $this->cacheKey(
+                'capacity',
+                $filters,
+            ),
+
+            fn() => $this->reporting
+                ->capacity($filters),
         );
     }
 

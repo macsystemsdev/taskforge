@@ -103,6 +103,19 @@ class Team extends Model
         return $this->hasMany(Project::class);
     }
 
+    // In Team.php
+    public function tasks()
+    {
+        return $this->hasManyThrough(
+            Task::class,
+            Project::class,
+            'team_id', // Foreign key on projects table
+            'project_id', // Foreign key on tasks table
+            'id', // Local key on teams table
+            'id' // Local key on projects table
+        );
+    }
+
     public function leaders()
     {
         return $this->members()

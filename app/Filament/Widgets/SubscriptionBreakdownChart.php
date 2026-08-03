@@ -12,6 +12,7 @@ class SubscriptionBreakdownChart extends ChartWidget
     protected int|string|array $columnSpan = 1;
     protected ?string $maxHeight = '320px';
     protected  ?string $pollingInterval = '2m';
+    protected static ?string $slug = 'metrics/subscription-breakdown';
 
     protected function getData(): array
     {

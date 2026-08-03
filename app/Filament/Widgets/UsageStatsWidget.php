@@ -13,6 +13,7 @@ class UsageStatsWidget extends StatsOverviewWidget
     protected int|string|array $columnSpan = 'full';
     protected ?string $heading = 'Usage Analytics';
     protected ?string $pollingInterval = '30s';
+    protected static ?string $slug = 'metrics/usage-stats';
 
     protected function getStats(): array
     {

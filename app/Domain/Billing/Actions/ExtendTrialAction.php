@@ -13,7 +13,7 @@ class ExtendTrialAction
 
         $subscription = $organization->subscription;
 
-        if (! $subscription->isOnTrial()) {
+        if (! $subscription->isTrial()) {
             return;
         }
 
