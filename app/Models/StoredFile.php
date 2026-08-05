@@ -59,4 +59,14 @@ class StoredFile extends Model
     {
         return $this->hasMany(FileAttachment::class);
     }
+
+    public function getOriginalFilenameAttribute(): string
+    {
+        return $this->original_name;
+    }
+
+    public function getFilenameAttribute(): string
+    {
+        return $this->stored_name;
+    }
 }

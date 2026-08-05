@@ -10,7 +10,17 @@ use Illuminate\Database\Eloquent\Model;
 
 #[Table('payment_transactions')]
 
-#[Fillable(['organization_id', 'subscription_plan_id', 'amount', 'currency', 'status', 'provider', 'provider_reference', 'metadata', 'paid_at'])]
+#[Fillable([
+    'organization_id',
+    'subscription_plan_id',
+    'amount',
+    'currency',
+    'status',
+    'provider',
+    'provider_reference',
+    'metadata',
+    'paid_at'
+])]
 
 class PaymentTransaction extends Model
 {

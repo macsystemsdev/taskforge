@@ -5,6 +5,7 @@ use App\Http\Controllers\OrganizationInvitationController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Livewire\Billing\ShowBillingCancel;
 use App\Livewire\Billing\ShowBillingSuccess;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 use App\Models\Organization;
@@ -85,12 +86,46 @@ Route::middleware(['auth'])->group(function () {
     Route::get(
         '/projects/{project}',
         function (Project $project) {
+            Gate::authorize('view', $project);
+
             return view(
                 'pages.projects.show',
                 compact('project')
             );
         }
     )->name('projects.show');
+
+    Route::get(
+        '/projects/{project}/attachments/{attachment}/download',
+        function (Project $project, \App\Models\FileAttachment $attachment, \App\Domain\Storage\Actions\DownloadProjectAttachmentAction $download) {
+            abort_unless(
+                $attachment->attachable_type === Project::class
+                && $attachment->attachable_id === $project->id,
+                404,
+            );
+
+            Gate::authorize('view', $project);
+
+            return $download->handle($attachment, Auth::user());
+        }
+    )->name('projects.attachments.download');
+
+    Route::get(
+        '/projects/{project}/attachments/{attachment}/view',
+        function (Project $project, \App\Models\FileAttachment $attachment) {
+            abort_unless(
+                $attachment->attachable_type === Project::class
+                && $attachment->attachable_id === $project->id,
+                404,
+            );
+
+            Gate::authorize('view', $project);
+
+            return response()->file(
+                \Illuminate\Support\Facades\Storage::disk('public')->path($attachment->storedFile->path),
+            );
+        }
+    )->name('projects.attachments.view');
 
     Route::get(
         '/projects/{project}/edit',
@@ -129,8 +164,12 @@ Route::middleware(['auth'])->group(function () {
     Route::view('/notifications', 'pages.notifications.index')->name('notifications.index');
 
     Route::post('/notifications/mark-all-read', function () {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
 
-        auth()->user()->unreadNotifications->markAsRead();
+        if ($user) {
+            $user->unreadNotifications->markAsRead();
+        }
 
         return back();
     })->name('notifications.read-all');

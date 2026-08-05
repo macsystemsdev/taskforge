@@ -48,7 +48,30 @@ class TaskPolicy
             return false;
         }
         return $task->assignee_id === $user->id
-            && $task->status === TaskStatus::TODO;
+            && $task->status === TaskStatus::TODO
+            || $task->status === TaskStatus::BLOCKED;
+            ;
+    }
+
+    public function block(
+        User $user,
+        Task $task
+    ): bool {
+
+        if (
+            $task
+            ->project
+            ->workspace
+            ->organization
+            ->taskLocked(
+                $task
+            )
+        ) {
+            return false;
+        }
+        return $task->assignee_id === $user->id
+            && $task->status === TaskStatus::IN_PROGRESS
+            ;
     }
 
     public function complete(

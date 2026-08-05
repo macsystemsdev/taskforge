@@ -25,12 +25,21 @@ class ProjectPolicy
             return false;
         }
 
-        return ProjectPermissions::canView(
-            $project
-                ->workspace
-                ->organization
-                ->roleFor($user)
-        );
+        $role = $project
+            ->workspace
+            ->organization
+            ->roleFor($user);
+
+        if (in_array($role, [
+            \App\Domain\Organizations\Enums\OrganizationRole::OWNER,
+            \App\Domain\Organizations\Enums\OrganizationRole::ADMIN,
+        ])) {
+            return true;
+        }
+
+        return $project->team
+            ? $user->belongsToTeam($project->team)
+            : false;
     }
     public function update(
         User $user,

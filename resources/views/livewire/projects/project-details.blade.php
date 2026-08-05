@@ -20,94 +20,55 @@ new class extends Component {
         {{ __('Project Details') }}
     </flux:heading>
 
-    <div class="mt-4 space-y-4">
+    <div class="mt-4 grid gap-4">
 
-        <x-ui.card class="space-y-2">
-            
+        <div class="rounded-3xl border border-zinc-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-zinc-950/60">
             <p class="tf-muted">Health</p>
-
             @if ($project->hasOverdueTasks())
-                <p class="font-semibold text-red-600">
-                    At Risk
-                </p>
+                <p class="mt-2 font-semibold text-red-600">At Risk</p>
             @elseif ($project->hasUpcomingDeadlines())
-                <p class="font-semibold text-amber-600">
-                    Attention Needed
-                </p>
+                <p class="mt-2 font-semibold text-amber-600">Attention Needed</p>
             @else
-                <p class="font-semibold text-green-600">
-                    Healthy
-                </p>
+                <p class="mt-2 font-semibold text-green-600">Healthy</p>
             @endif
-        </x-ui.card>
-
-        <div>
-            <p class="tf-muted">
-                Overdue Tasks
-            </p>
-
-            <p class="font-medium text-red-600">
-                {{ $project->overdueTaskCount() }}
-            </p>
         </div>
 
-        <div>
-            <p class="tf-muted">
-                Due Soon
-            </p>
+        <dl class="grid gap-4">
+            <div class="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
+                <dt class="tf-muted">Overdue Tasks</dt>
+                <dd class="mt-2 font-semibold text-red-600">{{ $project->overdueTaskCount() }}</dd>
+            </div>
 
-            <p class="font-medium text-amber-600">
-                {{ $project->dueSoonTaskCount() }}
-            </p>
-        </div>
+            <div class="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
+                <dt class="tf-muted">Due Soon</dt>
+                <dd class="mt-2 font-semibold text-amber-600">{{ $project->dueSoonTaskCount() }}</dd>
+            </div>
 
-        <div>
-            <p class="tf-muted">
-                Project Team
-            </p>
+            <div class="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
+                <dt class="tf-muted">Project Team</dt>
+                <dd class="mt-2 font-semibold text-zinc-950 dark:text-white">{{ $project->team->name }}</dd>
+            </div>
 
-            <p class="font-medium">
-                {{ $project->team->name }}
-            </p>
-        </div>
+            <div class="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
+                <dt class="tf-muted">Created By</dt>
+                <dd class="mt-2 font-semibold text-zinc-950 dark:text-white">{{ $project->creator->name }}</dd>
+            </div>
 
-        <div>
-            <p class="tf-muted">
-                Created By
-            </p>
+            <div class="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
+                <dt class="tf-muted">Status</dt>
+                <dd class="mt-2"><x-ui.status-badge :status="$project->status" /></dd>
+            </div>
 
-            <p class="font-medium">
-                {{ $project->creator->name }}
-            </p>
-        </div>
+            <div class="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
+                <dt class="tf-muted">Created</dt>
+                <dd class="mt-2 font-semibold text-zinc-950 dark:text-white">{{ $project->created_at->format('M d, Y') }}</dd>
+            </div>
 
-        <div>
-            <p class="tf-muted">
-                Status
-            </p>
-
-            <x-ui.status-badge :status="$project->status" />
-        </div>
-
-        <div>
-            <p class="tf-muted">
-                Created
-            </p>
-
-            <p>
-                {{ $project->created_at->format('M d, Y') }}
-            </p>
-        </div>
-
-        <div>
-            <p class="tf-muted">
-                Due Date
-            </p>
-
-            <p>
-                {{ $project->due_date?->format('M d, Y') ?? __('No due date') }}
-            </p>
-        </div>
+            <div class="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
+                <dt class="tf-muted">Due Date</dt>
+                <dd class="mt-2 font-semibold text-zinc-950 dark:text-white">{{ $project->due_date?->format('M d, Y') ?? __('No due date') }}</dd>
+            </div>
+        </dl>
 
     </div>
 

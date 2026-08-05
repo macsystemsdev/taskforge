@@ -89,7 +89,7 @@ readonly class OrganizationPermissions
         );
     }
 
-    public function canViewLibrary(
+    public static function canViewLibrary(
         ?OrganizationRole $role
     ): bool {
         return in_array(
@@ -103,7 +103,7 @@ readonly class OrganizationPermissions
         );
     }
 
-    public function canUploadToLibrary(
+    public static function canUploadToLibrary(
         ?OrganizationRole $role
     ): bool {
         return in_array(
@@ -116,7 +116,7 @@ readonly class OrganizationPermissions
         );
     }
 
-    public function canManageLibrary(
+    public static function canManageLibrary(
         ?OrganizationRole $role
     ): bool {
         return in_array(

@@ -23,7 +23,6 @@
                             <tr>
                                 <th>Project</th>
                                 <th>Workspace</th>
-                                <th>Owner</th>
                                 <th>Status</th>
                                 <th>Due</th>
                                 <th>Tasks</th>

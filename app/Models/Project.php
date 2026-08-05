@@ -65,6 +65,14 @@ class Project extends Model
         );
     }
 
+    public function attachments(): MorphMany
+    {
+        return $this->morphMany(
+            FileAttachment::class,
+            'attachable',
+        );
+    }
+
     public function activityLogs(): MorphMany
     {
         return $this->morphMany(
@@ -219,7 +227,7 @@ class Project extends Model
 
     public function totalTaskCount(): int
     {
-         if (isset($this->total_tasks_count)) {
+        if (isset($this->total_tasks_count)) {
             return $this->total_tasks_count;
         }
 

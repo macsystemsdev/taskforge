@@ -87,4 +87,31 @@ class OrganizationPolicy
             $organization->roleFor($user)
         );
     }
+
+    public function viewLibrary(
+        User $user,
+        Organization $organization
+    ): bool {
+        return OrganizationPermissions::canViewLibrary(
+            $organization->roleFor($user)
+        );
+    }
+
+    public function manageLibrary(
+        User $user,
+        Organization $organization
+    ): bool {
+        return OrganizationPermissions::canManageLibrary(
+            $organization->roleFor($user)
+        );
+    }
+
+    public function uploadToLibrary(
+        User $user,
+        Organization $organization
+    ): bool {
+        return OrganizationPermissions::canUploadToLibrary(
+            $organization->roleFor($user)
+        );
+    }
 }

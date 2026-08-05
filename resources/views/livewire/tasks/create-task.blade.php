@@ -13,7 +13,7 @@ new class extends Component {
 
     public string $title = '';
 
-    public ?string $statusFilter = null;
+    public string $statusFilter = 'all';
 
     public ?string $description = null;
 
@@ -27,10 +27,17 @@ new class extends Component {
         return $this->project->team->members->sortBy('name');
     }
 
+    protected $queryString = [
+        'statusFilter' => ['except' => 'all'],
+    ];
+
     #[Computed]
     public function tasks()
     {
-        return $this->project->tasks()->with('assignee')->when($this->statusFilter, fn($query) => $query->where('status', $this->statusFilter))->latest()->get();
+        return $this->project->tasks()->with('assignee')
+            ->when($this->statusFilter !== 'all', fn($query) => $query->where('status', $this->statusFilter))
+            ->latest()
+            ->get();
     }
 
     public function mount(Project $project): void
@@ -59,7 +66,10 @@ new class extends Component {
 
         return view('livewire.tasks.create-task', [
             'members' => $this->project->workspace->organization->members,
-            'tasks' => $this->project->tasks()->with('assignee')->when($this->statusFilter, fn($query) => $query->where('status', $this->statusFilter))->latest()->get(),
+            'tasks' => $this->project->tasks()->with('assignee')
+                ->when($this->statusFilter !== 'all', fn($query) => $query->where('status', $this->statusFilter))
+                ->latest()
+                ->get(),
         ]);
     }
 
@@ -83,41 +93,42 @@ new class extends Component {
     $taskLimit = $organization->currentPlan()?->max_tasks;
 @endphp
 
-<div class="grid grid-cols-1 gap-6 xl:grid-cols-[360px_1fr]">
+<div class="grid grid-cols-1 gap-6 xl:grid-cols-[320px_1fr]">
 
     {{-- TASK CREATION FORM --}}
     <div>
 
-        <x-ui.card class="space-y-5">
+        <x-ui.card padding="p-0" class="space-y-0">
 
-            <div>
-                <h2 class="tf-panel-title">Create Task</h2>
-                <p class="tf-panel-subtitle">Add work directly to this project.</p>
-            </div>
-
-            @if (session('success'))
-                <div
-                    class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-200">
-                    {{ session('success') }}
+            <div class="px-5 py-4">
+                <div>
+                    <h2 class="tf-panel-title">Create Task</h2>
+                    <p class="tf-panel-subtitle">Add work directly to this project.</p>
                 </div>
-            @endif
 
-            <div class="mb-4 rounded-2xl border border-zinc-200 bg-zinc-50/80 px-4 py-3 text-sm text-zinc-600 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-400">
-                Tasks in use: {{ $organization->taskUsage() }} / {{ $taskLimit === null ? 'Unlimited' : $taskLimit }}
-            </div>
+                @if (session('success'))
+                    <div
+                        class="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-200">
+                        {{ session('success') }}
+                    </div>
+                @endif
 
-            <form wire:submit="createTask" class="space-y-5">
-
-                <div class="space-y-2">
-                    <label>Task</label>
-
-                    <input type="text" wire:model="title" class="w-full px-3 py-2.5">
-                    @error('title')
-                        <p class="text-sm font-medium text-red-600 dark:text-red-400">
-                            {{ $message }}
-                        </p>
-                    @enderror
+                <div class="mt-4 mb-4 rounded-2xl border border-zinc-200 bg-zinc-50/80 px-4 py-3 text-sm text-zinc-600 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-400">
+                    Tasks in use: {{ $organization->taskUsage() }} / {{ $taskLimit === null ? 'Unlimited' : $taskLimit }}
                 </div>
+
+                <form wire:submit="createTask" class="space-y-5">
+
+                    <div class="space-y-2">
+                        <label>Task</label>
+
+                        <input type="text" wire:model="title" class="w-full px-3 py-2.5">
+                        @error('title')
+                            <p class="text-sm font-medium text-red-600 dark:text-red-400">
+                                {{ $message }}
+                            </p>
+                        @enderror
+                    </div>
 
                 <div class="space-y-2">
                     <label>Description</label>
@@ -177,7 +188,7 @@ new class extends Component {
     {{-- TASK LIST --}}
     <div>
 
-        <x-ui.card padding="p-0" class="overflow-hidden">
+        <x-ui.card padding="p-0" class="overflow-hidden flex flex-col min-h-0 h-full">
 
             <div
                 class="flex flex-col gap-4 border-b border-zinc-200 px-5 py-4 dark:border-white/10 lg:flex-row lg:items-center lg:justify-between">
@@ -186,56 +197,50 @@ new class extends Component {
                     <p class="tf-panel-subtitle">{{ $project->tasks_count }} tasks in this project.</p>
                 </div>
 
-                <div class="flex flex-wrap gap-2">
-                    <button type="button" wire:click="$set('statusFilter', null)"
-                        class="{{ $statusFilter === null ? 'tf-button-primary' : 'tf-button-secondary' }} px-3 py-2">
-                        All
-                    </button>
-                    @foreach (\App\Domain\Task\TaskStatus::cases() as $status)
-                        <button type="button" wire:click="$set('statusFilter', '{{ $status->value }}')"
-                            class="{{ $statusFilter === $status->value ? 'tf-button-primary' : 'tf-button-secondary' }} px-3 py-2">
-                            {{ str($status->value)->headline() }}
-                        </button>
-                    @endforeach
+                <div class="grid gap-3 sm:w-72">
+                    <label for="task-status-filter" class="sr-only">Filter tasks by status</label>
+                    <select id="task-status-filter" wire:model="statusFilter"
+                        class="w-full rounded-2xl border border-zinc-200 bg-white px-4 py-2 text-sm shadow-sm transition focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:border-zinc-700 dark:bg-zinc-950/70 dark:text-white">
+                        <option value="all">All tasks</option>
+                        @foreach (\App\Domain\Task\TaskStatus::cases() as $status)
+                            <option value="{{ $status->value }}">{{ str($status->value)->headline() }}</option>
+                        @endforeach
+                    </select>
                 </div>
             </div>
 
             @if ($this->tasks->isNotEmpty())
-                <div class="max-h-[500px] overflow-y-auto">
-
-                    <div class="overflow-x-auto">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Task</th>
-                                    <th>Status</th>
-                                    <th>Assignee</th>
-                                    <th>Due</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($this->tasks as $task)
+                <div class="min-h-0 overflow-hidden flex-1">
+                    <div class="max-h-[320px] sm:max-h-[360px] md:max-h-[420px] overflow-y-auto">
+                        <div class="min-w-full overflow-x-auto h-full">
+                            <table class="min-w-full border-separate border-spacing-0 text-sm">
+                                <thead class="bg-zinc-50 text-zinc-600 dark:bg-zinc-950/40 dark:text-zinc-300">
                                     <tr>
-                                        <td>
+                                        <th class="px-5 py-3 text-left font-semibold uppercase tracking-wide">Task</th>
+                                        <th class="px-5 py-3 text-left font-semibold uppercase tracking-wide">Status</th>
+                                        <th class="px-5 py-3 text-left font-semibold uppercase tracking-wide">Assignee</th>
+                                        <th class="px-5 py-3 text-left font-semibold uppercase tracking-wide">Due</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-zinc-200 dark:divide-white/10">
+                                @foreach ($this->tasks as $task)
+                                    <tr class="bg-white dark:bg-zinc-950">
+                                        <td class="px-5 py-4 whitespace-nowrap">
                                             <a href="{{ route('tasks.show', $task) }}"
                                                 class="font-medium text-zinc-950 hover:underline dark:text-white"
                                                 wire:navigate>
                                                 {{ $task->title }}
                                             </a>
-
                                         </td>
-                                        <td><x-ui.status-badge :status="$task->status" /></td>
-
-                                        <td>
+                                        <td class="px-5 py-4 whitespace-nowrap"><x-ui.status-badge :status="$task->status" /></td>
+                                        <td class="px-5 py-4 whitespace-nowrap">
                                             <div class="flex items-center gap-2">
                                                 <x-ui.avatar :name="$task->assignee?->name ?? 'Unassigned'" size="sm" />
                                                 <span>{{ $task->assignee?->name ?? 'Unassigned' }}</span>
                                             </div>
                                         </td>
-                                        <td>
-
+                                        <td class="px-5 py-4 whitespace-nowrap">
                                             <div class="flex flex-col">
-
                                                 <span>
                                                     {{ $task->due_date?->format('M d, Y') ?? 'No date' }}
                                                 </span>
@@ -245,9 +250,7 @@ new class extends Component {
                                                         Overdue
                                                     </span>
                                                 @endif
-
                                             </div>
-
                                         </td>
                                     </tr>
                                 @endforeach

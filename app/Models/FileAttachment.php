@@ -24,6 +24,11 @@ class FileAttachment extends Model
         ];
     }
 
+    public function attachable(): MorphTo
+    {
+        return $this->morphTo();
+    }
+
     public function file(): BelongsTo
     {
         return $this->belongsTo(
@@ -32,21 +37,16 @@ class FileAttachment extends Model
         );
     }
 
-    public function creator(): BelongsTo
+    public function storedFile(): BelongsTo
+    {
+        return $this->file();
+    }
+
+    public function uploader(): BelongsTo
     {
         return $this->belongsTo(
             User::class,
             'created_by',
         );
-    }
-
-    public function comment(): BelongsTo
-    {
-        return $this->belongsTo(Comment::class);
-    }
-
-    public function attachable(): MorphTo
-    {
-        return $this->morphTo();
     }
 }

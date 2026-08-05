@@ -38,6 +38,14 @@ class Workspace extends Model
         return $this->morphMany(ActivityLog::class, 'subject');
     }
 
+    public function attachments(): MorphMany
+    {
+        return $this->morphMany(
+            FileAttachment::class,
+            'attachable',
+        );
+    }
+
     // route by slug
     public function getRouteKeyName(): string
     {

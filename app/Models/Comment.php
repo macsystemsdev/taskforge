@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 #[Table('comments')]
@@ -20,5 +21,13 @@ class Comment extends Model
     public function commentable(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    public function attachments(): MorphMany
+    {
+        return $this->morphMany(
+            FileAttachment::class,
+            'attachable',
+        );
     }
 }

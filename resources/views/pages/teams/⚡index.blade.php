@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
+use App\Models\Organization;
 
 new #[Title('Teams')] class extends Component {
     public string $name = '';
@@ -46,6 +47,14 @@ new #[Title('Teams')] class extends Component {
     {
         return Auth::user()->toUserTeams(includeCurrent: true);
     }
+
+    #[Computed]
+    public function organization(): ?Organization
+    {
+        $workspace = Auth::user()->currentTeam?->workspace ?? Auth::user()->personalTeam()?->workspace;
+
+        return $workspace?->organization;
+    }
 }; ?>
 
 <section class="w-full">
@@ -57,8 +66,7 @@ new #[Title('Teams')] class extends Component {
 
         <div class="mt-6 space-y-3">
             @forelse ($this->teams as $team)
-            
-                @if ($organization->teamLocked($team))
+                @if ($this->organization?->teamLocked($team))
                     <flux:button variant="ghost" size="sm" icon="lock-closed" disabled />
                 @endif
                 <div class="flex items-center justify-between rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900"

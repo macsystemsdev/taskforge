@@ -62,4 +62,5 @@ readonly class TaskPermissions
             ]
         );
     }
+
 }

@@ -223,6 +223,12 @@ new class extends Component {
                         </button>
                     @endif
 
+                     @if (auth()->user()->can('block', $task))
+                        <button wire:click="startTask" class="tf-button-primary">
+                            Block Task
+                        </button>
+                    @endif
+
                     @if (auth()->user()->can('complete', $task))
                         <button wire:click="completeTask" class="tf-button-primary">
                             Complete Task

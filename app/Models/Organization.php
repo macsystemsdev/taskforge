@@ -42,6 +42,14 @@ class Organization extends Model
             ->withTimestamps();
     }
 
+    public function attachments(): MorphMany
+    {
+        return $this->morphMany(
+            FileAttachment::class,
+            'attachable',
+        );
+    }
+
     public function administrators()
     {
         return $this->members()
@@ -173,12 +181,16 @@ class Organization extends Model
             );
     }
 
-   
+
 
     // Role-based access control for organization members
 
     public function roleFor(User $user): ?OrganizationRole
     {
+        if ($this->owner_id === $user->id) {
+            return OrganizationRole::OWNER;
+        }
+
         $membership = $this->members()
             ->where('users.id', $user->id)
             ->first();
