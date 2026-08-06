@@ -40,15 +40,22 @@ class Team extends Model
         });
     }
 
-    /**
-     * Get the team owner.
-     */
-    public function owner(): ?Model
-    {
-        return $this->members()
-            ->wherePivot('role', TeamRole::LEADER->value)
+    // Get Team member roles
+    public function roleFor(
+        User $user
+    ): ?TeamRole {
+
+        $membership = $this->memberships()
+            ->where('user_id', $user->id)
             ->first();
+
+        if ($membership) {
+            return TeamRole::from($membership->role->value);
+        }
+
+        return null;
     }
+
 
     /**
      * Get all members of this team.
@@ -61,6 +68,12 @@ class Team extends Model
             ->using(Membership::class)
             ->withPivot(['role'])
             ->withTimestamps();
+    }
+
+    public function leader(){
+        return $this->members()
+            ->wherePivot('role', TeamRole::LEADER->value)
+            ->first();
     }
 
     /**
@@ -82,6 +95,7 @@ class Team extends Model
     {
         return [
             'is_personal' => 'boolean',
+            'role' => TeamRole::class
         ];
     }
 
@@ -114,6 +128,11 @@ class Team extends Model
             'id', // Local key on teams table
             'id' // Local key on projects table
         );
+    }
+
+    public function activityLogs()
+    {
+        return $this->morphMany(ActivityLog::class, 'subject');
     }
 
     public function leaders()

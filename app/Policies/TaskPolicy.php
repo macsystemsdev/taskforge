@@ -10,24 +10,31 @@ use App\Models\User;
 class TaskPolicy
 {
 
+    protected function locked(
+        Task $task,
+    ): bool {
+
+        return $task
+
+            ->project
+
+            ->workspace
+
+            ->organization
+
+            ->taskLocked($task);
+    }
+
     public function view(
         User $user,
         Task $task
     ): bool {
-        if (
-            $task
-            ->project
-            ->workspace
-            ->organization
-            ->taskLocked(
-                $task
-            )
-        ) {
+        if ($this->locked($task)) {
             return false;
         }
-        return $task->project
-            ->workspace
-            ->organization
+        return $task
+            ->project
+            ->team
             ->roleFor($user) !== null;
     }
 
@@ -36,21 +43,12 @@ class TaskPolicy
         Task $task
     ): bool {
 
-        if (
-            $task
-            ->project
-            ->workspace
-            ->organization
-            ->taskLocked(
-                $task
-            )
-        ) {
+        if ($this->locked($task)) {
             return false;
         }
         return $task->assignee_id === $user->id
             && $task->status === TaskStatus::TODO
-            || $task->status === TaskStatus::BLOCKED;
-            ;
+            || $task->status === TaskStatus::BLOCKED;;
     }
 
     public function block(
@@ -58,39 +56,22 @@ class TaskPolicy
         Task $task
     ): bool {
 
-        if (
-            $task
-            ->project
-            ->workspace
-            ->organization
-            ->taskLocked(
-                $task
-            )
-        ) {
+        if ($this->locked($task)) {
             return false;
         }
         return $task->assignee_id === $user->id
-            && $task->status === TaskStatus::IN_PROGRESS
-            ;
+            && $task->status === TaskStatus::IN_PROGRESS;
     }
 
     public function complete(
         User $user,
         Task $task
     ): bool {
-        if (
-            $task
-            ->project
-            ->workspace
-            ->organization
-            ->taskLocked(
-                $task
-            )
-        ) {
+        if ($this->locked($task)) {
             return false;
         }
         return $task->assignee_id === $user->id
-            && $task->status === TaskStatus::IN_PROGRESS;
+            && $task->status !== TaskStatus::DONE;
     }
 
     public function cancel(
@@ -98,22 +79,17 @@ class TaskPolicy
         Task $task
     ): bool {
 
-        if (
-            $task
-            ->project
-            ->workspace
-            ->organization
-            ->taskLocked(
-                $task
-            )
-        ) {
+        if ($this->locked($task)) {
             return false;
         }
         $role = $task
             ->project
-            ->workspace
-            ->organization
+            ->team
             ->roleFor($user);
+
+            if($task->status === TaskStatus::DONE){
+                return false;
+            }
 
 
         return TaskPermissions::canCancel(
@@ -126,9 +102,11 @@ class TaskPolicy
         Task $task
     ): bool {
 
-        if (
-            $task->assignee_id === $user->id
-        ) {
+        if ($this->locked($task)) {
+            return false;
+        }
+
+        if ($task->assignee->is($user)) {
             return true;
         }
 
@@ -136,7 +114,7 @@ class TaskPolicy
             ->project
             ->team
             ->leader()
-            ?->is($user);
+            ?->is($user) ?? false;
     }
 
     public function delete(
@@ -145,12 +123,11 @@ class TaskPolicy
     ): bool {
 
         return TaskPermissions::canDelete(
-            $task->project
-                ->workspace
-                ->organization
+            $task
+                ->project
+                ->team
                 ->roleFor($user)
         );
-
     }
 
     public function reassign(
@@ -159,10 +136,59 @@ class TaskPolicy
     ): bool {
 
         return TaskPermissions::canReassign(
-            $task->project
-                ->workspace
-                ->organization
+            $task
+                ->project
+                ->team
                 ->roleFor($user)
+        );
+    }
+
+    public function attachResource(
+        User $user,
+        Task $task,
+    ): bool {
+        if ($this->locked($task)) {
+            return false;
+        }
+
+        return TaskPermissions::canAttachResource(
+            $task->project
+                ->team
+                ->roleFor($user),
+        );
+    }
+
+    public function detachResource(
+        User $user,
+        Task $task,
+    ): bool {
+        if ($this->locked($task)) {
+            return false;
+        }
+
+        return TaskPermissions::canDetachResource(
+            $task->project
+                ->team
+                ->roleFor($user),
+        );
+    }
+
+    public function viewPrivateResource(
+        User $user,
+        Task $task,
+    ): bool {
+        if ($this->locked($task)) {
+            return false;
+        }
+
+        if ($task->assignee_id === $user->id) {
+            return true;
+        }
+
+        return TaskPermissions::canViewPrivateResource(
+            $task->project
+                ->team
+                ->roleFor($user),
         );
     }
 }

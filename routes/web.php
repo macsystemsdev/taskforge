@@ -100,7 +100,7 @@ Route::middleware(['auth'])->group(function () {
         function (Project $project, \App\Models\FileAttachment $attachment, \App\Domain\Storage\Actions\DownloadProjectAttachmentAction $download) {
             abort_unless(
                 $attachment->attachable_type === Project::class
-                && $attachment->attachable_id === $project->id,
+                    && $attachment->attachable_id === $project->id,
                 404,
             );
 
@@ -115,7 +115,7 @@ Route::middleware(['auth'])->group(function () {
         function (Project $project, \App\Models\FileAttachment $attachment) {
             abort_unless(
                 $attachment->attachable_type === Project::class
-                && $attachment->attachable_id === $project->id,
+                    && $attachment->attachable_id === $project->id,
                 404,
             );
 
@@ -126,6 +126,25 @@ Route::middleware(['auth'])->group(function () {
             );
         }
     )->name('projects.attachments.view');
+
+    Route::get('/tasks/{task}/attachments/{attachment}/download', function ($taskId, $attachmentId) {
+        $task = App\Models\Task::findOrFail($taskId);
+        $attachment = $task->attachments()->findOrFail($attachmentId);
+
+        return response()->download(
+            storage_path('app/' . $attachment->storedFile->path),
+            $attachment->storedFile->original_filename
+        );
+    })->name('tasks.attachments.download')->middleware(['auth', 'verified']);
+
+    Route::get('/tasks/{task}/attachments/{attachment}/view', function ($taskId, $attachmentId) {
+        $task = App\Models\Task::findOrFail($taskId);
+        $attachment = $task->attachments()->findOrFail($attachmentId);
+
+        return response()->file(
+            storage_path('app/' . $attachment->storedFile->path)
+        );
+    })->name('tasks.attachments.view')->middleware(['auth', 'verified']);
 
     Route::get(
         '/projects/{project}/edit',

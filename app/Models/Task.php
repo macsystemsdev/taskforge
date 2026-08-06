@@ -8,11 +8,75 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\Notification;
 
+
+/*
+|--------------------------------------------------------------------------
+| Future
+|--------------------------------------------------------------------------
+|
+| Replace blocked_reason and blocked_at with a dedicated task_blockers
+| table supporting:
+|
+| - Multiple blocker history
+| - Leader resolutions
+| - Attachments
+| - Resolution timestamps
+| - Team analytics
+|
+*/
+/** 
+ * Future
+
+ *task_blockers
+
+ *-------------------------
+
+ *id
+
+ *task_id
+
+ *blocked_by
+
+ *reason
+
+ *attachment_id
+
+ *resolved_by
+
+ *resolution
+
+ *resolved_attachment_id
+
+ *blocked_at
+
+ *resolved_at
+
+ *created_at
+
+ *updated_at
+ */
+
 #[Table('tasks')]
-#[Fillable(['project_id', 'slug', 'assignee_id', 'creator_id', 'title', 'description', 'status', 'due_date', 'completed_at'])]
+#[Fillable([
+    'project_id',
+    'slug',
+    'assignee_id',
+    'creator_id',
+    'title',
+    'description',
+    'status',
+    'priority',
+    'start_date',
+    'started_at',
+    'due_date',
+    'blocked_reason',
+    'completed_at',
+])]
+
 class Task extends Model
 {
     // Relationships
@@ -45,6 +109,13 @@ class Task extends Model
         return $this->morphMany(
             Comment::class,
             'commentable'
+        );
+    }
+
+    public function fileReferences(): HasMany
+    {
+        return $this->hasMany(
+            TaskFileReference::class
         );
     }
 

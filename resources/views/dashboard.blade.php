@@ -5,32 +5,44 @@
             ->where('owner_id', auth()->id())
             ->with('workspaces.projects.tasks')
             ->get();
+
         $allOrganizations = $ownedOrganizations->merge($organizations)->unique('id')->values();
+
+        // Extract the IDs from the collection
+        $allOrganizationIds = $allOrganizations->pluck('id');
+
         $workspaces = $allOrganizations->flatMap->workspaces;
-        $projects = $workspaces->flatMap->project;
+        $projects = $workspaces->flatMap->projects; // Note: fixed 'project' to 'projects'
         $tasks = $projects->flatMap->tasks;
+
         $assignedTasks = auth()->user()->assignedTasks()->with('project.team')->latest()->limit(6)->get();
         $unreadNotifications = auth()->user()->unreadNotifications()->count();
-        $dueSoon = $tasks->filter(fn ($task) => $task->due_date && $task->due_date->isFuture() && $task->due_date->diffInDays(now()) <= 7)->count();
+
+        // Database query using the extracted IDs
+        $dueSoon = \App\Models\Task::whereHas('project.workspace', function ($query) use ($allOrganizationIds) {
+            $query->whereIn('organization_id', $allOrganizationIds);
+        })
+            ->whereBetween('due_date', [now(), now()->addDays(7)])
+            ->count();
     @endphp
 
     <x-ui.page>
-        <div class="mb-6 overflow-hidden rounded-3xl border border-zinc-200 bg-gradient-to-br from-zinc-950 via-zinc-900 to-indigo-950 p-6 text-white shadow-xl shadow-zinc-950/10 sm:p-8">
-            <x-ui.page-header
-                :title="__('Operations Dashboard')"
-                :description="__('A focused view of organizations, project load, assigned work, and notification pressure.')"
-            />
+        <div
+            class="mb-6 overflow-hidden rounded-3xl border border-zinc-200 bg-gradient-to-br from-zinc-950 via-zinc-900 to-indigo-950 p-6 text-white shadow-xl shadow-zinc-950/10 sm:p-8">
+            <x-ui.page-header :title="__('Operations Dashboard')" :description="__('A focused view of organizations, project load, assigned work, and notification pressure.')" />
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <x-ui.card class="space-y-2 border-zinc-200/80 bg-white/90 shadow-sm">
                 <p class="text-sm font-medium text-zinc-500">Organizations</p>
-                <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">{{ $allOrganizations->count() }}</p>
+                <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+                    {{ $allOrganizations->count() }}</p>
             </x-ui.card>
 
             <x-ui.card class="space-y-2 border-zinc-200/80 bg-white/90 shadow-sm">
                 <p class="text-sm font-medium text-zinc-500">Projects</p>
-                <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">{{ $projects->count() }}</p>
+                <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">{{ $projects->count() }}
+                </p>
             </x-ui.card>
 
             <x-ui.card class="space-y-2 border-zinc-200/80 bg-white/90 shadow-sm">
@@ -40,7 +52,8 @@
 
             <x-ui.card class="space-y-2 border-zinc-200/80 bg-white/90 shadow-sm">
                 <p class="text-sm font-medium text-zinc-500">Unread notifications</p>
-                <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">{{ $unreadNotifications }}</p>
+                <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+                    {{ $unreadNotifications }}</p>
             </x-ui.card>
         </div>
 
@@ -67,7 +80,9 @@
                                 @foreach ($assignedTasks as $task)
                                     <tr class="tf-row-link">
                                         <td>
-                                            <a href="{{ route('tasks.show', $task) }}" class="font-medium text-zinc-950 hover:underline dark:text-white" wire:navigate>
+                                            <a href="{{ route('tasks.show', $task) }}"
+                                                class="font-medium text-zinc-950 hover:underline dark:text-white"
+                                                wire:navigate>
                                                 {{ $task->title }}
                                             </a>
                                         </td>
@@ -82,7 +97,8 @@
                     </div>
                 @else
                     <div class="p-5">
-                        <x-ui.empty-state title="No assigned tasks" description="Assigned work will appear here as projects start moving." />
+                        <x-ui.empty-state title="No assigned tasks"
+                            description="Assigned work will appear here as projects start moving." />
                     </div>
                 @endif
             </x-ui.card>
@@ -93,15 +109,21 @@
 
                 <div class="mt-5 space-y-3">
                     @forelse ($projects->take(6) as $project)
-                        <a href="{{ route('projects.show', $project) }}" class="block rounded-lg border border-zinc-200 p-4 transition hover:bg-zinc-50 dark:border-white/10 dark:hover:bg-white/[0.03]" wire:navigate>
+                        <a href="{{ route('projects.show', $project) }}"
+                            class="block rounded-lg border border-zinc-200 p-4 transition hover:bg-zinc-50 dark:border-white/10 dark:hover:bg-white/[0.03]"
+                            wire:navigate>
                             <div class="flex items-center justify-between gap-3">
                                 <p class="font-medium text-zinc-950 dark:text-white">{{ $project->name }}</p>
-                                <span class="text-xs font-medium text-zinc-500 dark:text-zinc-400">{{ $project->tasks->count() }} tasks</span>
+                                <span
+                                    class="text-xs font-medium text-zinc-500 dark:text-zinc-400">{{ $project->tasks->count() }}
+                                    tasks</span>
                             </div>
-                            <p class="mt-1 truncate text-sm text-zinc-500 dark:text-zinc-400">{{ $project->workspace->name }}</p>
+                            <p class="mt-1 truncate text-sm text-zinc-500 dark:text-zinc-400">
+                                {{ $project->workspace->name }}</p>
                         </a>
                     @empty
-                        <x-ui.empty-state title="No projects yet" description="Create a project from an organization workspace to start tracking work." />
+                        <x-ui.empty-state title="No projects yet"
+                            description="Create a project from an organization workspace to start tracking work." />
                     @endforelse
                 </div>
             </x-ui.card>

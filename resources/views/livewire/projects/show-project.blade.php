@@ -128,9 +128,10 @@ new class extends Component {
     </div>
 
 
-    <div class="mt-6 grid gap-4 min-h-0 md:auto-rows-fr md:grid-cols-[minmax(0,1fr)_minmax(320px,360px)] xl:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]">
+<div class="mt-6 grid gap-6 md:grid-cols-[1fr_380px] xl:grid-cols-[1fr_420px]">
 
-        <div class="space-y-6 min-h-0 flex flex-col">
+         <!-- Left column -->
+    <div class="space-y-6">
 
             @if (auth()->user()->can('createTask', $project))
                 @livewire('tasks.create-task', ['project' => $project])
@@ -142,7 +143,8 @@ new class extends Component {
 
         </div>
 
-        <aside class="space-y-6 min-h-0 md:sticky md:top-20">
+         <!-- Right column -->
+    <aside class="space-y-6 md:sticky md:top-20">
             @livewire('projects.project-details', ['project' => $project])
 
             @livewire('projects.project-files', ['project' => $project])

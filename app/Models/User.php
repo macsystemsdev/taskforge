@@ -103,4 +103,12 @@ class User extends Authenticatable implements FilamentUser
             $permission
         );
     }
+
+    public function createdTaskFileReferences(): HasMany
+    {
+        return $this->hasMany(
+            TaskFileReference::class,
+            'created_by',
+        );
+    }
 }

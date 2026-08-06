@@ -104,8 +104,7 @@ class ProjectPolicy
         }
         return ProjectPermissions::canComplete(
             $project
-                ->workspace
-                ->organization
+                ->team
                 ->roleFor($user)
         );
     }
@@ -139,8 +138,7 @@ class ProjectPolicy
     ): bool {
         return ProjectPermissions::canCreateTask(
             $project
-                ->workspace
-                ->organization
+                ->team
                 ->roleFor($user)
         )
 

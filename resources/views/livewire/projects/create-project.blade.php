@@ -7,6 +7,7 @@ use App\Models\Workspace;
 use Flux\Flux;
 use Livewire\Component;
 use Illuminate\Support\Facades\Gate;
+use Livewire\Attributes\Computed;
 
 new class extends Component {
     public Workspace $workspace;
@@ -19,9 +20,10 @@ new class extends Component {
 
     public ?int $teamId = null;
 
-    public function getTeamsProperty()
+    #[Computed]
+    public function teams()
     {
-        $this->teams = $workspace->teams->filter(fn($team) => !$workspace->organization->teamLocked($team));
+        return $this->workspace->teams->filter(fn($team) => !$this->workspace->organization->teamLocked($team));
     }
 
     public function createProject(CreateProjectAction $action)

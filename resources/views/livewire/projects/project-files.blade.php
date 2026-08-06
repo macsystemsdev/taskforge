@@ -23,9 +23,9 @@
             <select id="project-files-per-page" wire:model="perPage" wire:change="resetPage"
                 aria-label="Files per page"
                 class="w-full appearance-none rounded-2xl border border-zinc-200 bg-white px-4 py-2 pr-8 text-sm shadow-sm transition focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:border-zinc-700 dark:bg-zinc-950/70">
+                <option value="5">5 / page</option>
                 <option value="10">10 / page</option>
                 <option value="25">25 / page</option>
-                <option value="50">50 / page</option>
             </select>
         </div>
     </div>

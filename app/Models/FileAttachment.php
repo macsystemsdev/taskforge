@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 #[Table('file_attachments')]
@@ -47,6 +48,13 @@ class FileAttachment extends Model
         return $this->belongsTo(
             User::class,
             'created_by',
+        );
+    }
+
+    public function taskReferences(): HasMany
+    {
+        return $this->hasMany(
+            TaskFileReference::class
         );
     }
 }

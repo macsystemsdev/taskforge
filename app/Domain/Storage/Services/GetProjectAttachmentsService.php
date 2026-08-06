@@ -21,7 +21,7 @@ class GetProjectAttachmentsService
     ): Collection|LengthAwarePaginator {
 
         $query = $project
-            ->attachments()
+            ->fileAttachments()
             ->with([
                 'storedFile',
                 'uploader',

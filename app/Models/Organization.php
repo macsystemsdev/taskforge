@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Domain\Billing\Enum\PaymentStatus;
 use App\Domain\Organizations\Enums\OrganizationRole;
+use App\Support\UserTeam;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Model;
@@ -42,7 +43,7 @@ class Organization extends Model
             ->withTimestamps();
     }
 
-    public function attachments(): MorphMany
+    public function fileAttachments(): MorphMany
     {
         return $this->morphMany(
             FileAttachment::class,
@@ -392,8 +393,18 @@ class Organization extends Model
     }
 
     public function teamLocked(
-        Team $team
+        Team|UserTeam $team
     ): bool {
+        // If it's a UserTeam DTO, fetch the actual Team model
+        if ($team instanceof UserTeam) {
+            $team = Team::find($team->id);
+
+            // If team not found, return false
+            if (!$team) {
+                return false;
+            }
+        }
+
         return
             $this->workspaceLocked(
                 $team->workspace

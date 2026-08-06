@@ -14,6 +14,13 @@ enum TaskStatus: string
 
     case CANCELLED = 'cancelled';
 
+    /**
+     * Future:
+     * REVIEW
+     * WAITING_APPROVAL
+     * ARCHIVED
+     */
+
     public function canTransitionTo(
         TaskStatus $status,
     ): bool {

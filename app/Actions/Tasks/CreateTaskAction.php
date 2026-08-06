@@ -5,6 +5,7 @@ namespace App\Actions\Tasks;
 use App\Actions\ActivityLogs\CreateActivityLogAction;
 use App\Data\Tasks\CreateTaskData;
 use App\Domain\Task\TaskStatus;
+use App\Models\FileAttachment;
 use App\Models\Project;
 use App\Models\Task;
 use App\Notifications\Tasks\TaskAssignedNotification;
@@ -15,7 +16,8 @@ use Illuminate\Validation\ValidationException;
 class CreateTaskAction
 {
     public function __construct(
-        protected CreateActivityLogAction $activity
+        protected CreateActivityLogAction $activity,
+        protected AttachTaskResourceAction $attachResource,
     ) {}
 
     public function handle(
@@ -43,13 +45,23 @@ class CreateTaskAction
         $slug = Str::slug($data->title);
 
         $task = $project->tasks()->create([
+
             'creator_id' => auth()->id(),
+
             'assignee_id' => $data->assigneeId,
+
             'title' => $data->title,
+
             'slug' => $slug,
+
             'description' => $data->description,
+
+            'priority' => $data->priority,
+
             'status' => TaskStatus::TODO,
+
             'due_date' => $data->dueDate,
+
         ]);
 
         $task->notifyAssignee(
@@ -57,6 +69,19 @@ class CreateTaskAction
                 $task
             )
         );
+
+        foreach ($data->resourceIds as $attachmentId) {
+
+            $this->attachResource->handle(
+
+                $task,
+
+                $attachmentId,
+
+                auth()->id()
+
+            );
+        }
 
         $this->activity->handle(
             event: 'task_created',

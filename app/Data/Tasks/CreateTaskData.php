@@ -2,6 +2,7 @@
 
 namespace App\Data\Tasks;
 
+use App\Domain\Task\TaskPriority;
 use Spatie\LaravelData\Data;
 
 class CreateTaskData extends Data
@@ -14,5 +15,9 @@ class CreateTaskData extends Data
         public ?int $assigneeId,
 
         public ?string $dueDate,
+
+        public string $priority,
+
+        public array $resourceIds = [],
     ) {}
 }

@@ -2,12 +2,14 @@
 
 use App\Models\Organization;
 use App\Models\Project;
+use App\Models\Team;
 use App\Models\User;
 use App\Models\Workspace;
 use Livewire\Livewire;
 
 test('project creation shows a validation error when the slug already exists', function () {
     $user = User::factory()->create();
+    $team = Team::factory()->create();
     $organization = Organization::create([
         'owner_id' => $user->id,
         'name' => 'Acme',
@@ -25,11 +27,21 @@ test('project creation shows a validation error when the slug already exists', f
 
     Project::create([
         'workspace_id' => $workspace->id,
-        'owner_id' => $user->id,
+        'team_id' => $team->id,
         'name' => 'Launch Plan',
         'slug' => 'launch-plan',
         'status' => 'active',
+        'created_by' => $user->id,
     ]);
+
+    // Attempt to create duplicate
+    $response = $this->actingAs($user)
+        ->post(route('projects.store'), [
+            'workspace_id' => $workspace->id,
+            'team_id' => $team->id,
+            'name' => 'Test Project 2',
+            'slug' => 'test-project',
+        ]);
 
     $this->actingAs($user);
 

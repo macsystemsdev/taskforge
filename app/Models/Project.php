@@ -65,7 +65,7 @@ class Project extends Model
         );
     }
 
-    public function attachments(): MorphMany
+    public function fileAttachments(): MorphMany
     {
         return $this->morphMany(
             FileAttachment::class,

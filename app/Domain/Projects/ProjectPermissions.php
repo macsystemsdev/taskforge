@@ -3,6 +3,7 @@
 namespace App\Domain\Projects;
 
 use App\Domain\Organizations\Enums\OrganizationRole;
+use App\Domain\Teams\Enums\TeamRole;
 
 readonly class ProjectPermissions
 {
@@ -43,15 +44,9 @@ readonly class ProjectPermissions
     }
 
     public static function canComplete(
-        ?OrganizationRole $role
+        ?teamRole $role
     ): bool {
-        return in_array(
-            $role,
-            [
-                OrganizationRole::OWNER,
-                OrganizationRole::ADMIN,
-            ]
-        );
+        return $role == TeamRole::LEADER;
     }
 
     public static function canCancel(
@@ -67,14 +62,8 @@ readonly class ProjectPermissions
     }
 
     public static function canCreateTask(
-        ?OrganizationRole $role
+        ?TeamRole $role
     ): bool {
-        return in_array(
-            $role,
-            [
-                OrganizationRole::OWNER,
-                OrganizationRole::ADMIN,
-            ]
-        );
+        return $role === TeamRole::LEADER;
     }
 }

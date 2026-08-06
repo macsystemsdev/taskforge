@@ -26,7 +26,6 @@ new class extends Component {
 <?php $component->withAttributes([]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-
     <?php if (isset($component)) { $__componentOriginale0fd5b6a0986beffac17a0a103dfd7b9 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginale0fd5b6a0986beffac17a0a103dfd7b9 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::heading','data' => []] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -52,52 +51,57 @@ new class extends Component {
 <?php unset($__componentOriginale0fd5b6a0986beffac17a0a103dfd7b9); ?>
 <?php endif; ?>
 
-    <div class="mt-4 grid gap-4">
+    <div class="mt-4 space-y-4">
 
-        <div class="rounded-3xl border border-zinc-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-zinc-950/60">
-            <p class="tf-muted">Health</p>
+        
+        <div class="rounded-3xl border border-zinc-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-zinc-950/60">
+            <p class="tf-muted text-sm">Health</p>
             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($project->hasOverdueTasks()): ?>
-                <p class="mt-2 font-semibold text-red-600">At Risk</p>
+                <p class="mt-1 font-semibold text-red-600">At Risk</p>
             <?php elseif($project->hasUpcomingDeadlines()): ?>
-                <p class="mt-2 font-semibold text-amber-600">Attention Needed</p>
+                <p class="mt-1 font-semibold text-amber-600">Attention Needed</p>
             <?php else: ?>
-                <p class="mt-2 font-semibold text-green-600">Healthy</p>
+                <p class="mt-1 font-semibold text-green-600">Healthy</p>
             <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
         </div>
 
-        <dl class="grid gap-4">
-            <div class="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
-                <dt class="tf-muted">Overdue Tasks</dt>
-                <dd class="mt-2 font-semibold text-red-600"><?php echo e($project->overdueTaskCount()); ?></dd>
+        
+        <div class="grid grid-cols-2 gap-3">
+            <div class="rounded-3xl border border-zinc-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
+                <dt class="tf-muted text-xs">Overdue</dt>
+                <dd class="mt-1 font-semibold text-red-600 text-lg"><?php echo e($project->overdueTaskCount()); ?></dd>
             </div>
 
-            <div class="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
-                <dt class="tf-muted">Due Soon</dt>
-                <dd class="mt-2 font-semibold text-amber-600"><?php echo e($project->dueSoonTaskCount()); ?></dd>
+            <div class="rounded-3xl border border-zinc-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
+                <dt class="tf-muted text-xs">Due Soon</dt>
+                <dd class="mt-1 font-semibold text-amber-600 text-lg"><?php echo e($project->dueSoonTaskCount()); ?></dd>
+            </div>
+        </div>
+
+        
+        <div class="grid grid-cols-2 gap-3">
+            <div class="rounded-3xl border border-zinc-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
+                <dt class="tf-muted text-xs">Team</dt>
+                <dd class="mt-1 font-semibold text-zinc-950 dark:text-white text-sm truncate"><?php echo e($project->team->name); ?></dd>
             </div>
 
-            <div class="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
-                <dt class="tf-muted">Project Team</dt>
-                <dd class="mt-2 font-semibold text-zinc-950 dark:text-white"><?php echo e($project->team->name); ?></dd>
+            <div class="rounded-3xl border border-zinc-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
+                <dt class="tf-muted text-xs">Created By</dt>
+                <dd class="mt-1 font-semibold text-zinc-950 dark:text-white text-sm truncate"><?php echo e($project->creator->name); ?></dd>
             </div>
 
-            <div class="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
-                <dt class="tf-muted">Created By</dt>
-                <dd class="mt-2 font-semibold text-zinc-950 dark:text-white"><?php echo e($project->creator->name); ?></dd>
-            </div>
-
-            <div class="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
-                <dt class="tf-muted">Status</dt>
-                <dd class="mt-2"><?php if (isset($component)) { $__componentOriginaldf5a194c1ccdd1698e9a89f0cb5bf2c8 = $component; } ?>
+            <div class="rounded-3xl border border-zinc-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
+                <dt class="tf-muted text-xs">Status</dt>
+                <dd class="mt-1"><?php if (isset($component)) { $__componentOriginaldf5a194c1ccdd1698e9a89f0cb5bf2c8 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginaldf5a194c1ccdd1698e9a89f0cb5bf2c8 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.status-badge','data' => ['status' => $project->status]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.status-badge','data' => ['status' => $project->status,'size' => 'sm']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('ui.status-badge'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['status' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($project->status)]); ?>
+<?php $component->withAttributes(['status' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($project->status),'size' => 'sm']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
 <?php echo $__env->renderComponent(); ?>
@@ -112,19 +116,18 @@ new class extends Component {
 <?php endif; ?></dd>
             </div>
 
-            <div class="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
-                <dt class="tf-muted">Created</dt>
-                <dd class="mt-2 font-semibold text-zinc-950 dark:text-white"><?php echo e($project->created_at->format('M d, Y')); ?></dd>
+            <div class="rounded-3xl border border-zinc-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
+                <dt class="tf-muted text-xs">Created</dt>
+                <dd class="mt-1 font-semibold text-zinc-950 dark:text-white text-sm"><?php echo e($project->created_at->format('M d, Y')); ?></dd>
             </div>
 
-            <div class="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
-                <dt class="tf-muted">Due Date</dt>
-                <dd class="mt-2 font-semibold text-zinc-950 dark:text-white"><?php echo e($project->due_date?->format('M d, Y') ?? __('No due date')); ?></dd>
+            <div class="rounded-3xl border border-zinc-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-zinc-950/80 col-span-2">
+                <dt class="tf-muted text-xs">Due Date</dt>
+                <dd class="mt-1 font-semibold text-zinc-950 dark:text-white text-sm"><?php echo e($project->due_date?->format('M d, Y') ?? __('No due date')); ?></dd>
             </div>
-        </dl>
+        </div>
 
     </div>
-
  <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginalc4bce27d2c09d2f98a63d67977c1c3ec)): ?>

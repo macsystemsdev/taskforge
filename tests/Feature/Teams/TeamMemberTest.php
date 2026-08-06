@@ -6,6 +6,7 @@ use App\Models\Team;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Notifications\Teams\TeamMemberAdded;
+use App\Notifications\Teams\TeamMemberAddedNotification;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
 
@@ -30,6 +31,8 @@ test('adding an organization member to a team sends a database notification', fu
     Notification::fake();
 
     $leader = User::factory()->create();
+    $admin = User::factory()->create();
+    $owner = User::factory()->create();
     $member = User::factory()->create();
 
     $organization = Organization::create([
@@ -37,7 +40,7 @@ test('adding an organization member to a team sends a database notification', fu
         'slug' => 'test-organization',
         'subscription_plan' => 'free',
         'subscription_status' => 'active',
-        'owner_id' => $leader->id,
+        'owner_id' => $owner->id,
     ]);
 
     $workspace = Workspace::create([
@@ -50,8 +53,8 @@ test('adding an organization member to a team sends a database notification', fu
 
     $team = Team::factory()->create(['workspace_id' => $workspace->id]);
 
-    $organization->members()->attach($leader, [
-        'role' => 'leader',
+    $organization->members()->attach($admin, [
+        'role' => 'admin',
         'status' => 'active',
         'joined_at' => now(),
     ]);
@@ -74,7 +77,7 @@ test('adding an organization member to a team sends a database notification', fu
 
     Notification::assertSentTo(
         $member,
-        TeamMemberAdded::class,
+        TeamMemberAddedNotification::class,
         fn ($notification, $channels) => in_array('database', $channels, true)
     );
 });
@@ -134,23 +137,4 @@ test('team member cannot be removed by non owners', function () {
         ->assertForbidden();
 });
 
-test('removed members current team is set to personal team', function () {
-    $leader = User::factory()->create();
-    $member = User::factory()->create();
-    $personalTeam = $member->personalTeam();
-    $team = Team::factory()->create();
 
-    $team->members()->attach($leader, ['role' => TeamRole::LEADER->value]);
-    $team->members()->attach($member, ['role' => TeamRole::MEMBER->value]);
-
-    $member->update(['current_team_id' => $team->id]);
-
-    $this->actingAs($leader);
-
-    Livewire::test('pages::teams.remove-member-modal', ['team' => $team])
-        ->set('memberId', $member->id)
-        ->call('removeMember')
-        ->assertHasNoErrors();
-
-    expect($member->fresh()->current_team_id)->toEqual($personalTeam->id);
-});

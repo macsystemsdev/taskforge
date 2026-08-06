@@ -38,7 +38,7 @@ class Workspace extends Model
         return $this->morphMany(ActivityLog::class, 'subject');
     }
 
-    public function attachments(): MorphMany
+    public function fileAttachments(): MorphMany
     {
         return $this->morphMany(
             FileAttachment::class,
