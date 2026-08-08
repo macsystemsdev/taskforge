@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Notification;
 use Override;
 
@@ -49,6 +50,10 @@ class Organization extends Model
             FileAttachment::class,
             'attachable',
         );
+    }
+
+    public function usage(): HasOne{
+        return $this->hasOne(OrganizationUsage::class);
     }
 
     public function administrators()
@@ -294,7 +299,7 @@ class Organization extends Model
             return true;
         }
 
-        return ($this->storage_used_bytes + $bytes)
+        return ($this->usage->storage_used_bytes + $bytes)
 
             <=
 
@@ -324,7 +329,7 @@ class Organization extends Model
     public function storageUsageMb(): float
     {
         return round(
-            ($this->storage_used_bytes ?? 0)
+            ($this->usage->storage_used_bytes ?? 0)
                 / 1024
                 / 1024,
             2

@@ -714,3 +714,103 @@ Organization acceptance/decline workflow
 CSV exports
 PDF exports
 Scheduled reports
+
+# Week 8 Decisions
+
+## Centralized File Ownership
+
+Decision
+
+Files belong to Organizations, Workspaces or Projects.
+
+Tasks never own physical files.
+
+Reason
+
+Maintains a single source of truth and prevents duplicate uploads.
+
+---
+
+## Task Resources
+
+Decision
+
+Tasks reference existing project attachments.
+
+Reason
+
+A task only identifies which project resources are required for completion.
+
+---
+
+## Project Discussion
+
+Decision
+
+Project discussion remains the only collaborative communication space.
+
+Reason
+
+Keeps collaboration centralized while avoiding fragmented conversations.
+
+---
+
+## Task Creation
+
+Decision
+
+Task creation no longer uploads files.
+
+Reason
+
+Uploads belong in Project Discussion. Tasks only reference them.
+
+---
+
+## File Upload Pipeline
+
+Decision
+
+All uploads pass through:
+
+ValidateIncomingFileService
+
+↓
+
+UploadStoredFileAction
+
+↓
+
+FileAttachment
+
+Reason
+
+Every upload follows one secure storage pipeline.
+
+---
+
+## Relationship Naming
+
+Decision
+
+Standardized on:
+
+fileAttachments()
+
+instead of
+
+attachments()
+
+Reason
+
+The name reflects the FileAttachment model and avoids ambiguity as additional attachment types are introduced.
+
+---
+
+## Future Seed
+
+Task blockers will eventually become their own aggregate through a task_blockers table.
+
+Reason
+
+Blocking history should be auditable instead of overwriting a single blocked_reason field.

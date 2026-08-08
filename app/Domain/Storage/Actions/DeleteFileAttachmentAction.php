@@ -4,6 +4,7 @@ namespace App\Domain\Storage\Actions;
 
 use App\Actions\ActivityLogs\CreateActivityLogAction;
 use App\Domain\Storage\Services\FileStorageService;
+use App\Domain\Usage\Actions\DecreaseStorageUsageAction;
 use App\Models\FileAttachment;
 use App\Models\User;
 
@@ -15,6 +16,7 @@ class DeleteFileAttachmentAction
     public function __construct(
         protected FileStorageService $storage,
         protected CreateActivityLogAction $activity,
+        protected DecreaseStorageUsageAction $decreaseStorageUsage,
     ) {}
 
     /**
@@ -89,6 +91,11 @@ class DeleteFileAttachmentAction
             */
 
             $storedFile->delete();
+
+            $this->decreaseStorageUsage->handle(
+                $subject->workspace->organization,
+                $storedFile->size,
+            );
 
             /*
             |--------------------------------------------------------------------------

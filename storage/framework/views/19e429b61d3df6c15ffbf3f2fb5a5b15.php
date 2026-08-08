@@ -222,10 +222,10 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
     </div>
 
 
-<div class="mt-6 grid gap-6 md:grid-cols-[1fr_380px] xl:grid-cols-[1fr_420px]">
+    <div class="mt-6 grid gap-6 md:grid-cols-[1fr_380px] xl:grid-cols-[1fr_420px]">
 
-         <!-- Left column -->
-    <div class="space-y-6">
+        <!-- Left column -->
+        <div class="space-y-6">
 
             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(auth()->user()->can('createTask', $project)): ?>
                 <?php
@@ -287,8 +287,8 @@ unset($__split);
 
         </div>
 
-         <!-- Right column -->
-    <aside class="space-y-6 md:sticky md:top-20">
+        <!-- Right column -->
+        <aside class="space-y-6 md:sticky md:top-20">
             <?php
 $__split = function ($name, $params = []) {
     return [$name, $params];

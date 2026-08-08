@@ -26,6 +26,7 @@ class CommentSection extends Component
     public bool $ready = false;
     public int $attachmentsLimit = 5;
     public int $commentsLimit = 10;
+    public ?int $index = null;
 
     protected array $rules = [
         'content' => ['required', 'string'],
@@ -162,7 +163,9 @@ class CommentSection extends Component
 
             try {
                 $errors = $exception->errors();
-                $message = is_array($errors) ? array_values(array_map(function ($v) { return is_array($v) ? implode(' ', $v) : $v; }, $errors))[0] ?? $exception->getMessage() : $exception->getMessage();
+                $message = is_array($errors) ? array_values(array_map(function ($v) {
+                    return is_array($v) ? implode(' ', $v) : $v;
+                }, $errors))[0] ?? $exception->getMessage() : $exception->getMessage();
             } catch (\Throwable $e) {
                 $message = $exception->getMessage();
             }
@@ -179,7 +182,7 @@ class CommentSection extends Component
     public function deleteAttachment(int $attachmentId, DeleteFileAttachmentAction $action): void
     {
         $attachment = $this->commentable
-            ->attachments()
+            ->fileAttachments()
             ->where('id', $attachmentId)
             ->firstOrFail();
 
@@ -239,5 +242,14 @@ class CommentSection extends Component
         }
 
         return '📎';
+    }
+
+    public function removeUpload($index)
+    {
+        $this->uploads = array_filter($this->uploads, function ($key) use ($index) {
+            return $key != $index;
+        }, ARRAY_FILTER_USE_KEY);
+
+        $this->uploads = array_values($this->uploads);
     }
 }

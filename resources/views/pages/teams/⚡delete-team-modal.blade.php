@@ -8,9 +8,13 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
+use App\Domain\Usage\Actions\DecreaseTeamsAction;
 
 new class extends Component {
+
     public Team $team;
+
+    public DecreaseTeamsAction $decreaseTeam;
 
     public string $deleteName = '';
 
@@ -50,6 +54,7 @@ new class extends Component {
                 ->where('id', '!=', $user->id)
                 ->each(fn (User $affectedUser) => $affectedUser->switchTeam($affectedUser->personalTeam()));
 
+                app(DecreaseTeamsAction::class)->handle($this->team->workspace->organization);
             $this->team->memberships()->delete();
             $this->team->delete();
         });

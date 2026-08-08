@@ -3,13 +3,16 @@
 namespace App\Actions\Workspaces;
 
 use App\Actions\ActivityLogs\CreateActivityLogAction;
+use App\Domain\Usage\Actions\DecreaseWorkspacesAction;
 use App\Models\Workspace;
 use DomainException;
+use Illuminate\Support\Facades\DB;
 
 class DeleteWorkspaceAction
 {
     public function __construct(
-        protected CreateActivityLogAction $activity
+        protected CreateActivityLogAction $activity,
+        protected DecreaseWorkspacesAction $decreaseWorkspaces
     ) {
         //
     }
@@ -31,15 +34,19 @@ class DeleteWorkspaceAction
             );
         }
 
-        $workspace->delete();
+        DB::transaction(function () use ($workspace) {
+            $this->decreaseWorkspaces->handle($workspace->organization);
 
-        //activity log
-        $this->activity->handle(
-            event: "{$workspace->name} has been deleted",
-            subject: $workspace,
-            properties: [
-                'workspace_name' => $workspace->name,
-            ]
-        );
+            //activity log
+            $this->activity->handle(
+                event: "{$workspace->name} has been deleted",
+                subject: $workspace,
+                properties: [
+                    'workspace_name' => $workspace->name,
+                ]
+            );
+
+            $workspace->delete();
+        });
     }
 }

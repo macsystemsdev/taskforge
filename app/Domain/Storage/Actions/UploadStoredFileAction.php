@@ -5,14 +5,19 @@ namespace App\Domain\Storage\Actions;
 use App\Domain\Storage\Enums\FileCategory;
 use App\Domain\Storage\Enums\FileVisibility;
 use App\Domain\Storage\Services\FileStorageService;
+use App\Domain\Usage\Actions\IncreaseStorageUsageAction;
+use App\Domain\Usage\Services\StorageQuotaService;
 use App\Models\Organization;
 use App\Models\StoredFile;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 
 class UploadStoredFileAction
 {
     public function __construct(
         protected FileStorageService $storage,
+        protected IncreaseStorageUsageAction $Increaseusage,
+        protected StorageQuotaService $quota,
     ) {}
 
     /**
@@ -25,29 +30,50 @@ class UploadStoredFileAction
         int $uploadedBy,
     ): StoredFile {
 
-        $path = $this->storage
-            ->store(
-                $file,
-                $directory,
-            );
+        $bytes = $file->getSize();
 
-        return StoredFile::create([
-            'organization_id' => $organization->id,
-            'uploaded_by' => $uploadedBy,
-            'disk' => 'public',
-            'path' => $path,
-            'stored_name' => basename($path),
-            'original_name' => $file->getClientOriginalName(),
-            'mime_type' => $file->getMimeType(),
-            'extension' => $file->extension(),
-            'category' => $this->categoryFromMimeType($file->getMimeType()),
-            'visibility' => FileVisibility::PROJECT,
-            'size' => $file->getSize(),
-            'checksum' => hash_file(
-                'sha256',
-                $file->getRealPath(),
-            ),
-        ]);
+        $this->quota->ensureCanStore(
+            $organization,
+            $bytes,
+        );
+
+        try {
+            $path = $this->storage
+                ->store(
+                    $file,
+                    $directory,
+                );
+
+
+            $storedfile =    StoredFile::create([
+                'organization_id' => $organization->id,
+                'uploaded_by' => $uploadedBy,
+                'disk' => 'public',
+                'path' => $path,
+                'stored_name' => basename($path),
+                'original_name' => $file->getClientOriginalName(),
+                'mime_type' => $file->getMimeType(),
+                'extension' => $file->extension(),
+                'category' => $this->categoryFromMimeType($file->getMimeType()),
+                'visibility' => FileVisibility::PROJECT,
+                'size' => $file->getSize(),
+                'checksum' => hash_file(
+                    'sha256',
+                    $file->getRealPath(),
+                ),
+            ]);
+            $this->Increaseusage->handle($organization, $bytes);
+
+            return $storedfile;
+
+        } 
+        catch (\Throwable $exception) {
+            if (isset($path)) {
+                $this->storage->delete($path);
+            }
+
+            throw $exception;
+        }
     }
 
     protected function categoryFromMimeType(string $mimeType): FileCategory

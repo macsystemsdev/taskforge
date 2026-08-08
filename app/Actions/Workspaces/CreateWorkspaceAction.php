@@ -4,15 +4,18 @@ namespace App\Actions\Workspaces;
 
 use App\Actions\ActivityLogs\CreateActivityLogAction;
 use App\Data\Workspaces\CreateWorkspaceData;
+use App\Domain\Usage\Actions\IncreaseWorkspacesAction;
 use App\Exceptions\FeatureLimitExceededException;
 use App\Models\Organization;
 use App\Models\Workspace;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class CreateWorkspaceAction
 {
     public function __construct(
-        protected CreateActivityLogAction $activity
+        protected CreateActivityLogAction $activity,
+        protected IncreaseWorkspacesAction $increaseWorkspaces
     ) {}
     public function handle(
         Organization $organization,
@@ -26,6 +29,8 @@ class CreateWorkspaceAction
                 'Your subscription has reached the maximum number of workspaces.'
             );
         }
+        return DB::transaction(function () use ($organization, $data) {
+
         $slug = Str::slug($data->name);
         $workspace = $organization->workspaces()->create([
             'name' => $data->name,
@@ -33,6 +38,7 @@ class CreateWorkspaceAction
             'description' => $data->description,
         ]);
 
+        $this->increaseWorkspaces->handle($organization);
 
         //activity log
         $this->activity->handle(
@@ -44,5 +50,6 @@ class CreateWorkspaceAction
         );
 
         return $workspace;
+        });
     }
 }

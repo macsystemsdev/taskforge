@@ -26,7 +26,7 @@ class UploadProjectAttachmentAction
         UploadedFile $file,
         User $user
     ) {
-        DB::transaction(function () use ($project, $file, $user) {
+        return DB::transaction(function () use ($project, $file, $user) {
 
             $this->validator->handle(
                 $file,
@@ -42,7 +42,7 @@ class UploadProjectAttachmentAction
                 $user->id,
             );
 
-            $attachment = $project->attachments()->create([
+            $attachment = $project->fileAttachments()->create([
                 'stored_file_id' => $stored->id,
                 'comment_id' => null,
                 'created_by' => $user->id,

@@ -851,3 +851,29 @@ commercial product it references.
 
 Commercial lifecycle rules should be enforced at every entry point, not
 only during administration.
+
+
+# Week 8 Errors
+
+## Mistake
+
+Task creation implemented file uploads.
+
+### Problem
+
+Tasks began owning files.
+
+### Solution
+
+Removed upload functionality.
+
+Tasks now reference existing project attachments.
+
+---
+
+## Mistake
+
+Incorrect eager-loading relationship.
+
+```php
+attachment.storedFile

@@ -10,9 +10,11 @@ use App\Models\Team;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use App\Domain\Projects\Enums\ProjectStatus;
+use App\Domain\Usage\Actions\IncreaseProjectsAction;
 use App\Exceptions\FeatureLimitExceededException;
 use App\Notifications\Projects\ProjectCreatedNotification;
 use DomainException;
+use Illuminate\Support\Facades\DB;
 
 class CreateProjectAction
 {
@@ -53,15 +55,21 @@ class CreateProjectAction
             ]);
         }
 
-        $project = $workspace->projects()->create([
-            'team_id' => $team->id,
-            'created_by' => auth()->id(),
-            'name' => $data->name,
-            'slug' => $slug,
-            'description' => $data->description,
-            'status' => ProjectStatus::Active,
-            'due_date' => $data->dueDate,
-        ]);
+       $project = DB::transaction(function () use ($workspace, $team, $data, $slug) {
+            $project = $workspace->projects()->create([
+                'team_id' => $team->id,
+                'created_by' => auth()->id(),
+                'name' => $data->name,
+                'slug' => $slug,
+                'description' => $data->description,
+                'status' => ProjectStatus::Active,
+                'due_date' => $data->dueDate,
+            ]);
+
+            app(IncreaseProjectsAction::class)->handle($workspace->organization);
+
+            return $project;
+        });
 
         $project->team?->notifyMembers(
             new ProjectCreatedNotification(
@@ -88,7 +96,6 @@ class CreateProjectAction
             ],
             subject: $project,
         );
-
         return $project;
     }
 }

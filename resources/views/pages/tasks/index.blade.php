@@ -4,7 +4,7 @@
             ->with(['project.team', 'assignee'])
             ->where(function ($query) {
                 $query
-                    ->where('assigned_id', auth()->id())
+                    ->where('assignee_id', auth()->id())
                     ->orWhere('creator_id', auth()->id())
                     ->orWhereHas(
                         'project.team.members',

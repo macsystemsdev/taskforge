@@ -11,7 +11,6 @@ use App\Rules\BelongsToOrganization;
 use Illuminate\Database\Eloquent\Collection;
 
 new class extends Component {
-
     public Workspace $workspace;
 
     public string $name = '';
@@ -29,6 +28,13 @@ new class extends Component {
         $this->workspace = $workspace;
 
         $this->organizationMembers = $workspace->organization->members()->orderBy('name')->get();
+
+        // If only 1 member exists, pre-select them automatically
+        if ($this->organizationMembers->count() === 1) {
+            // Use user_id explicitly if it's on a pivot, or explicitly target the user model ID
+            $member = $this->organizationMembers->first();
+            $this->leaderId = $member->user_id ?? $member->id;
+        }
     }
 
     public function getOrganizationMembersProperty()
@@ -61,7 +67,8 @@ new class extends Component {
 @endphp
 
 <div class="max-w-2xl mx-auto py-8">
-    <div class="mb-4 rounded-2xl border border-zinc-200 bg-zinc-50/80 px-4 py-3 text-sm text-zinc-600 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-400">
+    <div
+        class="mb-4 rounded-2xl border border-zinc-200 bg-zinc-50/80 px-4 py-3 text-sm text-zinc-600 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-400">
         Teams in use: {{ $organization->teamUsage() }} / {{ $teamLimit === null ? 'Unlimited' : $teamLimit }}
     </div>
 
@@ -76,6 +83,7 @@ new class extends Component {
             placeholder="{{ __('What is this team responsible for?') }}" />
 
         <flux:select wire:model="leaderId" label="Team Leader">
+            <option value="" disabled selected>Select a leader...</option>
             @foreach ($organizationMembers as $member)
                 <option value="{{ $member->id }}">
                     {{ $member->name }}
@@ -94,18 +102,25 @@ new class extends Component {
                 {{ __('Cancel') }}
             </flux:button>
             @if ($organization->canCreateTeam())
-                <flux:button type="submit" variant="primary" wire:loading.attr="disabled" wire:target="createTeam" class="inline-flex items-center justify-center gap-2">
+                <flux:button type="submit" variant="primary" wire:loading.attr="disabled" wire:target="createTeam"
+                    class="inline-flex items-center justify-center gap-2">
                     <span wire:loading.remove wire:target="createTeam">{{ __('Create Team') }}</span>
-                    <span wire:loading.flex wire:target="createTeam" class="inline-flex items-center justify-center gap-2">
+                    <span wire:loading.flex wire:target="createTeam"
+                        class="inline-flex items-center justify-center gap-2">
                         <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z"></path>
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z">
+                            </path>
                         </svg>
                         <span>{{ __('Creating...') }}</span>
                     </span>
                 </flux:button>
             @else
-                <a href="{{ route('organizations.billing', $organization) }}" class="inline-flex items-center justify-center rounded-full bg-zinc-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-800" wire:navigate>
+                <a href="{{ route('organizations.billing', $organization) }}"
+                    class="inline-flex items-center justify-center rounded-full bg-zinc-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-800"
+                    wire:navigate>
                     {{ __('Upgrade plan') }}
                 </a>
             @endif

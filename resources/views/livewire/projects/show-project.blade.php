@@ -42,7 +42,7 @@ new class extends Component {
         $this->redirect(route('workspaces.show', $workspace), navigate: true);
     }
 
-
+    
 };
 ?>
 
@@ -128,10 +128,10 @@ new class extends Component {
     </div>
 
 
-<div class="mt-6 grid gap-6 md:grid-cols-[1fr_380px] xl:grid-cols-[1fr_420px]">
+    <div class="mt-6 grid gap-6 md:grid-cols-[1fr_380px] xl:grid-cols-[1fr_420px]">
 
-         <!-- Left column -->
-    <div class="space-y-6">
+        <!-- Left column -->
+        <div class="space-y-6">
 
             @if (auth()->user()->can('createTask', $project))
                 @livewire('tasks.create-task', ['project' => $project])
@@ -143,8 +143,8 @@ new class extends Component {
 
         </div>
 
-         <!-- Right column -->
-    <aside class="space-y-6 md:sticky md:top-20">
+        <!-- Right column -->
+        <aside class="space-y-6 md:sticky md:top-20">
             @livewire('projects.project-details', ['project' => $project])
 
             @livewire('projects.project-files', ['project' => $project])

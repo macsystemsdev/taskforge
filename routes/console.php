@@ -16,3 +16,6 @@ Schedule::command('subscriptions:renew')
 
 Schedule::command('subscriptions:expire')
     ->everyMinute();
+
+Schedule::command('usage:recalculate')
+    ->weekly();

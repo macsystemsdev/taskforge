@@ -3,15 +3,18 @@
 namespace App\Actions\Invitations;
 
 use App\Actions\ActivityLogs\CreateActivityLogAction;
+use App\Domain\Usage\Actions\IncreaseMembersAction;
 use App\Models\Invitation;
 use App\Models\Organization;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class AcceptInvitationAction
 {
 
     public function __construct(
-        protected CreateActivityLogAction $activity
+        protected CreateActivityLogAction $activity,
+        protected IncreaseMembersAction $increaseMemberAction
     ) {}
     public function handle(
         string $token,
@@ -41,33 +44,38 @@ class AcceptInvitationAction
             'Invitation expired.'
         );
 
-        $invitation->organization
-            ->members()
-            ->syncWithoutDetaching([
-                $user->id => [
-                    'role' => $invitation->role,
-                    'joined_at' => now(),
-                    'status' => 'active',
-                    'invited_by' => $invitation->invited_by,
-                ]
+       
+        return DB::transaction(function () use ($invitation, $user) {
+            $invitation->organization
+                ->members()
+                ->syncWithoutDetaching([
+                    $user->id => [
+                        'role' => $invitation->role,
+                        'joined_at' => now(),
+                        'status' => 'active',
+                        'invited_by' => $invitation->invited_by,
+                    ]
+                ]);
+
+            $invitation->update([
+                'status' => 'accepted',
+                'accepted_at' => now(),
             ]);
 
-        $invitation->update([
-            'status' => 'accepted',
-            'accepted_at' => now(),
-        ]);
+            $this->increaseMemberAction->handle($invitation->organization);
 
-        // log activity
+            // log activity
 
-        $this->activity->handle(
-            subject: $invitation,
-            event: 'Invitation accepted',
-            properties: [
-                'organization' => $invitation->organization->name,
-                'email' => $invitation->email,
-                'role' => $invitation->role,
-            ]
-        );
-        return $invitation->organization;
+            $this->activity->handle(
+                subject: $invitation,
+                event: 'Invitation accepted',
+                properties: [
+                    'organization' => $invitation->organization->name,
+                    'email' => $invitation->email,
+                    'role' => $invitation->role,
+                ]
+            );
+            return $invitation->organization;
+        });
     }
 }

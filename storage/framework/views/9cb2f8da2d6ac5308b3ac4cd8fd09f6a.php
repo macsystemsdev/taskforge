@@ -36,16 +36,20 @@
                 </div>
                 <div class="flex items-center gap-2 text-sm text-zinc-500" aria-live="polite">
                     <span>Showing <?php echo e($comments->count()); ?> of <?php echo e($commentsTotal); ?> comments</span>
-                    <button id="jump-to-latest-<?php echo e($commentable->id); ?>" type="button" class="rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-semibold text-zinc-600 shadow-sm transition hover:border-blue-300 hover:text-blue-700 dark:border-white/10 dark:bg-zinc-950/80 dark:text-zinc-300">Latest</button>
+                    <button id="jump-to-latest-<?php echo e($commentable->id); ?>" type="button"
+                        class="rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-semibold text-zinc-600 shadow-sm transition hover:border-blue-300 hover:text-blue-700 dark:border-white/10 dark:bg-zinc-950/80 dark:text-zinc-300">Latest</button>
                 </div>
             </div>
         </div>
 
         <div class="flex-1 overflow-hidden px-5 py-4">
-            <div id="comments-list-<?php echo e($commentable->id); ?>" class="flex h-full max-h-[420px] min-h-[280px] flex-col gap-4 overflow-y-auto pr-2" aria-label="Recent comments">
+            <div id="comments-list-<?php echo e($commentable->id); ?>"
+                class="flex h-full max-h-[420px] min-h-[280px] flex-col gap-4 overflow-y-auto pr-2"
+                aria-label="Recent comments">
                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($commentsTotal > $comments->count()): ?>
                     <div class="flex justify-center">
-                        <button type="button" wire:click="loadMoreComments" class="tf-button-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300">
+                        <button type="button" wire:click="loadMoreComments"
+                            class="tf-button-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300">
                             Load more comments
                         </button>
                     </div>
@@ -56,8 +60,10 @@
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($isMe): ?>
                         <div id="comment-<?php echo e($comment->id); ?>" class="flex gap-3 justify-end px-2">
                             <div class="max-w-[70%] text-right">
-                                <div class="text-xs text-zinc-400 mb-2">You · <?php echo e($comment->created_at->diffForHumans()); ?></div>
-                                <div class="inline-block rounded-3xl bg-blue-600 text-white chat-bubble shadow-sm transition-all duration-200">
+                                <div class="text-xs text-zinc-400 mb-2">You ·
+                                    <?php echo e($comment->created_at->diffForHumans()); ?></div>
+                                <div
+                                    class="inline-block rounded-3xl bg-blue-600 text-white chat-bubble shadow-sm transition-all duration-200">
                                     <p class="whitespace-pre-line text-sm leading-7"><?php echo e($comment->content); ?></p>
                                 </div>
                             </div>
@@ -113,13 +119,16 @@
                             <div class="max-w-[70%]">
                                 <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                                     <div>
-                                        <h3 class="font-semibold text-zinc-950 dark:text-white"><?php echo e($comment->user->name); ?></h3>
+                                        <h3 class="font-semibold text-zinc-950 dark:text-white">
+                                            <?php echo e($comment->user->name); ?></h3>
                                         <p class="text-xs text-zinc-500"><?php echo e($comment->created_at->diffForHumans()); ?></p>
                                     </div>
                                 </div>
 
-                                <div class="mt-3 inline-block rounded-3xl border border-zinc-200 bg-white chat-bubble shadow-sm dark:border-white/10 dark:bg-zinc-950/60">
-                                    <p class="whitespace-pre-line text-sm leading-7 text-zinc-700 dark:text-zinc-300"><?php echo e($comment->content); ?></p>
+                                <div
+                                    class="mt-3 inline-block rounded-3xl border border-zinc-200 bg-white chat-bubble shadow-sm dark:border-white/10 dark:bg-zinc-950/60">
+                                    <p class="whitespace-pre-line text-sm leading-7 text-zinc-700 dark:text-zinc-300">
+                                        <?php echo e($comment->content); ?></p>
                                 </div>
                             </div>
                         </div>
@@ -155,34 +164,49 @@
         <div class="border-t border-zinc-200 bg-white px-5 py-4 dark:border-white/10 dark:bg-zinc-950/95">
             <form wire:submit.prevent="createComment" class="space-y-4">
                 <div class="grid gap-3 md:grid-cols-[auto_1fr_auto] md:items-end">
-                    <label for="uploads-<?php echo e($commentable->id); ?>" class="group flex h-12 w-12 cursor-pointer items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-50 text-zinc-500 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 dark:border-white/10 dark:bg-zinc-950/60 dark:text-zinc-300 dark:hover:bg-blue-950/40">
+                    <label for="uploads-<?php echo e($commentable->id); ?>"
+                        class="group flex h-12 w-12 cursor-pointer items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-50 text-zinc-500 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 dark:border-white/10 dark:bg-zinc-950/60 dark:text-zinc-300 dark:hover:bg-blue-950/40">
                         <span class="text-xl">📎</span>
-                        <input id="uploads-<?php echo e($commentable->id); ?>" wire:model="uploads" type="file" multiple class="sr-only" />
+                        <input id="uploads-<?php echo e($commentable->id); ?>" wire:model="uploads" type="file" multiple
+                            class="sr-only" />
                     </label>
 
                     <div class="relative">
-                        <textarea wire:model="content" rows="3" class="w-full resize-none rounded-3xl border border-zinc-200 bg-zinc-50 px-4 py-3 pr-14 text-sm leading-6 text-zinc-900 transition focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:border-white/10 dark:bg-zinc-950/80 dark:text-white" placeholder="Type a message"></textarea>
-                        <button type="submit" class="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300">
+                        <textarea wire:model="content" rows="3"
+                            class="w-full resize-none rounded-3xl border border-zinc-200 bg-zinc-50 px-4 py-3 pr-14 text-sm leading-6 text-zinc-900 transition focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:border-white/10 dark:bg-zinc-950/80 dark:text-white"
+                            placeholder="Type a message"></textarea>
+                        <button type="submit"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300">
                             Send
                         </button>
                     </div>
 
-                    <button type="button" wire:click="uploadAttachments" wire:loading.attr="disabled" class="tf-button-secondary hidden h-12 px-4 py-0 text-sm md:inline-flex">
+                    <button type="button" wire:click="uploadAttachments" wire:loading.attr="disabled"
+                        class="tf-button-secondary hidden h-12 px-4 py-0 text-sm md:inline-flex">
                         Upload
                     </button>
                 </div>
 
-                <div id="drop-zone-<?php echo e($commentable->id); ?>" class="rounded-3xl border-2 border-dashed border-zinc-200 bg-white/80 px-4 py-3 text-sm text-zinc-500 transition hover:border-blue-300 hover:bg-blue-50 dark:border-white/10 dark:bg-white/5 dark:text-zinc-400">
+                <div id="drop-zone-<?php echo e($commentable->id); ?>"
+                    class="rounded-3xl border-2 border-dashed border-zinc-200 bg-white/80 px-4 py-3 text-sm text-zinc-500 transition hover:border-blue-300 hover:bg-blue-50 dark:border-white/10 dark:bg-white/5 dark:text-zinc-400">
                     Drag and drop media here, or tap the paperclip to attach files. Maximum size is 10MB per file.
                 </div>
 
                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($uploads): ?>
-                    <div class="space-y-2 rounded-3xl border border-zinc-200 bg-zinc-50 p-3 text-sm dark:border-white/10 dark:bg-zinc-950/80">
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $uploads; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $file): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                            <div class="flex items-center justify-between gap-3">
-                                <span class="truncate"><?php echo e($file->getClientOriginalName()); ?></span>
-                                <span class="text-zinc-500"><?php echo e(number_format($file->getSize() / 1024, 1)); ?> KB</span>
-                            </div>
+                    <div class="flex flex-wrap gap-2 mt-2">
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $uploads; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $file): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                            <span
+                                class="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-sm text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+                                <?php echo e($file->getClientOriginalName()); ?>
+
+                                <span class="text-xs text-blue-500 dark:text-blue-400">
+                                    <?php echo e(number_format($file->getSize() / 1024, 1)); ?> KB
+                                </span>
+                                <button type="button" wire:click="removeUpload(<?php echo e($index); ?>)"
+                                    class="hover:text-blue-900 dark:hover:text-blue-100">
+                                    ×
+                                </button>
+                            </span>
                         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
                     </div>
                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
@@ -221,9 +245,12 @@ endif;
 unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
                 <div class="flex items-center justify-between text-xs text-zinc-500">
-                    <span wire:loading wire:target="uploadAttachments" role="status" aria-live="polite">Uploading attachments…</span>
+                    <span wire:loading wire:target="uploadAttachments" role="status" aria-live="polite">Uploading
+                        attachments…</span>
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($uploadSuccess): ?>
-                        <span class="rounded-full bg-emerald-50 px-2 py-1 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-300">Files uploaded successfully.</span>
+                        <span
+                            class="rounded-full bg-emerald-50 px-2 py-1 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-300">Files
+                            uploaded successfully.</span>
                     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                 </div>
             </form>
@@ -259,7 +286,7 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
             </div>
         </div>
 
-        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! $ready): ?>
+        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(!$ready): ?>
             <div class="space-y-3">
                 <div class="h-12 rounded-2xl bg-zinc-100" aria-hidden="true"></div>
                 <div class="h-12 rounded-2xl bg-zinc-100" aria-hidden="true"></div>
@@ -292,7 +319,8 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
             <div class="max-h-[420px] overflow-y-auto space-y-3 pr-2">
                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $attachments; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $attachment): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
                     <?php $file = $attachment->storedFile; ?>
-                    <div class="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
+                    <div
+                        class="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
                         <div class="flex items-start gap-3">
                             <div class="flex h-14 w-14 items-center justify-center rounded-3xl bg-zinc-100 text-2xl">
                                 <?php echo e($this->attachmentIcon($file->mime_type)); ?>
@@ -302,23 +330,30 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
                             <div class="min-w-0 flex-1">
                                 <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                                     <div class="min-w-0">
-                                        <p class="truncate text-sm font-semibold text-zinc-950 dark:text-white"><?php echo e($file->original_filename); ?></p>
-                                        <p class="text-sm text-zinc-500"><?php echo e($attachment->uploader->name); ?> · <?php echo e($attachment->created_at->diffForHumans()); ?></p>
+                                        <p class="truncate text-sm font-semibold text-zinc-950 dark:text-white">
+                                            <?php echo e($file->original_filename); ?></p>
+                                        <p class="text-sm text-zinc-500"><?php echo e($attachment->uploader->name); ?> ·
+                                            <?php echo e($attachment->created_at->diffForHumans()); ?></p>
                                     </div>
 
                                     <div class="flex flex-wrap items-center gap-2">
-                                        <a href="<?php echo e(route('projects.attachments.download', [$commentable, $attachment])); ?>" class="tf-button-secondary inline-flex items-center justify-center gap-2">
+                                        <a href="<?php echo e(route('projects.attachments.download', [$commentable, $attachment])); ?>"
+                                            class="tf-button-secondary inline-flex items-center justify-center gap-2">
                                             Download
                                         </a>
 
                                         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(str_starts_with($file->mime_type, 'image/') || $file->mime_type === 'application/pdf'): ?>
-                                            <a href="<?php echo e(route('projects.attachments.view', [$commentable, $attachment])); ?>" target="_blank" class="tf-button-secondary inline-flex items-center justify-center gap-2">
+                                            <a href="<?php echo e(route('projects.attachments.view', [$commentable, $attachment])); ?>"
+                                                target="_blank"
+                                                class="tf-button-secondary inline-flex items-center justify-center gap-2">
                                                 Preview
                                             </a>
                                         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
                                         <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('update', $commentable)): ?>
-                                            <button type="button" wire:click="deleteAttachment(<?php echo e($attachment->id); ?>)" wire:loading.attr="disabled" class="tf-button-danger inline-flex items-center justify-center gap-2">
+                                            <button type="button" wire:click="deleteAttachment(<?php echo e($attachment->id); ?>)"
+                                                wire:loading.attr="disabled"
+                                                class="tf-button-danger inline-flex items-center justify-center gap-2">
                                                 Delete
                                             </button>
                                         <?php endif; ?>
@@ -328,8 +363,10 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
                                 <p class="mt-3 text-sm text-zinc-500"><?php echo e($this->formatBytes($file->size)); ?></p>
 
                                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(str_starts_with($file->mime_type, 'image/') && isset($attachment->preview_url)): ?>
-                                    <div class="mt-4 overflow-hidden rounded-3xl border border-zinc-200 bg-zinc-50 dark:border-white/10">
-                                        <img src="<?php echo e($attachment->preview_url); ?>" alt="<?php echo e($file->original_filename); ?>" class="h-32 w-full object-cover" />
+                                    <div
+                                        class="mt-4 overflow-hidden rounded-3xl border border-zinc-200 bg-zinc-50 dark:border-white/10">
+                                        <img src="<?php echo e($attachment->preview_url); ?>"
+                                            alt="<?php echo e($file->original_filename); ?>" class="h-32 w-full object-cover" />
                                     </div>
                                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                             </div>
@@ -365,9 +402,9 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
 <?php unset($__componentOriginaldae4cd48acb67888a4631e1ba48f2f93); ?>
 <?php endif; ?>
 <script>
-    (function () {
+    (function() {
         var commentsList = document.getElementById('comments-list-<?php echo e($commentable->id); ?>');
-        var scrollToBottom = function () {
+        var scrollToBottom = function() {
             if (commentsList) {
                 commentsList.scrollTop = commentsList.scrollHeight;
             }
@@ -381,9 +418,11 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
             jumpButton.addEventListener('click', scrollToBottom);
         }
 
-        function getPayload(e) { return Array.isArray(e.detail) ? e.detail[0] : e.detail; }
+        function getPayload(e) {
+            return Array.isArray(e.detail) ? e.detail[0] : e.detail;
+        }
 
-        window.addEventListener('attachmentsUploaded', function (e) {
+        window.addEventListener('attachmentsUploaded', function(e) {
             var payload = getPayload(e) || {};
             var count = payload.count ?? 0;
             var message = count + ' file' + (count === 1 ? '' : 's') + ' uploaded';
@@ -413,18 +452,19 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
             toast.style.padding = '10px 14px';
             toast.style.borderRadius = '8px';
             toast.style.boxShadow = '0 6px 18px rgba(0,0,0,0.1)';
-            toast.style.fontFamily = 'Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial';
+            toast.style.fontFamily =
+                'Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial';
             toast.style.fontSize = '13px';
 
             document.body.appendChild(toast);
 
-            setTimeout(function () {
+            setTimeout(function() {
                 toast.style.transition = 'opacity 300ms ease, transform 300ms ease';
                 toast.style.opacity = '0';
                 toast.style.transform = 'translateY(-6px)';
             }, 2200);
 
-            setTimeout(function () {
+            setTimeout(function() {
                 if (toast && toast.parentNode) toast.parentNode.removeChild(toast);
             }, 2600);
         });
@@ -432,8 +472,8 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
 </script>
 
 <script>
-    (function () {
-        window.addEventListener('attachmentsUploadFailed', function (e) {
+    (function() {
+        window.addEventListener('attachmentsUploadFailed', function(e) {
             var payload = Array.isArray(e.detail) ? e.detail[0] : e.detail;
             var message = payload?.message ?? 'Upload failed';
 
@@ -460,18 +500,19 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
             toast.style.padding = '10px 14px';
             toast.style.borderRadius = '8px';
             toast.style.boxShadow = '0 6px 18px rgba(0,0,0,0.1)';
-            toast.style.fontFamily = 'Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial';
+            toast.style.fontFamily =
+                'Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial';
             toast.style.fontSize = '13px';
 
             document.body.appendChild(toast);
 
-            setTimeout(function () {
+            setTimeout(function() {
                 toast.style.transition = 'opacity 300ms ease, transform 300ms ease';
                 toast.style.opacity = '0';
                 toast.style.transform = 'translateY(-6px)';
             }, 3200);
 
-            setTimeout(function () {
+            setTimeout(function() {
                 if (toast && toast.parentNode) toast.parentNode.removeChild(toast);
             }, 3600);
         });
@@ -482,25 +523,28 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
     /* Highlight animation for newly created comments (color pulse) */
     .new-comment {
         animation: highlightComment 2.2s ease forwards;
-        box-shadow: 0 8px 30px rgba(59,130,246,0.08);
+        box-shadow: 0 8px 30px rgba(59, 130, 246, 0.08);
         transform-origin: top left;
     }
 
     @keyframes highlightComment {
         0% {
-            background-color: rgba(59,130,246,0.18);
+            background-color: rgba(59, 130, 246, 0.18);
             transform: translateY(-6px) scale(1.02);
             opacity: 0.98;
         }
+
         30% {
-            background-color: rgba(59,130,246,0.12);
+            background-color: rgba(59, 130, 246, 0.12);
             transform: translateY(0) scale(1.005);
             opacity: 1;
         }
+
         70% {
-            background-color: rgba(59,130,246,0.06);
+            background-color: rgba(59, 130, 246, 0.06);
             transform: translateY(0) scale(1);
         }
+
         100% {
             background-color: transparent;
             transform: none;
@@ -510,12 +554,19 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
 
     /* Entrance animation for new comments (slide + fade) */
     .enter-comment {
-        animation: enterComment 360ms cubic-bezier(.2,.9,.2,1) forwards;
+        animation: enterComment 360ms cubic-bezier(.2, .9, .2, 1) forwards;
     }
 
     @keyframes enterComment {
-        0% { transform: translateY(8px); opacity: 0; }
-        100% { transform: translateY(0); opacity: 1; }
+        0% {
+            transform: translateY(8px);
+            opacity: 0;
+        }
+
+        100% {
+            transform: translateY(0);
+            opacity: 1;
+        }
     }
 
     /* Responsive bubble widths and padding */
@@ -525,26 +576,32 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
     }
 
     @media (min-width: 640px) {
-        .chat-bubble { max-width: 75%; padding: 0.75rem; }
+        .chat-bubble {
+            max-width: 75%;
+            padding: 0.75rem;
+        }
     }
 
     @media (min-width: 768px) {
-        .chat-bubble { max-width: 70%; padding: 1rem; }
+        .chat-bubble {
+            max-width: 70%;
+            padding: 1rem;
+        }
     }
 
     .drop-zone-active {
         border-color: #2563eb;
-        background-color: rgba(59,130,246,0.08);
+        background-color: rgba(59, 130, 246, 0.08);
         color: #1d4ed8;
     }
 </style>
 
 <script>
-    (function () {
+    (function() {
         var dropZone = document.getElementById('drop-zone-<?php echo e($commentable->id); ?>');
         var fileInput = document.getElementById('uploads-<?php echo e($commentable->id); ?>');
 
-        var preventDefault = function (event) {
+        var preventDefault = function(event) {
             event.preventDefault();
             event.stopPropagation();
         };
@@ -553,23 +610,23 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
         window.addEventListener('drop', preventDefault);
 
         if (dropZone && fileInput) {
-            var setActive = function (active) {
+            var setActive = function(active) {
                 dropZone.classList.toggle('drop-zone-active', active);
             };
 
-            dropZone.addEventListener('dragover', function (event) {
+            dropZone.addEventListener('dragover', function(event) {
                 event.preventDefault();
                 event.stopPropagation();
                 setActive(true);
             });
 
-            dropZone.addEventListener('dragleave', function (event) {
+            dropZone.addEventListener('dragleave', function(event) {
                 event.preventDefault();
                 event.stopPropagation();
                 setActive(false);
             });
 
-            dropZone.addEventListener('drop', function (event) {
+            dropZone.addEventListener('drop', function(event) {
                 event.preventDefault();
                 event.stopPropagation();
                 setActive(false);
@@ -577,7 +634,9 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
                 if (event.dataTransfer && event.dataTransfer.files.length) {
                     try {
                         fileInput.files = event.dataTransfer.files;
-                        fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+                        fileInput.dispatchEvent(new Event('change', {
+                            bubbles: true
+                        }));
                     } catch (err) {
                         console.warn('Unable to assign dropped files to input.', err);
                     }
@@ -586,10 +645,12 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
         }
     })();
 
-    (function () {
-        function getPayload(e){ return Array.isArray(e.detail) ? e.detail[0] : e.detail; }
+    (function() {
+        function getPayload(e) {
+            return Array.isArray(e.detail) ? e.detail[0] : e.detail;
+        }
 
-        window.addEventListener('commentCreated', function (e) {
+        window.addEventListener('commentCreated', function(e) {
             var payload = getPayload(e) || {};
             var id = payload.id;
 
@@ -597,18 +658,22 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
             try {
                 var container = document.getElementById('comments-list-<?php echo e($commentable->id); ?>');
                 if (container) container.scrollTop = container.scrollHeight;
-            } catch (err) { }
+            } catch (err) {}
 
             if (!id) return;
 
             // wait briefly so Livewire has a chance to re-render the new comment node
-            setTimeout(function () {
+            setTimeout(function() {
                 try {
                     var el = document.getElementById('comment-' + id);
                     if (el) {
-                        el.classList.add('enter-comment','new-comment');
-                        setTimeout(function () { el.classList.remove('new-comment'); }, 2400);
-                        setTimeout(function () { el.classList.remove('enter-comment'); }, 500);
+                        el.classList.add('enter-comment', 'new-comment');
+                        setTimeout(function() {
+                            el.classList.remove('new-comment');
+                        }, 2400);
+                        setTimeout(function() {
+                            el.classList.remove('enter-comment');
+                        }, 500);
                     }
                 } catch (err) {
                     // ignore
@@ -617,5 +682,4 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
         });
     })();
 </script>
-
 <?php /**PATH D:\Code\taskforge\resources\views/livewire/comments/comment-section.blade.php ENDPATH**/ ?>
