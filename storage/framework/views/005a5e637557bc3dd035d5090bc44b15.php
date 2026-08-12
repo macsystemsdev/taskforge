@@ -14,15 +14,14 @@
 $__split = function ($name, $params = []) {
     return [$name, $params];
 };
-[$__name, $__params] = $__split('projects.show-project',
-        ['project' => $project]);
+[$__name, $__params] = $__split('tasks.show-task', ['task' => $task]);
 
 $__keyOuter = $__key ?? null;
 
 $__key = null;
 $__componentSlots = [];
 
-$__key ??= \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::generateKey('lw-14279955-0', $__key);
+$__key ??= \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::generateKey('lw-443649960-0', $__key);
 
 $__html = app('livewire')->mount($__name, $__params, $__key, $__componentSlots);
 
@@ -47,4 +46,4 @@ unset($__split);
 <?php $component = $__componentOriginal81a506f898233b9e7d58286e6bea3c18; ?>
 <?php unset($__componentOriginal81a506f898233b9e7d58286e6bea3c18); ?>
 <?php endif; ?>
-<?php /**PATH /var/www/html/resources/views/pages/projects/show.blade.php ENDPATH**/ ?>
+<?php /**PATH /var/www/html/resources/views/pages/tasks/show.blade.php ENDPATH**/ ?>

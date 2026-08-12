@@ -28,9 +28,10 @@
         <x-ui.card>
             <div class="space-y-3">
                 @forelse ($notifications as $notification)
-                    <a href="{{ route('notifications.redirect', $notification) }}"
-                        wire:navigate>>
-                        <div class="flex gap-3 rounded-lg border border-zinc-200 p-4 dark:border-white/10">
+                    <a href="{{ route('notifications.redirect', $notification->id) }}" wire:navigate
+                        wire:key="notification-{{ $notification->id }}-{{ $loop->index }}" class="block">
+                        <div
+                            class="flex gap-3 rounded-lg border border-zinc-200 p-4 transition-colors hover:bg-zinc-50 dark:border-white/10 dark:hover:bg-white/5">
                             <div
                                 class="mt-1 size-2 rounded-full {{ $notification->read_at ? 'bg-zinc-300 dark:bg-zinc-700' : 'bg-zinc-950 dark:bg-white' }}">
                             </div>

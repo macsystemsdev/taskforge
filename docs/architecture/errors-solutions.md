@@ -979,3 +979,167 @@ Kept entity authorization in policies and used usage tracking primarily for acco
 Lesson
 
 Do not create a second authorization system simply because usage data is available.
+
+ERR-037 — Laravel Boost provider was referenced but unavailable
+Problem
+
+The application, Horizon, and Scheduler failed with:
+
+Class "Laravel\Boost\BoostServiceProvider" not found
+Cause
+
+Laravel package discovery metadata referenced a provider that was not available inside the production dependency set.
+
+The container was built with production dependencies only.
+
+composer install --no-dev
+Solution
+
+Corrected the package discovery/cache mismatch so Laravel metadata matched the packages actually installed inside the image.
+
+Lesson
+
+Cached framework metadata must match the dependency set available at runtime.
+
+ERR-038 — php artisan package:discover failed during image build
+Problem
+
+Running:
+
+php artisan package:discover --ansi
+
+during the Docker build caused an application configuration failure.
+
+Cause
+
+The application attempted to boot using configuration that depended on runtime environment values.
+
+Solution
+
+Separated image construction from environment-dependent application bootstrapping.
+
+Lesson
+
+The Docker build environment is not automatically a valid Laravel runtime environment.
+
+ERR-039 — Bind mount caused missing vendor/autoload.php
+Problem
+
+The application containers entered a restart loop.
+
+The error was:
+
+Failed opening required '/var/www/html/vendor/autoload.php'
+Cause
+
+The bind mount:
+
+- .:/var/www/html
+
+replaced the application directory packaged into the image.
+
+The mounted project directory did not yet contain the vendor directory.
+
+Solution
+
+Installed Composer dependencies into the mounted project before starting the services.
+
+docker compose run --rm app composer install
+docker compose up -d
+Lesson
+
+A bind mount can hide files that already exist inside the image.
+
+ERR-040 — Windows Node.js was executed from WSL
+Problem
+
+Node and Vite operations produced path and UNC-related failures.
+
+Cause
+
+WSL was resolving the Windows Node.js installation instead of a Linux-native installation.
+
+Windows executables do not reliably operate against WSL Linux filesystem paths.
+
+Solution
+
+Installed Node.js inside Ubuntu using NVM.
+
+nvm install --lts
+
+Then recreated the Node dependencies.
+
+rm -rf node_modules
+npm install
+Lesson
+
+Inside WSL, use Linux-native development tools.
+
+ERR-041 — Redis connection failed using 127.0.0.1
+Problem
+
+Laravel failed to connect to Redis.
+
+Connection refused [tcp://127.0.0.1:6379]
+Cause
+
+Redis was running inside a separate Docker container.
+
+Inside the Laravel container, 127.0.0.1 referred only to the Laravel container itself.
+
+Solution
+
+Configured Redis using the Docker Compose service name.
+
+REDIS_HOST=redis
+Lesson
+
+Containers communicate through Docker networking and service names.
+
+ERR-042 — Notification relationship traversal was invalid
+Problem
+
+A notification operation failed because the relationship traversal did not match the actual TaskForge domain relationships.
+
+Cause
+
+The logic attempted to traverse relationships through a path that Laravel did not define.
+
+Solution
+
+Corrected the traversal to use the actual relationship structure.
+
+Lesson
+
+Eloquent relationship methods represent explicit domain relationships.
+
+They cannot be chained arbitrarily.
+
+ERR-043 — Notification URLs pointed to the wrong environment
+Problem
+
+Stored notification URLs pointed to:
+
+http://taskforge.test
+
+while the application was running on:
+
+http://localhost:8000
+Cause
+
+Environment-specific absolute URLs were stored in notification data.
+
+Solution
+
+Updated:
+
+APP_URL=http://localhost:8000
+
+The notification redirect logic was adjusted to normalize redirects to relative paths.
+
+Future routes should use relative URLs where appropriate.
+
+route('route.name', [], false)
+Lesson
+
+Persistent application data should not depend on a specific local development domain.

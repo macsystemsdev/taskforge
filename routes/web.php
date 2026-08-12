@@ -193,12 +193,8 @@ Route::middleware(['auth'])->group(function () {
         return back();
     })->name('notifications.read-all');
 
-    Route::get(
-        '/notifications/{notification}',
-        NotificationRedirectController::class
-    )->name(
-        'notifications.redirect'
-    );
+    Route::get('/notifications/{id}', NotificationRedirectController::class)
+        ->name('notifications.redirect');
 
     Route::get(
         '/organizations/{organization}/billing',

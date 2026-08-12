@@ -942,3 +942,217 @@ Why
 A placeholder that pretends to represent infrastructure truth is worse than an absent metric.
 
 The architecture is prepared for a future infrastructure adapter.
+
+
+## `week-4-engineering-decisions.md`
+
+```md
+# Week 4 — Engineering Decisions
+
+## DEC-040 — Use a single Laravel image for multiple application processes
+
+### Decision
+
+Use the same `taskforge:latest` image for:
+
+- Application server
+- Laravel Horizon
+- Laravel Scheduler
+
+Each service runs a different command.
+
+```text
+taskforge:latest
+        │
+        ├── php artisan serve
+        ├── php artisan horizon
+        └── php artisan schedule:work
+Why
+
+These services require the same TaskForge application code and PHP runtime.
+
+Creating separate images would duplicate the same runtime environment and increase maintenance unnecessarily.
+
+DEC-041 — Separate Docker build-time concerns from runtime concerns
+Decision
+
+Do not assume the Laravel application can fully boot during the Docker image build.
+
+Why
+
+The build environment may not contain:
+
+.env
+Database connectivity
+Redis
+API credentials
+Payment configuration
+Other runtime dependencies
+Rule
+Docker Build
+    → Packages the application
+
+Container Runtime
+    → Runs the application
+DEC-042 — Use Docker service names for internal communication
+Decision
+
+Containers communicate using Docker Compose service names.
+
+Example:
+
+REDIS_HOST=redis
+Why
+
+Inside Docker:
+
+127.0.0.1
+
+refers only to the current container.
+
+It does not refer to another container.
+
+Docker Compose provides internal DNS resolution for service names.
+
+DEC-043 — Use bind mounts for active development
+Decision
+
+Mount the project directory into the application services during development.
+
+volumes:
+  - .:/var/www/html
+Why
+
+Application source code changes become immediately available inside the container.
+
+This avoids rebuilding the Docker image for every PHP, Blade, Livewire, or application code change.
+
+Constraint
+
+The mounted project must contain all required runtime files.
+
+A bind mount can hide files that already exist inside the Docker image.
+
+This includes:
+
+vendor/
+DEC-044 — Persist Redis data using a named volume
+Decision
+
+Use a named Docker volume for Redis persistence.
+
+redis:
+  volumes:
+    - redis-data:/data
+
+volumes:
+  redis-data:
+Why
+
+Redis data should not depend on the lifecycle of an individual container.
+
+A named volume allows Redis data to survive container recreation.
+
+DEC-045 — Develop Docker-based TaskForge inside the WSL Linux filesystem
+Decision
+
+Keep the active TaskForge project inside:
+
+~/code/taskforge
+Avoid
+
+Running the active Docker development workflow directly from:
+
+/mnt/d/Code/taskforge
+Why
+
+Mounting files from the Windows filesystem into Linux containers introduces filesystem translation overhead.
+
+Laravel performs significant filesystem activity during application requests.
+
+The Linux filesystem provides a development environment closer to the production runtime and reduces this overhead.
+
+DEC-046 — Use Linux-native tools inside WSL
+Decision
+
+Use Linux-native versions of development tools inside WSL.
+
+This includes:
+
+Git
+Node.js
+npm
+PHP
+Composer
+Why
+
+Mixing Windows executables with Linux filesystem paths creates environment and path resolution problems.
+
+Rule
+Windows environment
+    → Windows binaries
+
+WSL environment
+    → Linux binaries
+DEC-047 — Store relative paths instead of environment-specific application URLs
+Decision
+
+Avoid storing environment-specific absolute application URLs in persistent notification payloads.
+
+Preferred
+/tasks/project/task
+Avoid
+http://taskforge.test/tasks/project/task
+Implementation
+
+Laravel can generate relative routes:
+
+route('route.name', [], false)
+Why
+
+Relative paths remain valid across:
+
+Local development
+Docker
+Staging
+Production
+Domain changes
+
+---
+
+## `week-4-errors-solutions.md`
+
+```md
+# Week 4 — Error & Solution Log
+
+## ERR-036 — Laravel Horizon required the `pcntl` extension
+
+### Problem
+
+Composer failed while installing the production dependencies.
+
+The error reported:
+
+```text
+laravel/horizon requires ext-pcntl
+Cause
+
+The PHP Docker image did not contain the pcntl extension required by Laravel Horizon.
+
+Solution
+
+Added pcntl to the Docker PHP extension installation.
+
+RUN docker-php-ext-install \
+    bcmath \
+    intl \
+    mbstring \
+    pcntl \
+    pdo_mysql \
+    xml \
+    zip
+Lesson
+
+Composer validates dependencies against the environment where it runs.
+
+The container must contain every required PHP extension.

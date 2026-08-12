@@ -83,9 +83,10 @@
 
             <div class="space-y-3">
                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $notifications; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $notification): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                    <a href="<?php echo e(route('notifications.redirect', $notification)); ?>"
-                        wire:navigate>>
-                        <div class="flex gap-3 rounded-lg border border-zinc-200 p-4 dark:border-white/10">
+                    <a href="<?php echo e(route('notifications.redirect', $notification->id)); ?>" wire:navigate
+                        <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::$currentLoop['key'] = 'notification-'.e($notification->id).'-'.e($loop->index).''; ?>wire:key="notification-<?php echo e($notification->id); ?>-<?php echo e($loop->index); ?>" class="block">
+                        <div
+                            class="flex gap-3 rounded-lg border border-zinc-200 p-4 transition-colors hover:bg-zinc-50 dark:border-white/10 dark:hover:bg-white/5">
                             <div
                                 class="mt-1 size-2 rounded-full <?php echo e($notification->read_at ? 'bg-zinc-300 dark:bg-zinc-700' : 'bg-zinc-950 dark:bg-white'); ?>">
                             </div>

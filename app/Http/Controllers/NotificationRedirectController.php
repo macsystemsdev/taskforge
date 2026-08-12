@@ -3,23 +3,27 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Notifications\DatabaseNotification;
 
 class NotificationRedirectController extends Controller
 {
-    public function __invoke(
-        DatabaseNotification $notification
-    ) {
+    public function __invoke(string $id)
+    {
+        $notification = auth()->user()
+            ->notifications()
+            ->findOrFail($id);
 
-        abort_unless(
-            $notification->notifiable_id === auth()->id(),
-            403
-        );
+        if ($notification->unread()) {
+            $notification->markAsRead();
+        }
 
-        $notification->markAsRead();
+        $rawUrl = $notification->data['url']
+            ?? $notification->data['action_url']
+            ?? route('dashboard');
 
-        return redirect(
-            $notification->data['url']
-        );
+        // Extract just the path + query string (e.g., "/tasks/treat-you-better?workspace=...")
+        $parsed = parse_url($rawUrl);
+        $relativePath = ($parsed['path'] ?? '/') . (isset($parsed['query']) ? '?' . $parsed['query'] : '');
+
+        return redirect()->to($relativePath);
     }
 }
