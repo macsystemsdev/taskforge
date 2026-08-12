@@ -102,3 +102,98 @@ Tasks should organize work, not own files. Referencing existing project resource
 ### Visible Result
 
 Task leaders can select project resources during task creation, and assignees immediately know which project files are relevant.
+
+
+## Day 4 & 5 — Billing, Usage & Infrastructure Boundaries
+# Objective
+
+Review the billing/storage architecture after implementing organization usage tracking and storage quotas, identify duplicated responsibilities, and establish clean boundaries between billing, usage, quota enforcement, and infrastructure metrics.
+
+# Work completed
+- Reviewed the original Day 5 billing-integration requirement against the current billing architecture.
+- Determined that most entity billing limits already existed through plan metadata and authorization policies.
+- Avoided duplicating project/task/member/team/workspace quota logic inside the usage system.
+- Established storage as the primary resource requiring continuous usage accounting.
+- Added/confirmed organization storage usage tracking.
+- Added storage quota enforcement using the organization's active plan.
+- Added a dedicated quota exception instead of scattering generic validation errors throughout upload flows.
+- Added usage increment/decrement operations.
+- Added usage reconciliation through the existing usage:recalculate Artisan command.
+- Verified plan storage configuration through max_storage_mb.
+- Cleaned up inconsistencies between old storage column names and the current schema.
+- Reviewed infrastructure metrics and rejected duplication of organization-level storage metrics.
+- Defined platform-wide storage consumption as an infrastructure metric rather than another organization-health metric.
+- Preserved the distinction between application-managed storage and actual infrastructure/DigitalOcean storage.
+
+Final architecture
+SubscriptionPlan
+    │
+    └── Defines allowed limits
+            │
+            ▼
+      Quota / Policies
+            │
+            └── Enforces limits
+
+
+OrganizationUsage
+    │
+    └── Records actual consumption
+            │
+            ├── Entity metrics
+            └── Storage usage
+
+
+OrganizationHealth
+    │
+    └── Customer-level health and quota information
+
+
+InfrastructureMetrics
+    │
+    └── Platform-wide infrastructure consumption
+Storage model
+Plan
+    max_storage_mb
+         │
+         │ allowed
+         ▼
+Organization
+    OrganizationUsage
+         │
+         │ actual usage
+         ▼
+    storage_used
+
+Storage usage remains internally represented in bytes. Conversion to MB/GB belongs at the presentation boundary.
+
+Reconciliation model
+
+Normal operations use incremental counters:
+
+Create resource
+    → increase usage
+
+Delete resource
+    → decrease usage
+
+The system also has an authoritative reconciliation path:
+
+Actual database state
+        ↓
+usage:recalculate
+        ↓
+OrganizationUsage corrected
+
+This gives us cheap reads during normal operation without sacrificing the ability to repair inaccurate counters.
+
+Storage quota principle
+current usage + incoming file size
+            ↓
+       quota check
+            ↓
+       allow / reject
+
+A quota violation produces a dedicated exception.
+
+Existing data is not deleted simply because a customer exceeds a newly reduced quota.

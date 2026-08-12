@@ -3,6 +3,7 @@
 namespace App\Actions\Tasks;
 
 use App\Actions\ActivityLogs\CreateActivityLogAction;
+use App\Domain\Task\TaskStatus;
 use App\Models\Task;
 use DomainException;
 
@@ -17,8 +18,8 @@ class DeleteTaskAction
     ): void {
 
         if (
-            ! $task->status->isTodo()
-            || ! $task->status->isCancelled()
+            $task->status === TaskStatus::TODO->value
+            ||  $task->status === TaskStatus::CANCELLED->value
         ) {
             throw new DomainException(
                 'Only todo or cancelled tasks can be deleted.'
@@ -30,9 +31,7 @@ class DeleteTaskAction
                 $task
             )
         );
-        $task->delete();
-
-
+        
         $this->activity->handle(
             subject: $task,
             event: 'task_deleted',
@@ -41,5 +40,7 @@ class DeleteTaskAction
                 'task_title' => $task->title,
             ]
         );
+
+        $task->delete();
     }
 }

@@ -5,7 +5,7 @@ use App\Models\Team;
 use App\Models\Organization;
 use App\Models\Membership;
 use App\Models\User;
-use App\Notifications\Teams\TeamMemberAdded;
+use App\Notifications\Teams\TeamMemberAddedNotification;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -93,7 +93,7 @@ new class extends Component {
             'role' => $role,
         ]);
 
-        $user->notify(new TeamMemberAdded(
+        $user->notify(new TeamMemberAddedNotification(
             $this->team,
             $role,
             Auth::user(),

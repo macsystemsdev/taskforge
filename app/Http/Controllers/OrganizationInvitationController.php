@@ -51,8 +51,9 @@ class OrganizationInvitationController
 
           $organization->notifyAdministrators(
             new InvitationAcceptedNotification(
-                $organization,
-                auth()->user()
+                auth()->user(),
+                $organization
+                
             ),
             auth()->user()
         );

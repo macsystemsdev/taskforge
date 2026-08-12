@@ -14,7 +14,6 @@ use Illuminate\Support\Collection;
 |--------------------------------------------------------------------------
 |
 | Add:
-| - Storage usage from uploaded files
 | - Failed payment detection
 | - Grace period monitoring
 | - Pending invitations
@@ -117,14 +116,12 @@ class OrganizationHealthService
 
     private function storageUsed(Organization $organization): float
     {
-        /*
-     * TODO (Phase 3)
-     *
-     * Calculate actual storage from uploaded files
-     * and organization assets.
-     */
-
-        return 0;
+      $used = $organization
+            ->usage()
+            ->firstOrCreate()
+            ->storage_used_bytes;
+            $used = $used ? $used / (1024 * 1024) : 0; // Convert bytes to MB
+        return (float) $used;
     }
 
     private function storageLimit(Organization $organization): float

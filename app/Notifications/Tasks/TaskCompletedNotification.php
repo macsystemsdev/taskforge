@@ -73,12 +73,12 @@ public function backoff(): array
             'icon' =>
             'check-circle',
 
-            'url' => route(
+             'url' => route(
                 'tasks.show',
                 [
                     'workspace' =>
                     $this->task
-                        ->workspace,
+                        ->project->workspace,
 
                     'project' =>
                     $this->task
@@ -96,6 +96,7 @@ public function backoff(): array
 
             'organization_id' =>
             $this->task
+                ->project
                 ->workspace
                 ->organization_id,
         ];

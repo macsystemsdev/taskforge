@@ -77,7 +77,7 @@ class TaskAssignedNotification extends Notification implements ShouldQueue
                 [
                     'workspace' =>
                     $this->task
-                        ->workspace,
+                        ->project->workspace,
 
                     'project' =>
                     $this->task
@@ -95,6 +95,7 @@ class TaskAssignedNotification extends Notification implements ShouldQueue
 
             'organization_id' =>
             $this->task
+                ->project
                 ->workspace
                 ->organization_id,
         ];

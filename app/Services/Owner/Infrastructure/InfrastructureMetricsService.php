@@ -2,12 +2,12 @@
 
 namespace App\Services\Owner\Infrastructure;
 
+use App\Models\OrganizationUsage;
 use App\Services\Owner\DTO\MetricData;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Redis;
 
-// Storage from uploaded files
 
 // Redis latency
 
@@ -61,47 +61,31 @@ class InfrastructureMetricsService
                 color: 'success',
             ),
 
+             'platformStorageUsed' => new MetricData(
+                label: 'Platform Storage',
+                value: $this->platformStorageUsed(),
+                description: 'Application-managed storage consumption',
+                icon: 'heroicon-o-server-stack',
+                color: 'warning',
+            ),
+
         ];
     }
 
-    // private function storageUsed(): int
-    // {
-    //     return 0;
-    // }
+    private function storageUsedBytes(): int
+    {
+        return (int) OrganizationUsage::query()
+            ->sum('storage_used_bytes');
+    }
 
-    // private function storageLimit(): int
-    // {
-    //     return 0;
-    // }
+    private function platformStorageUsed(): float
+    {
+        $bytes = OrganizationUsage::query()
+            ->sum('storage_used_bytes');
 
-    // private function storageUsagePercentage(): int
-    // {
-    //     return 0;
-    // }
+        return $bytes / (1024 * 1024);
+    }
 
-        // 'storageUsed' => new MetricData(
-            //     label: 'Storage Used',
-            //     value: $this->storageUsed(),
-            //     description: 'Total platform storage consumption',
-            //     icon: 'heroicon-o-server-stack',
-            //     color: 'warning',
-            // ),
-
-            // 'storageLimit' => new MetricData(
-            //     label: 'Storage Limit',
-            //     value: $this->storageLimit(),
-            //     description: 'Maximum available storage',
-            //     icon: 'heroicon-o-circle-stack',
-            //     color: 'primary',
-            // ),
-
-            // 'storageUsagePercentage' => new MetricData(
-            //     label: 'Storage Usage',
-            //     value: $this->storageUsagePercentage(),
-            //     description: 'Percentage of storage consumed',
-            //     icon: 'heroicon-o-chart-pie',
-            //     color: 'warning',
-            // ),
 
     private function queuedJobs(): int
     {

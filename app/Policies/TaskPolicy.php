@@ -48,7 +48,7 @@ class TaskPolicy
         }
         return $task->assignee_id === $user->id
             && $task->status === TaskStatus::TODO
-            || $task->status === TaskStatus::BLOCKED;;
+            || $task->status === TaskStatus::BLOCKED;
     }
 
     public function block(
@@ -71,7 +71,7 @@ class TaskPolicy
             return false;
         }
         return $task->assignee_id === $user->id
-            && $task->status !== TaskStatus::DONE;
+            && $task->status == TaskStatus::IN_PROGRESS;
     }
 
     public function cancel(
@@ -88,6 +88,10 @@ class TaskPolicy
             ->roleFor($user);
 
             if($task->status === TaskStatus::DONE){
+                return false;
+            }
+
+            if($task->status === TaskStatus::CANCELLED){
                 return false;
             }
 

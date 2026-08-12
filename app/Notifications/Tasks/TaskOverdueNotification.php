@@ -72,12 +72,12 @@ class TaskOverdueNotification extends Notification implements ShouldQueue
             'icon' =>
             'exclamation-circle',
 
-            'url' => route(
+              'url' => route(
                 'tasks.show',
                 [
                     'workspace' =>
                     $this->task
-                        ->workspace,
+                        ->project->workspace,
 
                     'project' =>
                     $this->task
@@ -95,6 +95,7 @@ class TaskOverdueNotification extends Notification implements ShouldQueue
 
             'organization_id' =>
             $this->task
+                ->project
                 ->workspace
                 ->organization_id,
         ];

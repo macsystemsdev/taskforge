@@ -877,3 +877,105 @@ Incorrect eager-loading relationship.
 
 ```php
 attachment.storedFile
+
+ERR-031 — storage_used_bytes vs current storage column inconsistency
+
+Problem
+
+Different parts of the application referenced different storage column names. The old architecture used storage_used_bytes, while the current schema had been changed.
+
+Impact
+
+Usage queries and infrastructure metrics could reference a column that no longer represented the canonical schema.
+
+Solution
+
+Standardized usage code around the current canonical storage column.
+
+Lesson
+
+When refactoring schema terminology, search the entire application for the old name rather than fixing only the immediate failing query.
+
+ERR-032 — Storage metrics duplicated organization health
+
+Problem
+
+InfrastructureMetricsService contained storage metrics such as:
+
+Storage Used
+Storage Limit
+Storage Usage Percentage
+
+while organization health already calculated actual organization-level storage usage and limits.
+
+Solution
+
+Removed the conceptual duplication.
+
+Infrastructure metrics now represent platform-level infrastructure, not individual organization quotas.
+
+Lesson
+
+A metric's location should be determined by the question it answers, not merely by the fact that the same underlying number is available.
+
+ERR-033 — Confusing plan storage with organization storage
+
+Problem
+
+Storage fields existed in both plan and organization-related structures, creating ambiguity about whether a field represented:
+
+allowed storage
+consumed storage
+infrastructure capacity
+
+Solution
+
+Established:
+
+Plan.max_storage_mb
+    = allowed customer capacity
+
+OrganizationUsage.storage_used
+    = actual customer consumption
+
+Infrastructure capacity remains a separate concern.
+
+Lesson
+
+Names and ownership must make the meaning of a metric obvious.
+
+ERR-034 — Attempting to calculate organization-wide task counts through invalid relationship traversal
+
+Problem
+
+The organization does not have a direct task relationship.
+
+A chain such as:
+
+$organization->projects()->tasks()
+
+is invalid because projects() returns a relationship to Project; it does not magically expose the Task relationship.
+
+Solution
+
+Use relationships that actually exist or define an explicit HasManyThrough only where the domain/schema supports it.
+
+For current TaskForge architecture, project is the direct owner of tasks.
+
+Lesson
+
+Laravel relationship methods represent actual domain relationships. They are not arbitrary query namespaces.
+
+ERR-035 — Storage quota duplicated entity quota enforcement
+
+Problem
+
+There was a risk of making OrganizationUsageService responsible for checking every entity limit even though policies already enforce those limits.
+
+Solution
+
+Kept entity authorization in policies and used usage tracking primarily for accounting/reconciliation, with storage receiving explicit quota enforcement.
+
+Lesson
+
+Do not create a second authorization system simply because usage data is available.

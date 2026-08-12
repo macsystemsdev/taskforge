@@ -61,7 +61,12 @@ class SubscriptionPlansTable
                 TextColumn::make('max_storage_mb')
                     ->numeric()
                     ->placeholder('Unlimited')
-                    ->formatStateUsing(fn($state) => $state ? "{$state} MB" : null)  // ✅ Format when not null
+                     ->formatStateUsing(function ($state) {
+                        if ($state === null) return null;  // Let placeholder handle it
+
+                        if ($state < 1024 * 1024 * 1024) return round($state / (1024 * 1024), 1) . ' MB';
+                        return round($state / (1024 * 1024 * 1024), 1) . ' GB';
+                    })
                     ->sortable(),
 
                 TextColumn::make('storage_used_bytes')

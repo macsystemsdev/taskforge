@@ -34,7 +34,7 @@ public function backoff(): array
      */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['mail', 'database'];
     }
 
     /**

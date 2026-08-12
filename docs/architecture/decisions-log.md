@@ -814,3 +814,131 @@ Task blockers will eventually become their own aggregate through a task_blockers
 Reason
 
 Blocking history should be auditable instead of overwriting a single blocked_reason field.
+
+## DEC-031 — Plans define limits; usage records consumption
+
+# Decision
+
+Keep commercial limits and actual usage as separate concepts.
+
+SubscriptionPlan
+    → maximum allowed consumption
+
+OrganizationUsage
+    → actual consumption
+
+Why
+
+Combining them creates ambiguous ownership and makes billing logic difficult to reason about.
+
+## DEC-032 — Entity quotas remain in policies
+
+# Decision
+
+Do not move existing project, task, member, team, and workspace quota enforcement into OrganizationUsageService.
+
+Why
+
+Those limits are already enforced through authorization/policy logic. Reimplementing them in the usage service would create two sources of truth.
+
+Rule
+
+Usage tells us what exists. Policies decide whether an operation is permitted.
+
+## DEC-033 — Storage is tracked separately
+
+# Decision
+
+Storage usage is continuously tracked because it represents a measurable resource with a physical capacity implication.
+
+Why
+
+Counting entities and measuring bytes are fundamentally different problems.
+
+## DEC-034 — Storage usage uses bytes internally
+
+# Decision
+
+Store canonical usage in bytes.
+
+Why
+
+Bytes provide precise accounting and avoid repeated unit conversion/rounding errors.
+
+Human-readable MB/GB conversion happens when displaying the value.
+
+## DEC-035 — Usage counters require reconciliation
+
+# Decision
+
+Use incremental counters for normal application operations but retain a recalculation mechanism.
+
+Why
+
+Counters are efficient but can become inconsistent because of bugs, failed workflows, manual changes, or future migrations.
+
+The database remains the ultimate source of truth.
+
+# DEC-036 — Downgrades do not delete resources
+
+# Decision
+
+If an organization's existing usage exceeds its newly reduced plan limit, existing resources remain intact.
+
+Future operations consuming additional quota are restricted.
+
+Why
+
+Billing changes should not unexpectedly destroy customer data.
+
+# DEC-037 — Organization health and infrastructure health are different
+
+# Decision
+
+Do not duplicate organization storage metrics inside InfrastructureMetricsService.
+
+Organization health:
+
+How is this organization doing relative to its plan?
+
+Infrastructure health:
+
+How much of the platform's infrastructure is being consumed?
+
+# DEC-038 — Platform storage is aggregated separately
+
+# Decision
+
+Infrastructure metrics may aggregate:
+
+SUM(OrganizationUsage.storage_used)
+
+to represent application-managed platform storage.
+
+Important distinction
+
+This is not necessarily the same as actual DigitalOcean disk usage.
+
+Infrastructure storage can additionally contain:
+
+database files
+logs
+temporary files
+framework files
+backups
+generated assets
+orphaned data
+
+Actual provider-level storage monitoring should eventually come from an infrastructure adapter/API rather than application accounting.
+
+# DEC-039 — Do not build infrastructure functionality prematurely
+
+# Decision
+
+Do not create fake storageLimit() or hardcoded DigitalOcean metrics merely to populate a dashboard.
+
+Why
+
+A placeholder that pretends to represent infrastructure truth is worse than an absent metric.
+
+The architecture is prepared for a future infrastructure adapter.
