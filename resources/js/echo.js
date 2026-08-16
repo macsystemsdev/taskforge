@@ -12,3 +12,23 @@ window.Echo = new Echo({
     forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'https') === 'https',
     enabledTransports: ['ws', 'wss'],
 });
+
+window.Echo.connector.pusher.connection.bind(
+    'state_change',
+    (states) => {
+        console.log('Reverb state:', states);
+    }
+);
+
+window.Echo.connector.pusher.connection.bind(
+    'error',
+    (error) => {
+        console.error('Reverb error:', error);
+    }
+);
+
+console.log('Echo initialized:', window.Echo);
+console.log(
+    'Echo config:',
+    window.Echo.connector.pusher.config
+);
