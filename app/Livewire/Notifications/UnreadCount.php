@@ -20,8 +20,8 @@ class UnreadCount extends Component
     {
         $this->count = auth()
             ->user()
-            ->unreadNotifications()
-            ->count();
+            ?->unreadNotifications()
+            ->count() ?? 0;
     }
 
     public function render()

@@ -20,10 +20,7 @@ if (userId) {
             );
 
             window.Livewire.dispatch(
-                'notification-received',
-                {
-                    notification,
-                }
+                'notification-received'
             );
         });
 }

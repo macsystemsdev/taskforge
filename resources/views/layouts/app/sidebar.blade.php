@@ -35,12 +35,19 @@
                 {{ __('Tasks') }}
             </flux:sidebar.item>
 
-            <flux:sidebar.item icon="bell" :href="route('notifications.index')"
-                :current="request()->routeIs('notifications.*')" wire:navigate>
-                {{ __('Notifications') }}
+            {{-- Direct Flux Dropdown --}}
+            <flux:dropdown position="bottom" align="start">
+                <flux:sidebar.item icon="bell" :current="request()->routeIs('notifications.*')"
+                    class="cursor-pointer">
+                    {{ __('Notifications') }}
 
-                <livewire:notifications.unread-count />
-            </flux:sidebar.item>
+                    <livewire:notifications.unread-count />
+                </flux:sidebar.item>
+
+                <flux:menu class="w-96 overflow-hidden p-0">
+                    <livewire:notifications.notification-dropdown />
+                </flux:menu>
+            </flux:dropdown>
         </flux:sidebar.group>
 
         @if ($currentProject)
@@ -54,8 +61,7 @@
             @if ($team = $currentProject?->team)
                 <flux:sidebar.group :heading="__('Team')" class="grid gap-1">
                     <flux:sidebar.item icon="users" :href="route('teams.edit', $team)"
-                        :current="request()->routeIs('teams.edit')
-                                                                                        && request()->route('team')?->is($team)"
+                        :current="request()->routeIs('teams.edit') && request()->route('team')->is($team)"
                         wire:navigate>
                         {{ $team->name }}
                     </flux:sidebar.item>
