@@ -5,6 +5,7 @@ namespace App\Notifications\Organization;
 use App\Models\Organization;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -33,8 +34,18 @@ class OrganizationRoleUpdatedNotification extends Notification implements Should
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', 'broadcast'];
     }
+
+    public function viaQueues(): array
+    {
+        return [
+            'database' => 'notifications',
+            'broadcast' => 'notifications',
+            'mail' => 'emails',
+        ];
+    }
+
 
     /**
      * Get the mail representation of the notification.
@@ -47,12 +58,7 @@ class OrganizationRoleUpdatedNotification extends Notification implements Should
             ->line('Thank you for using our application!');
     }
 
-    /**
-     * Get the array representation of the notification.
-     *
-     * @return array<string, mixed>
-     */
-    public function toArray(object $notifiable): array
+    protected function notificationData(): array
     {
         return [
             'title' => __('Organization role updated'),
@@ -64,5 +70,22 @@ class OrganizationRoleUpdatedNotification extends Notification implements Should
                 $this->organization
             )
         ];
+    }
+
+    /**
+     * Get the array representation of the notification.
+     *
+     * @return array<string, mixed>
+     */
+    public function toArray(object $notifiable): array
+    {
+        return $this->notificationData();
+    }
+
+    public function toBroadcast(object $notifiable): BroadcastMessage
+    {
+        return new BroadcastMessage(
+            $this->notificationData()
+        );
     }
 }

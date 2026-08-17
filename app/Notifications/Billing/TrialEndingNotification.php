@@ -4,6 +4,7 @@ namespace App\Notifications\Billing;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -32,13 +33,14 @@ class TrialEndingNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        return ['mail', 'database', 'broadcast'];
     }
 
     public function viaQueues(): array
     {
         return [
             'database' => 'notifications',
+            'broadcast' => 'notifications',
             'mail' => 'emails',
         ];
     }
@@ -48,10 +50,25 @@ class TrialEndingNotification extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
+        $data = $this->notificationData();
+
         return (new MailMessage)
-            ->line('The introduction to the notification.')
-            ->action('Notification Action', url('/'))
-            ->line('Thank you for using our application!');
+            ->subject($data['title'])
+            ->line($data['message'])
+            ->action('View Notification', $data['url']);
+    }
+
+    protected function notificationData(): array
+    {
+        return [
+            'title' => __('Trial ending soon'),
+
+            'message' => __('Your trial is ending soon. Please add billing details to continue using your account.'),
+
+            'icon' => 'clock',
+
+            'url' => route('notifications.index'),
+        ];
     }
 
     /**
@@ -61,8 +78,13 @@ class TrialEndingNotification extends Notification implements ShouldQueue
      */
     public function toArray(object $notifiable): array
     {
-        return [
-            //
-        ];
+        return $this->notificationData();
+    }
+
+    public function toBroadcast(object $notifiable): BroadcastMessage
+    {
+        return new BroadcastMessage(
+            $this->notificationData()
+        );
     }
 }

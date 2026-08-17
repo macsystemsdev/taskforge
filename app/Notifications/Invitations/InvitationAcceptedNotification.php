@@ -6,6 +6,7 @@ use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -34,8 +35,18 @@ public function backoff(): array
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', 'broadcast'];
     }
+
+    public function viaQueues(): array
+    {
+        return [
+            'database' => 'notifications',
+            'broadcast' => 'notifications',
+            'mail' => 'emails',
+        ];
+    }
+
 
     /**
      * Get the mail representation of the notification.
@@ -48,12 +59,7 @@ public function backoff(): array
             ->line('Thank you for using our application!');
     }
 
-    /**
-     * Get the array representation of the notification.
-     *
-     * @return array<string, mixed>
-     */
-    public function toArray(object $notifiable): array
+    protected function notificationData(): array
     {
         return [
 
@@ -73,5 +79,22 @@ public function backoff(): array
             ),
 
         ];
+    }
+
+    /**
+     * Get the array representation of the notification.
+     *
+     * @return array<string, mixed>
+     */
+    public function toArray(object $notifiable): array
+    {
+        return $this->notificationData();
+    }
+
+    public function toBroadcast(object $notifiable): BroadcastMessage
+    {
+        return new BroadcastMessage(
+            $this->notificationData()
+        );
     }
 }

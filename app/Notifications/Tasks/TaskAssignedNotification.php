@@ -5,6 +5,7 @@ namespace App\Notifications\Tasks;
 use App\Models\Task;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -33,13 +34,14 @@ class TaskAssignedNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', 'broadcast'];
     }
 
     public function viaQueues(): array
     {
         return [
             'database' => 'notifications',
+            'broadcast' => 'notifications',
             'mail' => 'emails',
         ];
     }
@@ -54,12 +56,7 @@ class TaskAssignedNotification extends Notification implements ShouldQueue
             ->line('Thank you for using our application!');
     }
 
-    /**
-     * Get the array representation of the notification.
-     *
-     * @return array<string, mixed>
-     */
-    public function toArray(object $notifiable): array
+    protected function notificationData(): array
     {
         return [
 
@@ -99,5 +96,22 @@ class TaskAssignedNotification extends Notification implements ShouldQueue
                 ->workspace
                 ->organization_id,
         ];
+    }
+
+    /**
+     * Get the array representation of the notification.
+     *
+     * @return array<string, mixed>
+     */
+    public function toArray(object $notifiable): array
+    {
+        return $this->notificationData();
+    }
+
+    public function toBroadcast(object $notifiable): BroadcastMessage
+    {
+        return new BroadcastMessage(
+            $this->notificationData()
+        );
     }
 }

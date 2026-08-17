@@ -5,6 +5,7 @@ namespace App\Notifications\Tasks;
 use App\Models\Task;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -33,13 +34,14 @@ class TaskOverdueNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['database', 'mail'];
+        return ['database', 'mail', 'broadcast'];
     }
 
     public function viaQueues(): array
     {
         return [
             'database' => 'notifications',
+            'broadcast' => 'notifications',
             'mail' => 'emails',
         ];
     }
@@ -48,18 +50,15 @@ class TaskOverdueNotification extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
+        $data = $this->notificationData();
+
         return (new MailMessage)
-            ->line('The introduction to the notification.')
-            ->action('Notification Action', url('/'))
-            ->line('Thank you for using our application!');
+            ->subject($data['title'])
+            ->line($data['message'])
+            ->action('View Notification', $data['url']);
     }
 
-    /**
-     * Get the array representation of the notification.
-     *
-     * @return array<string, mixed>
-     */
-    public function toArray(object $notifiable): array
+    protected function notificationData(): array
     {
         return [
 
@@ -99,5 +98,22 @@ class TaskOverdueNotification extends Notification implements ShouldQueue
                 ->workspace
                 ->organization_id,
         ];
+    }
+
+    /**
+     * Get the array representation of the notification.
+     *
+     * @return array<string, mixed>
+     */
+    public function toArray(object $notifiable): array
+    {
+        return $this->notificationData();
+    }
+
+    public function toBroadcast(object $notifiable): BroadcastMessage
+    {
+        return new BroadcastMessage(
+            $this->notificationData()
+        );
     }
 }

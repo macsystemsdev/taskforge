@@ -4,6 +4,7 @@ namespace App\Notifications\Billing;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -32,25 +33,41 @@ public function backoff(): array
      */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        return ['mail', 'database', 'broadcast'];
     }
 
     public function viaQueues(): array
-{
-    return [
-        'database' => 'notifications',
-        'mail' => 'emails',
-    ];
-}
+    {
+        return [
+            'database' => 'notifications',
+            'broadcast' => 'notifications',
+            'mail' => 'emails',
+        ];
+    }
     /**
      * Get the mail representation of the notification.
      */
     public function toMail(object $notifiable): MailMessage
     {
+        $data = $this->notificationData();
+
         return (new MailMessage)
-            ->line('The introduction to the notification.')
-            ->action('Notification Action', url('/'))
-            ->line('Thank you for using our application!');
+            ->subject($data['title'])
+            ->line($data['message'])
+            ->action('View Notification', $data['url']);
+    }
+
+    protected function notificationData(): array
+    {
+        return [
+            'title' => __('Subscription downgraded'),
+
+            'message' => __('Your subscription has been downgraded.'),
+
+            'icon' => 'credit-card',
+
+            'url' => route('notifications.index'),
+        ];
     }
 
     /**
@@ -60,8 +77,13 @@ public function backoff(): array
      */
     public function toArray(object $notifiable): array
     {
-        return [
-            //
-        ];
+        return $this->notificationData();
+    }
+
+    public function toBroadcast(object $notifiable): BroadcastMessage
+    {
+        return new BroadcastMessage(
+            $this->notificationData()
+        );
     }
 }

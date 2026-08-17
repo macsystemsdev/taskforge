@@ -11,7 +11,6 @@
 
     @php
         $currentProject = request()->route('project');
-        $unreadNotifications = auth()->check() ? auth()->user()->unreadNotifications()->count() : 0;
     @endphp
 
     <flux:sidebar.nav>
@@ -39,12 +38,8 @@
             <flux:sidebar.item icon="bell" :href="route('notifications.index')"
                 :current="request()->routeIs('notifications.*')" wire:navigate>
                 {{ __('Notifications') }}
-                @if ($unreadNotifications)
-                    <span
-                        class="ml-2 inline-flex items-center justify-center rounded-full bg-rose-600 px-2 py-0.5 text-[10px] font-semibold text-white">
-                        {{ $unreadNotifications }}
-                    </span>
-                @endif
+
+                <livewire:notifications.unread-count />
             </flux:sidebar.item>
         </flux:sidebar.group>
 
@@ -60,7 +55,7 @@
                 <flux:sidebar.group :heading="__('Team')" class="grid gap-1">
                     <flux:sidebar.item icon="users" :href="route('teams.edit', $team)"
                         :current="request()->routeIs('teams.edit')
-                                        && request()->route('team')?->is($team)"
+                                                                                        && request()->route('team')?->is($team)"
                         wire:navigate>
                         {{ $team->name }}
                     </flux:sidebar.item>

@@ -7,6 +7,7 @@ use App\Models\Team;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Notification;
 
 class TeamMemberAddedNotification extends Notification implements ShouldQueue
@@ -29,18 +30,19 @@ class TeamMemberAddedNotification extends Notification implements ShouldQueue
 
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', 'broadcast'];
     }
 
     public function viaQueues(): array
     {
         return [
             'database' => 'notifications',
+            'broadcast' => 'notifications',
             'mail' => 'emails',
         ];
     }
 
-    public function toArray(object $notifiable): array
+    protected function notificationData(): array
     {
         return [
             'title' => __('Team membership added'),
@@ -71,5 +73,22 @@ class TeamMemberAddedNotification extends Notification implements ShouldQueue
                 ]
             ),
         ];
+    }
+
+    /**
+     * Get the array representation of the notification.
+     *
+     * @return array<string, mixed>
+     */
+    public function toArray(object $notifiable): array
+    {
+        return $this->notificationData();
+    }
+
+    public function toBroadcast(object $notifiable): BroadcastMessage
+    {
+        return new BroadcastMessage(
+            $this->notificationData()
+        );
     }
 }

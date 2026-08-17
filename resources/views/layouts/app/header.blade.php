@@ -1,6 +1,5 @@
 <flux:header container class="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
     @php
-        $unreadNotifications = auth()->check() ? auth()->user()->unreadNotifications()->count() : 0;
         $organization = request()->route('organization') ?? auth()->user()?->organizations()->first();
         $billingRoute = $organization ? route('organizations.billing', ['organization' => $organization]) : route('dashboard');
         $isBillingRoute = request()->routeIs('organizations.billing') || request()->routeIs('billing.*');
@@ -38,16 +37,6 @@
         <flux:tooltip :content="__('Search')" position="bottom">
             <flux:navbar.item class="!h-10 [&>div>svg]:size-5" icon="magnifying-glass" href="#" :label="__('Search')" />
         </flux:tooltip>
-        <flux:tooltip :content="__('Notifications')" position="bottom">
-            <flux:navbar.item class="h-10 max-lg:hidden [&>div>svg]:size-5" icon="bell" :href="route('notifications.index')" wire:navigate>
-                {{ __('Notifications') }}
-                @if ($unreadNotifications)
-                    <span class="ml-2 inline-flex items-center justify-center rounded-full bg-rose-600 px-2 py-0.5 text-[10px] font-semibold text-white">
-                        {{ $unreadNotifications }}
-                    </span>
-                @endif
-            </flux:navbar.item>
-        </flux:tooltip>
     </flux:navbar>
 
     <x-desktop-user-menu :showTeam="false" />
@@ -78,14 +67,6 @@
                 {{ __('Tasks') }}
             </flux:sidebar.item>
 
-            <flux:sidebar.item icon="bell" :href="route('notifications.index')" :current="request()->routeIs('notifications.*')" wire:navigate>
-                {{ __('Notifications') }}
-                @if ($unreadNotifications)
-                    <span class="ml-2 inline-flex items-center justify-center rounded-full bg-rose-600 px-2 py-0.5 text-[10px] font-semibold text-white">
-                        {{ $unreadNotifications }}
-                    </span>
-                @endif
-            </flux:sidebar.item>
         </flux:sidebar.group>
 
         <flux:sidebar.group :heading="__('Administration')">
