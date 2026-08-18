@@ -8,7 +8,8 @@ use App\Actions\Projects\DeleteProjectAction;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 ?>
 
-<div id="taskforge-project" data-project-id="<?php echo e($project->id); ?>">
+<div id="taskforge-project" data-project-id="<?php echo e($project->id); ?>"         data-user-id="<?php echo e(auth()->id()); ?>"
+    data-user-name="<?php echo e(auth()->user()->name); ?>">
     <?php if (isset($component)) { $__componentOriginal1f4cdfbcf032dc00af93962c134fd24f = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal1f4cdfbcf032dc00af93962c134fd24f = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.page','data' => []] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>

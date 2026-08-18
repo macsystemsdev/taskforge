@@ -8,118 +8,13 @@
 
 import './echo';
 
-const userId = window.TaskForge?.userId;
+// Set user data globally before other modules need it
+window.TaskForge = {
+    ...window.TaskForge,
+    userId: document.querySelector('meta[name="user-id"]')?.content,
+    userName: document.querySelector('meta[name="user-name"]')?.content,
+};
 
-if (userId) {
-    window.Echo
-        .private(`App.Models.User.${userId}`)
-        .notification((notification) => {
-            console.log('Realtime notification received:', notification);
-            window.Livewire?.dispatch('notification-received', { notification });
-        });
-}
-
-let currentProjectChannel = null;
-
-function dispatchPresenceEvent(event, payload) {
-    window.Livewire.dispatch(
-        event,
-        payload
-    );
-}
-
-function joinProjectPresenceChannel() {
-    const projectElement = document.getElementById(
-        'taskforge-project'
-    );
-
-    const projectId = projectElement?.dataset?.projectId;
-
-    if (!projectId) {
-        leaveProjectPresenceChannel();
-
-        return;
-    }
-
-    // CHANGE THIS LINE - Add 'presence-' prefix
-    const channelName = `presence-project.${projectId}`;
-
-    if (currentProjectChannel === channelName) {
-        return;
-    }
-
-    leaveProjectPresenceChannel();
-
-    currentProjectChannel = channelName;
-
-    console.log(
-        `[Presence] Joining ${channelName}`
-    );
-
-    window.Echo
-        .join(channelName)
-        .here((users) => {
-            console.log(
-                `[Presence] Users already in ${channelName}:`,
-                users
-            );
-
-            dispatchPresenceEvent(
-                'project-presence-here',
-                {
-                    users,
-                }
-            );
-        })
-        .joining((user) => {
-            console.log(
-                `[Presence] User joined ${channelName}:`,
-                user
-            );
-
-            dispatchPresenceEvent(
-                'project-presence-joining',
-                {
-                    user,
-                }
-            );
-        })
-        .leaving((user) => {
-            console.log(
-                `[Presence] User left ${channelName}:`,
-                user
-            );
-
-            dispatchPresenceEvent(
-                'project-presence-leaving',
-                {
-                    user,
-                }
-            );
-        });
-}
-
-function leaveProjectPresenceChannel() {
-    if (!currentProjectChannel) {
-        return;
-    }
-
-    console.log(
-        `[Presence] Leaving ${currentProjectChannel}`
-    );
-
-    window.Echo.leave(
-        currentProjectChannel
-    );
-
-    currentProjectChannel = null;
-}
-
-joinProjectPresenceChannel();
-
-document.addEventListener(
-    'livewire:navigated',
-    () => {
-        joinProjectPresenceChannel();
-    }
-);
+// Import order matters - typing needs userId from global scope
+import './presence';
+import './notifications';

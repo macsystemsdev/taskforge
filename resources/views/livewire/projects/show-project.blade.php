@@ -44,7 +44,8 @@ new class extends Component {
 };
 ?>
 
-<div id="taskforge-project" data-project-id="{{ $project->id }}">
+<div id="taskforge-project" data-project-id="{{ $project->id }}"         data-user-id="{{ auth()->id() }}"
+    data-user-name="{{ auth()->user()->name }}">
     <x-ui.page>
         @php
             $tasks = $project->tasks;

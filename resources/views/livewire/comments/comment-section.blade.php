@@ -21,6 +21,20 @@
             </div>
         </div>
 
+         @if (count($typingUsers))
+                            <div class="px-4 pb-2 text-sm text-zinc-500 dark:text-zinc-400">
+                                @if (count($typingUsers) === 1)
+                                    {{ collect($typingUsers)->first()['name'] }}
+                                    {{ __('is typing...') }}
+                                @elseif (count($typingUsers) === 2)
+                                    {{ collect($typingUsers)->pluck('name')->join(' and ') }}
+                                    {{ __('are typing...') }}
+                                @else
+                                    {{ count($typingUsers) }}
+                                    {{ __('people are typing...') }}
+                                @endif
+                            </div>
+                        @endif
         <div class="flex-1 overflow-hidden px-5 py-4">
             <div id="comments-list-{{ $commentable->id }}"
                 class="flex h-full max-h-[420px] min-h-[280px] flex-col gap-4 overflow-y-auto pr-2"
@@ -89,9 +103,19 @@
                     </label>
 
                     <div class="relative">
-                        <textarea wire:model="content" rows="3"
-                            class="w-full resize-none rounded-3xl border border-zinc-200 bg-zinc-50 px-4 py-3 pr-14 text-sm leading-6 text-zinc-900 transition focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:border-white/10 dark:bg-zinc-950/80 dark:text-white"
-                            placeholder="Type a message"></textarea>
+                       
+                        <textarea wire:model="content" x-data="{ lastTypingEvent: 0 }"
+                            @input="
+                                    const now = Date.now();
+
+                         if (now - lastTypingEvent > 1000) {
+                             window.TaskForge?.whisperProjectTyping();
+
+                                 lastTypingEvent = now;
+                                 }
+                             "
+                            placeholder="{{ __('Type a message') }}" rows="3"
+                            class="w-full resize-none rounded-3xl border border-zinc-200 bg-zinc-50 px-4 py-3 pr-14 text-sm leading-6 text-zinc-900 transition focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:border-white/10 dark:bg-zinc-950/80 dark:text-white"></textarea>
                         <button type="submit"
                             class="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300">
                             Send

@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Livewire\Attributes\On;
 
 class CommentSection extends Component
 {
@@ -27,6 +28,7 @@ class CommentSection extends Component
     public int $attachmentsLimit = 5;
     public int $commentsLimit = 10;
     public ?int $index = null;
+    public array $typingUsers = [];
 
     protected array $rules = [
         'content' => ['required', 'string'],
@@ -251,5 +253,29 @@ class CommentSection extends Component
         }, ARRAY_FILTER_USE_KEY);
 
         $this->uploads = array_values($this->uploads);
+    }
+
+    #[On('project-user-typing')]
+    public function userTyping(array $user): void
+    {
+        if (
+            (int) $user['id'] === (int) auth()->id()
+        ) {
+            return;
+        }
+
+        $this->typingUsers[$user['id']] = [
+            'id' => $user['id'],
+            'name' => $user['name'],
+        ];
+    }
+
+    #[On('project-user-stopped-typing')]
+    public function userStoppedTyping(
+        int $userId
+    ): void {
+        unset(
+            $this->typingUsers[$userId]
+        );
     }
 }
