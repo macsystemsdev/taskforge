@@ -13,7 +13,10 @@ use App\Models\Project;
 use App\Models\Task;
 use App\Models\Workspace;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Broadcast;
 
+
+Broadcast::routes(['middleware' => ['auth']]);
 
 Route::get('/invitations/{token}/accept', [OrganizationInvitationController::class, 'accept'])
     ->name('invitations.accept')->middleware('auth');
