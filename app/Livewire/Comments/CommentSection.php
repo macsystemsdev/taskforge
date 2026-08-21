@@ -278,4 +278,10 @@ class CommentSection extends Component
             $this->typingUsers[$userId]
         );
     }
+
+    #[On('project-comment-created')]
+    public function commentCreated(): void
+    {
+        // The Livewire component will re-render.
+    }
 }

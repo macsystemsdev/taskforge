@@ -19,9 +19,6 @@ class CompletePaymentService
             return;
         }
 
-        if ($transaction->isSuccessful()) {
-            return;
-        }
 
         DB::transaction(function () use ($transaction) {
 

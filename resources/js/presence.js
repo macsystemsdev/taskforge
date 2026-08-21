@@ -5,19 +5,19 @@ const typingTimeouts = new Map();
 // Helper function to get user ID with multiple fallbacks
 function getUserId() {
     // Check multiple sources
-    return window.TaskForge?.userId || 
-           document.querySelector('meta[name="user-id"]')?.content ||
-           document.querySelector('meta[name="user-id"]')?.getAttribute('content') ||
-           document.getElementById('taskforge-project')?.dataset?.userId ||
-           null;
+    return window.TaskForge?.userId ||
+        document.querySelector('meta[name="user-id"]')?.content ||
+        document.querySelector('meta[name="user-id"]')?.getAttribute('content') ||
+        document.getElementById('taskforge-project')?.dataset?.userId ||
+        null;
 }
 
 function getUserName() {
-    return window.TaskForge?.userName || 
-           document.querySelector('meta[name="user-name"]')?.content ||
-           document.querySelector('meta[name="user-name"]')?.getAttribute('content') ||
-           document.getElementById('taskforge-project')?.dataset?.userName ||
-           'Unknown User';
+    return window.TaskForge?.userName ||
+        document.querySelector('meta[name="user-name"]')?.content ||
+        document.querySelector('meta[name="user-name"]')?.getAttribute('content') ||
+        document.getElementById('taskforge-project')?.dataset?.userName ||
+        'Unknown User';
 }
 
 function dispatchPresenceEvent(event, payload) {
@@ -83,15 +83,29 @@ function joinProjectPresenceChannel() {
             if (typingTimeouts.has(user.id)) {
                 clearTimeout(typingTimeouts.get(user.id));
                 typingTimeouts.delete(user.id);
-                window.Livewire.dispatch('project-user-stopped-typing', { 
-                    userId: user.id 
+                window.Livewire.dispatch('project-user-stopped-typing', {
+                    userId: user.id
                 });
             }
 
             dispatchPresenceEvent('project-presence-leaving', { user });
         })
+
         .listenForWhisper('typing', (event) => {
             handleProjectTyping(event.user);
+        })
+        .listen('.comment.created', (event) => {
+            console.log(
+                '[Presence] Comment created:',
+                event
+            );
+
+            window.Livewire.dispatch(
+                'project-comment-created',
+                {
+                    comment: event.comment,
+                }
+            );
         });
 }
 
@@ -126,7 +140,7 @@ window.TaskForge = {
 
         const userId = getUserId();
         const userName = getUserName();
-        
+
         if (!userId) {
             console.warn('[Presence] User ID not available');
             console.log('[Presence] Debug info:', {

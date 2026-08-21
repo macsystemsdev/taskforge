@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Concerns\HasTeams;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
@@ -19,7 +19,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 
 #[Fillable(['name', 'email', 'password', 'current_team_id'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, HasTeams, Notifiable, TwoFactorAuthenticatable;
@@ -40,7 +40,16 @@ class User extends Authenticatable implements FilamentUser
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->email === 'mac.systems.dev@gmail.com';
+        // 1. Fetch the secure email from the environment config
+        $adminEmail = config('services.filament.admin_email');
+
+        // 2. Block immediately if the config is empty (safeguard)
+        if (empty($adminEmail)) {
+            return false;
+        }
+
+        // 3. Match the email AND strictly require verified status
+        return $this->email === $adminEmail && $this->hasVerifiedEmail();
     }
 
     /**

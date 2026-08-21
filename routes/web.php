@@ -16,26 +16,18 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Broadcast;
 
 
-Broadcast::routes(['middleware' => ['auth']]);
+Broadcast::routes(['middleware' => ['auth', 'verified']]);
 
-Route::get('/invitations/{token}/accept', [OrganizationInvitationController::class, 'accept'])
-    ->name('invitations.accept')->middleware('auth');
-
-Route::post('/invitations/{token}/reject', [OrganizationInvitationController::class, 'reject'])
-    ->name('invitations.reject')->middleware('auth');
-
-Route::get('/invitations/{token}/reject', [OrganizationInvitationController::class, 'showRejectForm'])->name('invitations.reject.form')->middleware('auth');
 
 Route::view('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('home');
 
-Route::middleware(['auth', 'verified'])
-    ->group(function () {
-        Route::view('dashboard', 'dashboard')->name('dashboard');
-    });
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
+
+    Route::view('dashboard', 'dashboard')->name('dashboard');
+
     Route::view('/organizations', 'pages.organizations.index')->name('organizations.index');
 
     // Create and show organization
@@ -50,6 +42,14 @@ Route::middleware(['auth'])->group(function () {
             return view('pages.organizations.show', compact('organization'));
         }
     )->name('organizations.show');
+
+    Route::get('/invitations/{token}/accept', [OrganizationInvitationController::class, 'accept'])
+        ->name('invitations.accept');
+
+    Route::post('/invitations/{token}/reject', [OrganizationInvitationController::class, 'reject'])
+        ->name('invitations.reject');
+
+    Route::get('/invitations/{token}/reject', [OrganizationInvitationController::class, 'showRejectForm'])->name('invitations.reject.form');
 
     // show workspace
     Route::get(
@@ -138,7 +138,7 @@ Route::middleware(['auth'])->group(function () {
             storage_path('app/' . $attachment->storedFile->path),
             $attachment->storedFile->original_filename
         );
-    })->name('tasks.attachments.download')->middleware(['auth', 'verified']);
+    })->name('tasks.attachments.download');
 
     Route::get('/tasks/{task}/attachments/{attachment}/view', function ($taskId, $attachmentId) {
         $task = App\Models\Task::findOrFail($taskId);
@@ -147,7 +147,7 @@ Route::middleware(['auth'])->group(function () {
         return response()->file(
             storage_path('app/' . $attachment->storedFile->path)
         );
-    })->name('tasks.attachments.view')->middleware(['auth', 'verified']);
+    })->name('tasks.attachments.view');
 
     Route::get(
         '/projects/{project}/edit',

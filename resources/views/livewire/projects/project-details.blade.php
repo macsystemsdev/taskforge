@@ -14,65 +14,79 @@ new class extends Component {
 
 ?>
 
-<flux:card>
-    <flux:heading>
-        {{ __('Project Details') }}
-    </flux:heading>
+<flux:card class="!p-0 overflow-hidden">
+    <div class="border-b border-zinc-200 px-6 py-4 dark:border-white/10">
+        <h2 class="text-base font-semibold text-zinc-950 dark:text-white">Project Details</h2>
+    </div>
 
-    <div class="mt-4 space-y-4">
-
-        {{-- Health as a prominent banner --}}
-        <div class="rounded-3xl border border-zinc-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-zinc-950/60">
-            <p class="tf-muted text-sm">Health</p>
-            @if ($project->hasOverdueTasks())
-                <p class="mt-1 font-semibold text-red-600">At Risk</p>
+    <div class="space-y-4 p-6">
+        {{-- Health --}}
+        <div
+            class="rounded-xl border p-4 
+            @if ($project->hasOverdueTasks()) border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-950/40
             @elseif ($project->hasUpcomingDeadlines())
-                <p class="mt-1 font-semibold text-amber-600">Attention Needed</p>
+                border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/40
             @else
-                <p class="mt-1 font-semibold text-green-600">Healthy</p>
-            @endif
+                border-emerald-200 bg-emerald-50 dark:border-emerald-900/50 dark:bg-emerald-950/40 @endif">
+            <p class="tf-muted text-xs">Health</p>
+            <p
+                class="mt-1 font-semibold 
+                @if ($project->hasOverdueTasks()) text-red-600 dark:text-red-400
+                @elseif ($project->hasUpcomingDeadlines())
+                    text-amber-600 dark:text-amber-400
+                @else
+                    text-emerald-600 dark:text-emerald-400 @endif">
+                @if ($project->hasOverdueTasks())
+                    At Risk
+                @elseif ($project->hasUpcomingDeadlines())
+                    Attention Needed
+                @else
+                    Healthy
+                @endif
+            </p>
         </div>
 
-        {{-- Metrics in a 2-column grid --}}
+        {{-- Metrics --}}
         <div class="grid grid-cols-2 gap-3">
-            <div class="rounded-3xl border border-zinc-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
+            <div class="rounded-xl border border-zinc-200 bg-white p-4 dark:border-white/10 dark:bg-zinc-950/80">
                 <dt class="tf-muted text-xs">Overdue</dt>
-                <dd class="mt-1 font-semibold text-red-600 text-lg">{{ $project->overdueTaskCount() }}</dd>
+                <dd class="mt-1 text-lg font-semibold text-red-600 dark:text-red-400">{{ $project->overdueTaskCount() }}
+                </dd>
             </div>
-
-            <div class="rounded-3xl border border-zinc-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
+            <div class="rounded-xl border border-zinc-200 bg-white p-4 dark:border-white/10 dark:bg-zinc-950/80">
                 <dt class="tf-muted text-xs">Due Soon</dt>
-                <dd class="mt-1 font-semibold text-amber-600 text-lg">{{ $project->dueSoonTaskCount() }}</dd>
+                <dd class="mt-1 text-lg font-semibold text-amber-600 dark:text-amber-400">
+                    {{ $project->dueSoonTaskCount() }}</dd>
             </div>
         </div>
 
-        {{-- Details in a 2-column grid --}}
+        {{-- Details --}}
         <div class="grid grid-cols-2 gap-3">
-            <div class="rounded-3xl border border-zinc-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
+            <div class="rounded-xl border border-zinc-200 bg-white p-4 dark:border-white/10 dark:bg-zinc-950/80">
                 <dt class="tf-muted text-xs">Team</dt>
-                <dd class="mt-1 font-semibold text-zinc-950 dark:text-white text-sm truncate">{{ $project->team->name }}</dd>
+                <dd class="mt-1 truncate text-sm font-semibold text-zinc-950 dark:text-white">{{ $project->team->name }}
+                </dd>
             </div>
-
-            <div class="rounded-3xl border border-zinc-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
+            <div class="rounded-xl border border-zinc-200 bg-white p-4 dark:border-white/10 dark:bg-zinc-950/80">
                 <dt class="tf-muted text-xs">Created By</dt>
-                <dd class="mt-1 font-semibold text-zinc-950 dark:text-white text-sm truncate">{{ $project->creator->name }}</dd>
+                <dd class="mt-1 truncate text-sm font-semibold text-zinc-950 dark:text-white">
+                    {{ $project->creator->name }}</dd>
             </div>
-
-            <div class="rounded-3xl border border-zinc-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
+            <div class="rounded-xl border border-zinc-200 bg-white p-4 dark:border-white/10 dark:bg-zinc-950/80">
                 <dt class="tf-muted text-xs">Status</dt>
                 <dd class="mt-1"><x-ui.status-badge :status="$project->status" size="sm" /></dd>
             </div>
-
-            <div class="rounded-3xl border border-zinc-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
+            <div class="rounded-xl border border-zinc-200 bg-white p-4 dark:border-white/10 dark:bg-zinc-950/80">
                 <dt class="tf-muted text-xs">Created</dt>
-                <dd class="mt-1 font-semibold text-zinc-950 dark:text-white text-sm">{{ $project->created_at->format('M d, Y') }}</dd>
+                <dd class="mt-1 text-sm font-semibold text-zinc-950 dark:text-white">
+                    {{ $project->created_at->format('M d, Y') }}</dd>
             </div>
-
-            <div class="rounded-3xl border border-zinc-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-zinc-950/80 col-span-2">
+            <div
+                class="col-span-2 rounded-xl border border-zinc-200 bg-white p-4 dark:border-white/10 dark:bg-zinc-950/80">
                 <dt class="tf-muted text-xs">Due Date</dt>
-                <dd class="mt-1 font-semibold text-zinc-950 dark:text-white text-sm">{{ $project->due_date?->format('M d, Y') ?? __('No due date') }}</dd>
+                <dd class="mt-1 text-sm font-semibold text-zinc-950 dark:text-white">
+                    {{ $project->due_date?->format('M d, Y') ?? __('No due date') }}</dd>
             </div>
         </div>
-
     </div>
 </flux:card>

@@ -16,81 +16,76 @@ new class extends Component {
 
 <?php if (isset($component)) { $__componentOriginalc4bce27d2c09d2f98a63d67977c1c3ec = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc4bce27d2c09d2f98a63d67977c1c3ec = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::card.index','data' => []] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::card.index','data' => ['class' => '!p-0 overflow-hidden']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::card'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes([]); ?>
+<?php $component->withAttributes(['class' => '!p-0 overflow-hidden']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-    <?php if (isset($component)) { $__componentOriginale0fd5b6a0986beffac17a0a103dfd7b9 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginale0fd5b6a0986beffac17a0a103dfd7b9 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::heading','data' => []] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::heading'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes([]); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+    <div class="border-b border-zinc-200 px-6 py-4 dark:border-white/10">
+        <h2 class="text-base font-semibold text-zinc-950 dark:text-white">Project Details</h2>
+    </div>
 
-        <?php echo e(__('Project Details')); ?>
-
-     <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginale0fd5b6a0986beffac17a0a103dfd7b9)): ?>
-<?php $attributes = $__attributesOriginale0fd5b6a0986beffac17a0a103dfd7b9; ?>
-<?php unset($__attributesOriginale0fd5b6a0986beffac17a0a103dfd7b9); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginale0fd5b6a0986beffac17a0a103dfd7b9)): ?>
-<?php $component = $__componentOriginale0fd5b6a0986beffac17a0a103dfd7b9; ?>
-<?php unset($__componentOriginale0fd5b6a0986beffac17a0a103dfd7b9); ?>
-<?php endif; ?>
-
-    <div class="mt-4 space-y-4">
-
+    <div class="space-y-4 p-6">
         
-        <div class="rounded-3xl border border-zinc-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-zinc-950/60">
-            <p class="tf-muted text-sm">Health</p>
-            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($project->hasOverdueTasks()): ?>
-                <p class="mt-1 font-semibold text-red-600">At Risk</p>
+        <div
+            class="rounded-xl border p-4 
+            <?php if($project->hasOverdueTasks()): ?> border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-950/40
             <?php elseif($project->hasUpcomingDeadlines()): ?>
-                <p class="mt-1 font-semibold text-amber-600">Attention Needed</p>
+                border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/40
             <?php else: ?>
-                <p class="mt-1 font-semibold text-green-600">Healthy</p>
-            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                border-emerald-200 bg-emerald-50 dark:border-emerald-900/50 dark:bg-emerald-950/40 <?php endif; ?>">
+            <p class="tf-muted text-xs">Health</p>
+            <p
+                class="mt-1 font-semibold 
+                <?php if($project->hasOverdueTasks()): ?> text-red-600 dark:text-red-400
+                <?php elseif($project->hasUpcomingDeadlines()): ?>
+                    text-amber-600 dark:text-amber-400
+                <?php else: ?>
+                    text-emerald-600 dark:text-emerald-400 <?php endif; ?>">
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($project->hasOverdueTasks()): ?>
+                    At Risk
+                <?php elseif($project->hasUpcomingDeadlines()): ?>
+                    Attention Needed
+                <?php else: ?>
+                    Healthy
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+            </p>
         </div>
 
         
         <div class="grid grid-cols-2 gap-3">
-            <div class="rounded-3xl border border-zinc-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
+            <div class="rounded-xl border border-zinc-200 bg-white p-4 dark:border-white/10 dark:bg-zinc-950/80">
                 <dt class="tf-muted text-xs">Overdue</dt>
-                <dd class="mt-1 font-semibold text-red-600 text-lg"><?php echo e($project->overdueTaskCount()); ?></dd>
-            </div>
+                <dd class="mt-1 text-lg font-semibold text-red-600 dark:text-red-400"><?php echo e($project->overdueTaskCount()); ?>
 
-            <div class="rounded-3xl border border-zinc-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
+                </dd>
+            </div>
+            <div class="rounded-xl border border-zinc-200 bg-white p-4 dark:border-white/10 dark:bg-zinc-950/80">
                 <dt class="tf-muted text-xs">Due Soon</dt>
-                <dd class="mt-1 font-semibold text-amber-600 text-lg"><?php echo e($project->dueSoonTaskCount()); ?></dd>
+                <dd class="mt-1 text-lg font-semibold text-amber-600 dark:text-amber-400">
+                    <?php echo e($project->dueSoonTaskCount()); ?></dd>
             </div>
         </div>
 
         
         <div class="grid grid-cols-2 gap-3">
-            <div class="rounded-3xl border border-zinc-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
+            <div class="rounded-xl border border-zinc-200 bg-white p-4 dark:border-white/10 dark:bg-zinc-950/80">
                 <dt class="tf-muted text-xs">Team</dt>
-                <dd class="mt-1 font-semibold text-zinc-950 dark:text-white text-sm truncate"><?php echo e($project->team->name); ?></dd>
-            </div>
+                <dd class="mt-1 truncate text-sm font-semibold text-zinc-950 dark:text-white"><?php echo e($project->team->name); ?>
 
-            <div class="rounded-3xl border border-zinc-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
+                </dd>
+            </div>
+            <div class="rounded-xl border border-zinc-200 bg-white p-4 dark:border-white/10 dark:bg-zinc-950/80">
                 <dt class="tf-muted text-xs">Created By</dt>
-                <dd class="mt-1 font-semibold text-zinc-950 dark:text-white text-sm truncate"><?php echo e($project->creator->name); ?></dd>
+                <dd class="mt-1 truncate text-sm font-semibold text-zinc-950 dark:text-white">
+                    <?php echo e($project->creator->name); ?></dd>
             </div>
-
-            <div class="rounded-3xl border border-zinc-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
+            <div class="rounded-xl border border-zinc-200 bg-white p-4 dark:border-white/10 dark:bg-zinc-950/80">
                 <dt class="tf-muted text-xs">Status</dt>
                 <dd class="mt-1"><?php if (isset($component)) { $__componentOriginaldf5a194c1ccdd1698e9a89f0cb5bf2c8 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginaldf5a194c1ccdd1698e9a89f0cb5bf2c8 = $attributes; } ?>
@@ -115,18 +110,18 @@ new class extends Component {
 <?php unset($__componentOriginaldf5a194c1ccdd1698e9a89f0cb5bf2c8); ?>
 <?php endif; ?></dd>
             </div>
-
-            <div class="rounded-3xl border border-zinc-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
+            <div class="rounded-xl border border-zinc-200 bg-white p-4 dark:border-white/10 dark:bg-zinc-950/80">
                 <dt class="tf-muted text-xs">Created</dt>
-                <dd class="mt-1 font-semibold text-zinc-950 dark:text-white text-sm"><?php echo e($project->created_at->format('M d, Y')); ?></dd>
+                <dd class="mt-1 text-sm font-semibold text-zinc-950 dark:text-white">
+                    <?php echo e($project->created_at->format('M d, Y')); ?></dd>
             </div>
-
-            <div class="rounded-3xl border border-zinc-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-zinc-950/80 col-span-2">
+            <div
+                class="col-span-2 rounded-xl border border-zinc-200 bg-white p-4 dark:border-white/10 dark:bg-zinc-950/80">
                 <dt class="tf-muted text-xs">Due Date</dt>
-                <dd class="mt-1 font-semibold text-zinc-950 dark:text-white text-sm"><?php echo e($project->due_date?->format('M d, Y') ?? __('No due date')); ?></dd>
+                <dd class="mt-1 text-sm font-semibold text-zinc-950 dark:text-white">
+                    <?php echo e($project->due_date?->format('M d, Y') ?? __('No due date')); ?></dd>
             </div>
         </div>
-
     </div>
  <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>

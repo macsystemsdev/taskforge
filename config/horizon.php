@@ -232,7 +232,7 @@ return [
                 'balance' => 'auto',
                 'maxProcesses' => 5,
                 'timeout' => 120,
-                'memory' => 256,
+                'memory' => 128,
                 'tries' => 5,
             ],
 
@@ -266,7 +266,7 @@ return [
                 'balance' => 'auto',
                 'maxProcesses' => 2,
                 'timeout' => 120,
-                'memory' => 256,
+                'memory' => 128,
                 'tries' => 5,
             ],
 

@@ -145,105 +145,94 @@ new class extends Component {
 };
 ?>
 
+
 @php
     $organization = $project->workspace->organization;
     $taskLimit = $organization->currentPlan()?->max_tasks;
 @endphp
 
 <div class="space-y-6">
-
-    {{-- TASK CREATION FORM --}}
+    {{-- Create Task --}}
     <div>
+        <x-ui.card padding="p-0" class="overflow-hidden">
+            <div class="border-b border-zinc-200 px-6 py-4 dark:border-white/10">
+                <h2 class="text-base font-semibold text-zinc-950 dark:text-white">Create Task</h2>
+                <p class="mt-0.5 text-sm text-zinc-500">Add work directly to this project.</p>
+            </div>
 
-        <x-ui.card padding="p-0" class="space-y-0">
-
-            <div class="px-5 py-4">
-                <div>
-                    <h2 class="tf-panel-title">Create Task</h2>
-                    <p class="tf-panel-subtitle">Add work directly to this project.</p>
-                </div>
-
+            <div class="p-6">
                 @if (session('success'))
-                    <div
-                        class="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-200">
+                    <div class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300">
                         {{ session('success') }}
                     </div>
                 @endif
 
-                <div
-                    class="mt-4 mb-4 rounded-2xl border border-zinc-200 bg-zinc-50/80 px-4 py-3 text-sm text-zinc-600 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-400">
-                    Tasks in use: {{ $organization->taskUsage() }} /
-                    {{ $taskLimit === null ? 'Unlimited' : $taskLimit }}
+                <div class="mb-4 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-600 dark:border-white/10 dark:bg-zinc-950/40 dark:text-zinc-400">
+                    Tasks in use: {{ $organization->taskUsage() }} / {{ $taskLimit === null ? 'Unlimited' : $taskLimit }}
                 </div>
 
                 <form wire:submit="createTask" class="space-y-5">
-
-                    {{-- TASK TITLE --}}
-                    <div class="space-y-2">
-                        <label>Task</label>
-                        <input type="text" wire:model="title" class="w-full px-3 py-2.5">
+                    {{-- Title --}}
+                    <div class="space-y-1.5">
+                        <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Task</label>
+                        <input type="text" wire:model="title" placeholder="Enter task title"
+                            class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:border-zinc-700 dark:bg-zinc-950/70 dark:text-white" />
                         @error('title')
-                            <p class="text-sm font-medium text-red-600 dark:text-red-400">
-                                {{ $message }}
-                            </p>
+                            <p class="text-sm font-medium text-red-600 dark:text-red-400">{{ $message }}</p>
                         @enderror
                     </div>
 
-                    {{-- DESCRIPTION --}}
-                    <div class="space-y-2">
-                        <label>Description</label>
-                        <textarea rows="4" wire:model="description" class="w-full px-3 py-2.5"></textarea>
+                    {{-- Description --}}
+                    <div class="space-y-1.5">
+                        <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Description</label>
+                        <textarea rows="4" wire:model="description" placeholder="Add more details..."
+                            class="w-full resize-none rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:border-zinc-700 dark:bg-zinc-950/70 dark:text-white"></textarea>
                     </div>
 
-                    {{-- ASSIGNEE --}}
-                    <div class="space-y-2">
-                        <label>Assignee</label>
-                        <select wire:model="assigneeId" class="w-full px-3 py-2.5">
-                            <option value="">Unassigned</option>
-                            @foreach ($this->teamMembers as $member)
-                                <option value="{{ $member->id }}">{{ $member->name }}</option>
-                            @endforeach
-                        </select>
+                    {{-- Grid: Assignee, Due Date, Priority --}}
+                    <div class="grid gap-4 sm:grid-cols-3">
+                        <div class="space-y-1.5">
+                            <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Assignee</label>
+                            <select wire:model="assigneeId"
+                                class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:border-zinc-700 dark:bg-zinc-950/70 dark:text-white">
+                                <option value="">Unassigned</option>
+                                @foreach ($this->teamMembers as $member)
+                                    <option value="{{ $member->id }}">{{ $member->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Due Date</label>
+                            <input type="date" wire:model="dueDate"
+                                class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:border-zinc-700 dark:bg-zinc-950/70 dark:text-white" />
+                            @error('dueDate')
+                                <p class="text-sm font-medium text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Priority</label>
+                            <select wire:model="priority"
+                                class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:border-zinc-700 dark:bg-zinc-950/70 dark:text-white">
+                                @foreach (\App\Domain\Task\TaskPriority::cases() as $priority)
+                                    <option value="{{ $priority->value }}">{{ ucfirst($priority->value) }}</option>
+                                @endforeach
+                            </select>
+                            @error('priority')
+                                <p class="text-sm font-medium text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
+                        </div>
                     </div>
 
-                    {{-- DUE DATE --}}
-                    <div class="space-y-2">
-                        <label>Due Date</label>
-                        <input type="date" wire:model="dueDate" class="w-full px-3 py-2.5">
-                        @error('dueDate')
-                            <p class="text-sm font-medium text-red-600 dark:text-red-400">
-                                {{ $message }}
-                            </p>
-                        @enderror
-                    </div>
+                    {{-- Resources --}}
+                    <div class="space-y-1.5">
+                        <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Task Resources</label>
+                        <p class="text-xs text-zinc-500">Select existing project resources that are relevant to this task.</p>
 
-                    {{-- PRIORITY --}}
-                    <div class="space-y-2">
-                        <label>Priority</label>
-                        <select wire:model="priority" class="w-full px-3 py-2.5">
-                            @foreach (\App\Domain\Task\TaskPriority::cases() as $priority)
-                                <option value="{{ $priority->value }}">
-                                    {{ ucfirst($priority->value) }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('priority')
-                            <p class="text-sm font-medium text-red-600 dark:text-red-400">
-                                {{ $message }}
-                            </p>
-                        @enderror
-                    </div>
-
-                    {{-- TASK RESOURCES --}}
-                    <div class="space-y-2">
-                        <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300">Task Resources</label>
-                        <p class="text-xs text-zinc-500">Select existing project resources that are relevant to this
-                            task.</p>
-
-                        {{-- Search input --}}
                         <div class="relative">
                             <input type="text" wire:model.live="resourceSearch" placeholder="Search resources..."
-                                class="w-full px-3 py-2.5">
+                                class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:border-zinc-700 dark:bg-zinc-950/70 dark:text-white" />
 
                             @php
                                 $allResources = $this->availableResources;
@@ -251,24 +240,16 @@ new class extends Component {
                             @endphp
 
                             @if ($resourceCount > 0 && empty($resourceSearch))
-                                <div class="text-xs text-zinc-400 mt-1">{{ $resourceCount }} resources available</div>
+                                <div class="mt-1 text-xs text-zinc-400">{{ $resourceCount }} resources available</div>
                             @endif
 
-                            @if (!empty($resourceSearch))
-                                <div class="text-xs text-zinc-500 mt-1">Searching for: "{{ $resourceSearch }}"</div>
-                            @endif
-
-                            {{-- Dropdown results --}}
                             @if (!empty($resourceSearch) && $resourceCount > 0)
-                                <div
-                                    class="absolute z-20 mt-1 w-full rounded-2xl border border-zinc-200 bg-white shadow-lg dark:border-white/10 dark:bg-zinc-950/95 max-h-48 overflow-y-auto">
+                                <div class="absolute z-20 mt-1 w-full rounded-xl border border-zinc-200 bg-white shadow-lg dark:border-white/10 dark:bg-zinc-950/95 max-h-48 overflow-y-auto">
                                     @php
                                         $searchTerm = strtolower(trim($resourceSearch));
                                         $filteredResources = collect();
-
                                         foreach ($allResources as $resource) {
-                                            $resourceName =
-                                                $resource->storedFile?->original_filename ?? ($resource->name ?? '');
+                                            $resourceName = $resource->storedFile?->original_filename ?? ($resource->name ?? '');
                                             if (strpos(strtolower($resourceName), $searchTerm) !== false) {
                                                 $filteredResources->push($resource);
                                             }
@@ -277,108 +258,84 @@ new class extends Component {
 
                                     @if ($filteredResources->isNotEmpty())
                                         @foreach ($filteredResources as $resource)
-                                            <label
-                                                class="flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 cursor-pointer transition-colors">
-                                                <input type="checkbox" wire:model.live="resourceIds"
-                                                    value="{{ $resource->id }}"
-                                                    class="rounded border-zinc-300 text-blue-600 focus:ring-blue-500">
-                                                <span class="text-sm text-zinc-700 dark:text-zinc-300">
+                                            <label class="flex items-center gap-3 px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 cursor-pointer">
+                                                <input type="checkbox" wire:model.live="resourceIds" value="{{ $resource->id }}"
+                                                    class="rounded border-zinc-300 text-blue-600 focus:ring-blue-500" />
+                                                <span class="flex-1 truncate text-sm text-zinc-700 dark:text-zinc-300">
                                                     {{ $resource->storedFile?->original_filename ?? ($resource->name ?? 'Unnamed') }}
                                                 </span>
-                                                <span class="text-xs text-zinc-400 ml-auto">
-                                                    {{ number_format(($resource->storedFile?->size ?? 0) / 1024, 1) }}
-                                                    KB
+                                                <span class="text-xs text-zinc-400">
+                                                    {{ number_format(($resource->storedFile?->size ?? 0) / 1024, 1) }} KB
                                                 </span>
                                             </label>
                                         @endforeach
                                     @else
-                                        <div class="px-4 py-3 text-sm text-zinc-500">
-                                            No matching resources found for "{{ $resourceSearch }}"
-                                        </div>
+                                        <div class="px-3 py-2 text-sm text-zinc-500">No matching resources found</div>
                                     @endif
                                 </div>
                             @endif
                         </div>
 
-                        {{-- Selected resources chips --}}
                         @if (!empty($resourceIds))
-                            <div class="flex flex-wrap gap-2 mt-2">
+                            <div class="flex flex-wrap gap-2">
                                 @foreach ($allResources->whereIn('id', $resourceIds) as $resource)
-                                    <span
-                                        class="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-sm text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+                                    <span class="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-sm text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
                                         {{ $resource->storedFile?->original_filename ?? ($resource->name ?? 'Unnamed') }}
                                         <button type="button" wire:click="removeResource({{ $resource->id }})"
-                                            class="hover:text-blue-900 dark:hover:text-blue-100">
-                                            ×
-                                        </button>
+                                            class="hover:text-blue-900 dark:hover:text-blue-100">×</button>
                                     </span>
                                 @endforeach
                             </div>
                         @endif
 
                         @error('resourceIds')
-                            <p class="text-sm font-medium text-red-600 dark:text-red-400">
-                                {{ $message }}
-                            </p>
+                            <p class="text-sm font-medium text-red-600 dark:text-red-400">{{ $message }}</p>
                         @enderror
                     </div>
 
-                    {{-- SUBMIT BUTTON --}}
-                    <div class="flex justify-end">
+                    {{-- Submit --}}
+                    <div class="flex justify-end border-t border-zinc-200 pt-4 dark:border-white/10">
                         @if ($organization->canCreateTask())
                             <button type="submit" wire:loading.attr="disabled" wire:target="createTask"
                                 class="tf-button-primary inline-flex items-center justify-center gap-2">
                                 <span wire:loading.remove wire:target="createTask">Create Task</span>
-                                <span wire:loading.flex wire:target="createTask"
-                                    class="inline-flex items-center justify-center gap-2">
-                                    <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"
-                                        aria-hidden="true">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10"
-                                            stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor"
-                                            d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z">
-                                        </path>
+                                <span wire:loading.flex wire:target="createTask" class="inline-flex items-center gap-2">
+                                    <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z"></path>
                                     </svg>
                                     <span>Creating...</span>
                                 </span>
                             </button>
                         @else
-                            <a href="{{ route('organizations.billing', $organization) }}" class="tf-button-secondary"
-                                wire:navigate>
+                            <a href="{{ route('organizations.billing', $organization) }}" class="tf-button-secondary" wire:navigate>
                                 Upgrade plan
                             </a>
                         @endif
                     </div>
-
                 </form>
             </div>
-
         </x-ui.card>
-
     </div>
 
-    {{-- TASK LIST --}}
+    {{-- Task List --}}
     <div>
-
         <x-ui.card padding="p-0" class="overflow-hidden">
-
-            <div
-                class="flex flex-col gap-4 border-b border-zinc-200 px-5 py-4 dark:border-white/10 lg:flex-row lg:items-center lg:justify-between">
+            <div class="flex flex-col gap-3 border-b border-zinc-200 px-6 py-4 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h2 class="tf-panel-title">Project Tasks</h2>
-                    <p class="tf-panel-subtitle">
-                        {{ $this->tasks->count() }} tasks in this project
+                    <h2 class="text-base font-semibold text-zinc-950 dark:text-white">Project Tasks</h2>
+                    <p class="mt-0.5 text-sm text-zinc-500">
+                        {{ $this->tasks->count() }} tasks
                         @if ($statusFilter !== 'all')
-                            <span class="text-xs text-zinc-400">(filtered by
-                                {{ str($statusFilter)->headline() }})</span>
+                            <span class="text-xs text-zinc-400">({{ str($statusFilter)->headline() }})</span>
                         @endif
                     </p>
                 </div>
 
-                <div class="grid gap-3 sm:w-72">
+                <div class="w-full sm:w-64">
                     <label for="task-status-filter" class="sr-only">Filter tasks by status</label>
                     <select id="task-status-filter" wire:model.live="statusFilter"
-                        class="w-full rounded-2xl border border-zinc-200 bg-white px-4 py-2 text-sm shadow-sm transition focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:border-zinc-700 dark:bg-zinc-950/70 dark:text-white">
+                        class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:border-zinc-700 dark:bg-zinc-950/70 dark:text-white">
                         <option value="all">All tasks</option>
                         @foreach (\App\Domain\Task\TaskStatus::cases() as $status)
                             <option value="{{ $status->value }}">{{ str($status->value)->headline() }}</option>
@@ -388,38 +345,33 @@ new class extends Component {
             </div>
 
             @if ($this->tasks->isNotEmpty())
-                <div class="overflow-y-auto max-h-[320px] sm:max-h-[360px] md:max-h-[420px]">
-                    <table class="min-w-full border-separate border-spacing-0 text-sm">
-                        <thead
-                            class="bg-zinc-50 text-zinc-600 dark:bg-zinc-950/40 dark:text-zinc-300 sticky top-0 z-10">
+                {{-- Desktop --}}
+                <div class="hidden md:block max-h-[360px] overflow-y-auto">
+                    <table class="min-w-full text-sm">
+                        <thead class="sticky top-0 bg-zinc-50 text-left text-xs font-semibold uppercase tracking-wide text-zinc-600 dark:bg-zinc-950/40 dark:text-zinc-300">
                             <tr>
-                                <th class="px-5 py-3 text-left font-semibold uppercase tracking-wide">Task</th>
-                                <th class="px-5 py-3 text-left font-semibold uppercase tracking-wide">Status</th>
-                                <th class="px-5 py-3 text-left font-semibold uppercase tracking-wide">Assignee</th>
-                                <th class="px-5 py-3 text-left font-semibold uppercase tracking-wide">Due</th>
+                                <th class="px-6 py-3">Task</th>
+                                <th class="px-6 py-3">Status</th>
+                                <th class="px-6 py-3">Assignee</th>
+                                <th class="px-6 py-3">Due</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-zinc-200 dark:divide-white/10">
                             @foreach ($this->tasks as $task)
-                                <tr
-                                    class="bg-white dark:bg-zinc-950 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors">
-                                    <td class="px-5 py-4 whitespace-nowrap">
-                                        <a href="{{ route('tasks.show', $task) }}"
-                                            class="font-medium text-zinc-950 hover:underline dark:text-white"
-                                            wire:navigate>
+                                <tr class="bg-white transition hover:bg-zinc-50 dark:bg-zinc-950 dark:hover:bg-zinc-900/50">
+                                    <td class="px-6 py-3">
+                                        <a href="{{ route('tasks.show', $task) }}" class="font-medium text-zinc-950 hover:underline dark:text-white" wire:navigate>
                                             {{ $task->title }}
                                         </a>
                                     </td>
-                                    <td class="px-5 py-4 whitespace-nowrap">
-                                        <x-ui.status-badge :status="$task->status" />
-                                    </td>
-                                    <td class="px-5 py-4 whitespace-nowrap">
+                                    <td class="px-6 py-3"><x-ui.status-badge :status="$task->status" /></td>
+                                    <td class="px-6 py-3">
                                         <div class="flex items-center gap-2">
                                             <x-ui.avatar :name="$task->assignee?->name ?? 'Unassigned'" size="sm" />
                                             <span>{{ $task->assignee?->name ?? 'Unassigned' }}</span>
                                         </div>
                                     </td>
-                                    <td class="px-5 py-4 whitespace-nowrap">
+                                    <td class="px-6 py-3">
                                         <div class="flex flex-col">
                                             <span>{{ $task->due_date?->format('M d, Y') ?? 'No date' }}</span>
                                             @if ($task->isOverdue())
@@ -432,25 +384,32 @@ new class extends Component {
                         </tbody>
                     </table>
                 </div>
+
+                {{-- Mobile --}}
+                <div class="md:hidden space-y-3 p-4 max-h-[360px] overflow-y-auto">
+                    @foreach ($this->tasks as $task)
+                        <div class="rounded-xl border border-zinc-200 bg-white p-4 dark:border-white/10 dark:bg-zinc-950/80">
+                            <a href="{{ route('tasks.show', $task) }}" class="font-semibold text-zinc-950 hover:underline dark:text-white" wire:navigate>
+                                {{ $task->title }}
+                            </a>
+                            <div class="mt-2 flex flex-wrap items-center gap-2">
+                                <x-ui.status-badge :status="$task->status" />
+                                <span class="text-xs text-zinc-500">{{ $task->assignee?->name ?? 'Unassigned' }}</span>
+                            </div>
+                            <div class="mt-2 flex items-center justify-between">
+                                <span class="text-xs text-zinc-500">{{ $task->due_date?->format('M d, Y') ?? 'No date' }}</span>
+                                @if ($task->isOverdue())
+                                    <span class="text-xs font-medium text-red-600">Overdue</span>
+                                @endif
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
             @else
-                <div class="p-5">
-                    <x-ui.empty-state title="No matching tasks"
-                        description="Create a task or change the status filter to widen the list." />
+                <div class="p-6">
+                    <x-ui.empty-state title="No matching tasks" description="Create a task or change the status filter to widen the list." />
                 </div>
             @endif
-
         </x-ui.card>
-
     </div>
-
 </div>
-
-<style>
-    .relative {
-        z-index: 1;
-    }
-
-    .relative .absolute {
-        z-index: 20;
-    }
-</style>

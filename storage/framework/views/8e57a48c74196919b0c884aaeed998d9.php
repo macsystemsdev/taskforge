@@ -8,7 +8,7 @@ use App\Actions\Projects\DeleteProjectAction;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 ?>
 
-<div id="taskforge-project" data-project-id="<?php echo e($project->id); ?>"         data-user-id="<?php echo e(auth()->id()); ?>"
+<div id="taskforge-project" data-project-id="<?php echo e($project->id); ?>" data-user-id="<?php echo e(auth()->id()); ?>"
     data-user-name="<?php echo e(auth()->user()->name); ?>">
     <?php if (isset($component)) { $__componentOriginal1f4cdfbcf032dc00af93962c134fd24f = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal1f4cdfbcf032dc00af93962c134fd24f = $attributes; } ?>
@@ -29,8 +29,9 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
             $dueDate = $project->due_date ? $project->due_date->format('M d, Y') : __('No due date');
         ?>
 
+        
         <div
-            class="mb-6 overflow-hidden rounded-3xl border border-zinc-200 bg-white/80 p-5 shadow-sm backdrop-blur sm:p-6 dark:border-white/10 dark:bg-zinc-900/70">
+            class="mb-6 rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-zinc-900/70 sm:p-8">
             <?php if (isset($component)) { $__componentOriginal91a231a9270579fa1ae9246bd51fb785 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal91a231a9270579fa1ae9246bd51fb785 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.page-header','data' => ['title' => $project->name,'description' => $project->description ?: __('No project description has been added yet.'),'eyebrow' => $project->workspace->organization->name . ' / ' . $project->workspace->name]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -44,8 +45,8 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                  <?php $__env->slot('actions', null, []); ?> 
-
-                    <?php if (isset($component)) { $__componentOriginaldf5a194c1ccdd1698e9a89f0cb5bf2c8 = $component; } ?>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <?php if (isset($component)) { $__componentOriginaldf5a194c1ccdd1698e9a89f0cb5bf2c8 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginaldf5a194c1ccdd1698e9a89f0cb5bf2c8 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.status-badge','data' => ['status' => $project->status]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('ui.status-badge'); ?>
@@ -68,32 +69,26 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 <?php unset($__componentOriginaldf5a194c1ccdd1698e9a89f0cb5bf2c8); ?>
 <?php endif; ?>
 
-                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($project->status->isActive()): ?>
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(auth()->user()->can('update', $project)): ?>
-                            <a href="<?php echo e(route('projects.edit', $project)); ?>" wire:navigate class="tf-button-secondary">
-                                Edit
-                            </a>
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($project->status->isActive()): ?>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(auth()->user()->can('update', $project)): ?>
+                                <a href="<?php echo e(route('projects.edit', $project)); ?>" wire:navigate
+                                    class="tf-button-secondary">Edit</a>
+                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(auth()->user()->can('complete', $project)): ?>
+                                <button wire:click="completeProject" class="tf-button-primary">Complete</button>
+                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(auth()->user()->can('cancel', $project)): ?>
+                                <button wire:click="cancelProject" class="tf-button-secondary">Cancel</button>
+                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(auth()->user()->can('complete', $project)): ?>
-                            <button wire:click="completeProject" class="tf-button-primary">
-                                Complete
-                            </button>
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(auth()->user()->can('delete', $project)): ?>
+                            <button wire:click="deleteProject" wire:confirm="Delete this project?"
+                                class="tf-button-danger">Delete</button>
                         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(auth()->user()->can('cancel', $project)): ?>
-                            <button wire:click="cancelProject" class="tf-button-secondary">
-                                Cancel
-                            </button>
-                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-
-                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(auth()->user()->can('delete', $project)): ?>
-                        <button wire:click="deleteProject" wire:confirm="Delete this project?" class="tf-button-danger">
-                            Delete
-                        </button>
-                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-
+                    </div>
                  <?php $__env->endSlot(); ?>
              <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
@@ -107,35 +102,36 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 <?php endif; ?>
 
             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($project->isOverdue()): ?>
-                <div class="mt-5 rounded-2xl border border-red-200 bg-red-50/80 p-4 text-sm text-red-700">
+                <div
+                    class="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300">
                     This project is overdue.
                 </div>
             <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($project->hasUpcomingDeadlines()): ?>
-                <div class="mt-3 rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-700">
+                <div
+                    class="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300">
                     Some tasks are approaching their deadlines.
                 </div>
             <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
         </div>
 
+        
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <?php if (isset($component)) { $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.card','data' => ['class' => 'space-y-2']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.card','data' => ['class' => 'p-5']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('ui.card'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['class' => 'space-y-2']); ?>
+<?php $component->withAttributes(['class' => 'p-5']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-                <p class="tf-muted">Team</p>
-                <div class="flex items-center gap-2">
-                    <p class="font-semibold text-zinc-950 dark:text-white"><?php echo e($project->team->name); ?></p>
-                </div>
+                <p class="tf-muted text-sm">Team</p>
+                <p class="mt-2 font-semibold text-zinc-950 dark:text-white truncate"><?php echo e($project->team->name); ?></p>
              <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93)): ?>
@@ -149,18 +145,18 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
             <?php if (isset($component)) { $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.card','data' => ['class' => 'space-y-2']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.card','data' => ['class' => 'p-5']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('ui.card'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['class' => 'space-y-2']); ?>
+<?php $component->withAttributes(['class' => 'p-5']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-                <p class="tf-muted">Due date</p>
-                <p class="font-semibold text-zinc-950 dark:text-white"><?php echo e($dueDate); ?></p>
+                <p class="tf-muted text-sm">Due date</p>
+                <p class="mt-2 font-semibold text-zinc-950 dark:text-white"><?php echo e($dueDate); ?></p>
              <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93)): ?>
@@ -174,18 +170,20 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
             <?php if (isset($component)) { $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.card','data' => ['class' => 'space-y-2']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.card','data' => ['class' => 'p-5']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('ui.card'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['class' => 'space-y-2']); ?>
+<?php $component->withAttributes(['class' => 'p-5']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-                <p class="tf-muted">Open tasks</p>
-                <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white"><?php echo e($openTasks); ?></p>
+                <p class="tf-muted text-sm">Open tasks</p>
+                <p class="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white"><?php echo e($openTasks); ?>
+
+                </p>
              <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93)): ?>
@@ -199,18 +197,19 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
             <?php if (isset($component)) { $__componentOriginaldae4cd48acb67888a4631e1ba48f2f93 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.card','data' => ['class' => 'space-y-2']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.ui.card','data' => ['class' => 'p-5']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('ui.card'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['class' => 'space-y-2']); ?>
+<?php $component->withAttributes(['class' => 'p-5']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-                <p class="tf-muted">Completed</p>
-                <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white"><?php echo e($completedTasks); ?></p>
+                <p class="tf-muted text-sm">Completed</p>
+                <p class="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+                    <?php echo e($completedTasks); ?></p>
              <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginaldae4cd48acb67888a4631e1ba48f2f93)): ?>
@@ -223,12 +222,10 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 <?php endif; ?>
         </div>
 
-
-        <div class="mt-6 grid gap-6 md:grid-cols-[1fr_380px] xl:grid-cols-[1fr_420px]">
-
-            <!-- Left column -->
-            <div class="space-y-6">
-
+        
+        <div class="mt-6 grid gap-6 lg:grid-cols-[1fr_380px] xl:grid-cols-[1fr_420px]">
+            
+            <div class="space-y-6 min-w-0">
                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(auth()->user()->can('createTask', $project)): ?>
                     <?php
 $__split = function ($name, $params = []) {
@@ -262,9 +259,7 @@ unset($__split);
 $__split = function ($name, $params = []) {
     return [$name, $params];
 };
-[$__name, $__params] = $__split('comments.comment-section', [
-                    'commentable' => $project,
-                ]);
+[$__name, $__params] = $__split('comments.comment-section', ['commentable' => $project]);
 
 $__keyOuter = $__key ?? null;
 
@@ -286,18 +281,15 @@ unset($__params);
 unset($__componentSlots);
 unset($__split);
 ?>
-
             </div>
 
-            <!-- Right column -->
-            <aside class="space-y-6 md:sticky md:top-20">
+            
+            <aside class="space-y-6 lg:sticky lg:top-20 h-fit">
                 <?php
 $__split = function ($name, $params = []) {
     return [$name, $params];
 };
-[$__name, $__params] = $__split('projects.project-presence', [
-                    'project' => $project,
-                ]);
+[$__name, $__params] = $__split('projects.project-presence', ['project' => $project]);
 
 $__keyOuter = $__key ?? null;
 
@@ -319,14 +311,11 @@ unset($__params);
 unset($__componentSlots);
 unset($__split);
 ?>
-
                 <?php
 $__split = function ($name, $params = []) {
     return [$name, $params];
 };
-[$__name, $__params] = $__split('projects.project-details', [
-                    'project' => $project,
-                ]);
+[$__name, $__params] = $__split('projects.project-details', ['project' => $project]);
 
 $__keyOuter = $__key ?? null;
 
@@ -348,14 +337,11 @@ unset($__params);
 unset($__componentSlots);
 unset($__split);
 ?>
-
                 <?php
 $__split = function ($name, $params = []) {
     return [$name, $params];
 };
-[$__name, $__params] = $__split('projects.project-files', [
-                    'project' => $project,
-                ]);
+[$__name, $__params] = $__split('projects.project-files', ['project' => $project]);
 
 $__keyOuter = $__key ?? null;
 
@@ -378,7 +364,6 @@ unset($__componentSlots);
 unset($__split);
 ?>
             </aside>
-
         </div>
      <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
