@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Notification;
 
-#[Fillable(['name', 'slug', 'is_personal', 'workspace_id', 'description'])]
+#[Fillable(['name', 'slug', 'is_personal', 'workspace_id', 'description', 'current_team_id'])]
 class Team extends Model
 {
     /** @use HasFactory<TeamFactory> */

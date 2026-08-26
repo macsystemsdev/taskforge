@@ -11,6 +11,7 @@
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
+    /* Color palette */
     --color-zinc-50: #fafafa;
     --color-zinc-100: #f5f5f5;
     --color-zinc-200: #e5e5e5;
@@ -23,9 +24,16 @@
     --color-zinc-900: #171717;
     --color-zinc-950: #0a0a0a;
 
+    /* Accent colors */
     --color-accent: var(--color-neutral-800);
     --color-accent-content: var(--color-neutral-800);
     --color-accent-foreground: var(--color-white);
+    
+    /* Additional utility colors */
+    --color-success: #10b981;
+    --color-warning: #f59e0b;
+    --color-danger: #ef4444;
+    --color-info: #3b82f6;
 }
 
 @layer theme {
@@ -37,7 +45,6 @@
 }
 
 @layer base {
-
     *,
     ::after,
     ::before,
@@ -45,51 +52,103 @@
     ::file-selector-button {
         border-color: var(--color-gray-200, currentColor);
     }
-}
 
-[data-flux-field]:not(ui-radio, ui-checkbox) {
-    @apply grid gap-2;
-}
-
-[data-flux-label] {
-    @apply  !mb-0 !leading-tight;
-}
-
-input:focus[data-flux-control],
-textarea:focus[data-flux-control],
-select:focus[data-flux-control] {
-    @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
-}
-
-@layer base {
-    body {
-        @apply bg-zinc-50 text-zinc-950 antialiased dark:bg-zinc-950 dark:text-zinc-100;
+    /* Smooth scrolling for better UX */
+    html {
+        scroll-behavior: smooth;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
     }
 
+    body {
+        @apply bg-zinc-50 text-zinc-950 antialiased dark:bg-zinc-950 dark:text-zinc-100;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Improve focus visibility for accessibility */
+    :focus-visible {
+        @apply outline-2 outline-offset-2 outline-accent;
+    }
+
+    /* Form elements base styles */
     label {
         @apply text-sm font-medium text-zinc-800 dark:text-zinc-200;
+        margin-bottom: 0.375rem;
+        display: inline-block;
     }
 
     input:not([type='checkbox']):not([type='radio']),
     textarea,
     select {
-        @apply rounded-lg border-zinc-300 bg-white text-sm text-zinc-950 shadow-xs transition placeholder:text-zinc-400 focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10 dark:border-white/10 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-white dark:focus:ring-white/10;
+        @apply rounded-lg border-zinc-300 bg-white text-sm text-zinc-950 shadow-xs transition-all duration-200 placeholder:text-zinc-400 focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10 dark:border-white/10 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-white dark:focus:ring-white/10;
+        width: 100%;
     }
 
+    input:not([type='checkbox']):not([type='radio']):hover,
+    textarea:hover,
+    select:hover {
+        @apply border-zinc-400 dark:border-white/20;
+    }
+
+    input:not([type='checkbox']):not([type='radio']):disabled,
+    textarea:disabled,
+    select:disabled {
+        @apply cursor-not-allowed opacity-60;
+    }
+
+    /* Checkbox and radio styling */
+    input[type='checkbox'],
+    input[type='radio'] {
+        @apply rounded border-zinc-300 text-accent focus:ring-accent dark:border-white/10;
+    }
+
+    /* Table styles */
     table {
         @apply w-full border-separate border-spacing-0 text-sm;
     }
 
     thead th {
         @apply border-b border-zinc-200 bg-zinc-50 px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-400;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        backdrop-filter: blur(8px);
     }
 
     tbody td {
         @apply border-b border-zinc-100 px-4 py-4 align-middle text-zinc-700 dark:border-white/5 dark:text-zinc-300;
     }
+
+    tbody tr:hover {
+        @apply bg-zinc-50/50 dark:bg-white/[0.02];
+        transition: background-color 0.2s ease;
+    }
+
+    tbody tr:last-child td {
+        @apply border-b-0;
+    }
 }
 
 @layer components {
+    /* Panel and card components */
+    .tf-panel {
+        @apply rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-white/10 dark:bg-zinc-900;
+    }
+
+    .tf-panel-header {
+        @apply px-6 py-4 border-b border-zinc-200 dark:border-white/10;
+    }
+
+    .tf-panel-body {
+        @apply px-6 py-5;
+    }
+
+    .tf-panel-footer {
+        @apply px-6 py-4 border-t border-zinc-200 bg-zinc-50 dark:border-white/10 dark:bg-white/[0.03];
+    }
+
     .tf-panel-title {
         @apply text-base font-semibold text-zinc-950 dark:text-white;
     }
@@ -98,32 +157,73 @@ select:focus[data-flux-control] {
         @apply mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400;
     }
 
+    /* Typography utilities */
     .tf-muted {
         @apply text-sm text-zinc-500 dark:text-zinc-400;
     }
 
+    .tf-text-small {
+        @apply text-xs text-zinc-500 dark:text-zinc-400;
+    }
+
+    .tf-text-large {
+        @apply text-lg text-zinc-900 dark:text-zinc-100;
+    }
+
+    /* Interactive elements */
     .tf-row-link {
-        @apply transition hover:bg-zinc-50 dark:hover:bg-white/[0.03];
+        @apply transition-all duration-200 hover:bg-zinc-50 dark:hover:bg-white/[0.03];
+        cursor: pointer;
+    }
+
+    /* Button base styles - can't use @apply with custom classes, so define directly */
+    .tf-button,
+    .tf-button-primary,
+    .tf-button-secondary,
+    .tf-button-danger,
+    .tf-button-success,
+    .tf-button-ghost {
+        @apply inline-flex items-center justify-center rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-60 active:scale-[0.98];
     }
 
     .tf-button-primary {
-        @apply inline-flex items-center justify-center rounded-lg bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-zinc-800 focus:outline-hidden focus:ring-2 focus:ring-zinc-900/20 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200 dark:focus:ring-white/20;
+        @apply bg-zinc-950 text-white shadow-sm hover:bg-zinc-800 focus:ring-zinc-900/20 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200 dark:focus:ring-white/20;
     }
 
     .tf-button-secondary {
-        @apply inline-flex items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 shadow-sm transition hover:bg-zinc-50 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-white/10;
+        @apply border border-zinc-200 bg-white text-zinc-800 shadow-sm hover:bg-zinc-50 focus:ring-zinc-900/20 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-white/10;
     }
 
+    .tf-button-danger {
+        @apply bg-red-600 text-white shadow-sm hover:bg-red-700 focus:ring-red-600/20 dark:bg-red-500 dark:hover:bg-red-600;
+    }
+
+    .tf-button-success {
+        @apply bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 focus:ring-emerald-600/20 dark:bg-emerald-500 dark:hover:bg-emerald-600;
+    }
+
+    .tf-button-ghost {
+        @apply text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-white/10;
+    }
+
+    /* Button sizes */
+    .tf-button-sm {
+        @apply px-3 py-1.5 text-xs;
+    }
+
+    .tf-button-lg {
+        @apply px-6 py-3 text-base;
+    }
+
+    /* Loading states */
+    .tf-button.is-loading,
     .tf-button-primary.is-loading,
     .tf-button-secondary.is-loading,
-    .tf-button-danger.is-loading {
+    .tf-button-danger.is-loading,
+    .tf-button-success.is-loading,
+    .tf-button-ghost.is-loading {
         @apply pointer-events-none cursor-not-allowed opacity-80;
-    }
-
-    .tf-button-primary:disabled,
-    .tf-button-secondary:disabled,
-    .tf-button-danger:disabled {
-        @apply pointer-events-none cursor-not-allowed opacity-80;
+        position: relative;
     }
 
     .tf-button-content {
@@ -134,17 +234,215 @@ select:focus[data-flux-control] {
         @apply ml-2 inline-flex items-center transition-opacity duration-200;
     }
 
+    .tf-button.is-loading .tf-button-content,
     .tf-button-primary.is-loading .tf-button-content,
     .tf-button-secondary.is-loading .tf-button-content,
-    .tf-button-danger.is-loading .tf-button-content {
+    .tf-button-danger.is-loading .tf-button-content,
+    .tf-button-success.is-loading .tf-button-content,
+    .tf-button-ghost.is-loading .tf-button-content {
         @apply opacity-90;
     }
 
     .tf-inline-loader {
         @apply inline-block size-4 animate-spin rounded-full border-2 border-current/70 border-t-transparent;
     }
+
+    /* Badge and status indicators */
+    .tf-badge {
+        @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+    }
+
+    .tf-badge-success {
+        @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-400;
+    }
+
+    .tf-badge-warning {
+        @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-500/10 dark:text-amber-400;
+    }
+
+    .tf-badge-danger {
+        @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-500/10 dark:text-red-400;
+    }
+
+    .tf-badge-info {
+        @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-500/10 dark:text-blue-400;
+    }
+
+    .tf-badge-neutral {
+        @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-zinc-100 text-zinc-800 dark:bg-white/10 dark:text-zinc-300;
+    }
+
+    /* Alert components */
+    .tf-alert {
+        @apply rounded-lg border p-4 text-sm;
+    }
+
+    .tf-alert-success {
+        @apply rounded-lg border p-4 text-sm border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400;
+    }
+
+    .tf-alert-warning {
+        @apply rounded-lg border p-4 text-sm border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-400;
+    }
+
+    .tf-alert-danger {
+        @apply rounded-lg border p-4 text-sm border-red-200 bg-red-50 text-red-800 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-400;
+    }
+
+    .tf-alert-info {
+        @apply rounded-lg border p-4 text-sm border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-400;
+    }
+
+    /* Empty states */
+    .tf-empty-state {
+        @apply flex flex-col items-center justify-center py-12 text-center;
+    }
+
+    .tf-empty-state-icon {
+        @apply mb-4 flex size-16 items-center justify-center rounded-full bg-zinc-100 dark:bg-white/5;
+    }
+
+    .tf-empty-state-title {
+        @apply text-base font-semibold text-zinc-900 dark:text-zinc-100;
+    }
+
+    .tf-empty-state-description {
+        @apply mt-2 text-sm text-zinc-500 dark:text-zinc-400 max-w-md;
+    }
+
+    /* Form layouts */
+    .tf-form-group {
+        @apply space-y-2;
+    }
+
+    .tf-form-help {
+        @apply mt-1 text-xs text-zinc-500 dark:text-zinc-400;
+    }
+
+    .tf-form-error {
+        @apply mt-1 text-xs text-red-600 dark:text-red-400;
+    }
+
+    /* Card grid layouts */
+    .tf-card-grid {
+        @apply grid gap-6 sm:grid-cols-2 lg:grid-cols-3;
+    }
+
+    /* Navigation */
+    .tf-nav-link {
+        @apply inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/5 dark:hover:text-zinc-100;
+    }
+
+    .tf-nav-link-active {
+        @apply bg-zinc-100 text-zinc-900 dark:bg-white/10 dark:text-white;
+    }
+
+    /* Modal/overlay enhancements */
+    .tf-modal-overlay {
+        @apply fixed inset-0 z-50 bg-black/50 backdrop-blur-sm;
+    }
+
+    /* Animation utilities */
+    .tf-fade-in {
+        animation: fadeIn 0.2s ease-in-out;
+    }
+
+    .tf-slide-in {
+        animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateY(-10px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
 }
 
-/* \[:where(&)\]:size-4 {
-    @apply size-4;
-} */
+/* Flux component enhancements */
+[data-flux-field]:not(ui-radio, ui-checkbox) {
+    @apply grid gap-2;
+}
+
+[data-flux-label] {
+    @apply !mb-0 !leading-tight;
+}
+
+input:focus[data-flux-control],
+textarea:focus[data-flux-control],
+select:focus[data-flux-control] {
+    @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
+}
+
+/* Utility classes for layout */
+@layer utilities {
+    .tf-container {
+        @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+    }
+
+    .tf-section {
+        @apply py-8 sm:py-12;
+    }
+
+    .tf-divider {
+        @apply my-6 border-t border-zinc-200 dark:border-white/10;
+    }
+}
+
+/* Responsive table wrapper */
+.tf-table-wrapper {
+    @apply overflow-x-auto rounded-lg border border-zinc-200 dark:border-white/10;
+}
+
+/* Print styles */
+@media print {
+    .tf-no-print {
+        display: none !important;
+    }
+    
+    body {
+        background: white;
+    }
+}
+
+/* Mobile sidebar fixes */
+@media (max-width: 1023px) {
+    flux-sidebar flux-dropdown {
+        display: block !important;
+        width: 100% !important;
+    }
+    
+    flux-sidebar flux-dropdown [data-flux-sidebar-item] {
+        display: flex !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+    
+    /* Ensure the notification text doesn't hide */
+    flux-sidebar flux-dropdown [data-flux-sidebar-item] span,
+    flux-sidebar flux-dropdown [data-flux-sidebar-item] div {
+        display: inline-flex !important;
+        opacity: 1 !important;
+    }
+}
+
+/* Fix disappearing notification dropdown in sidebar */
+flux-sidebar {
+    flux-dropdown {
+        display: block !important;
+        width: 100% !important;
+    }
+}

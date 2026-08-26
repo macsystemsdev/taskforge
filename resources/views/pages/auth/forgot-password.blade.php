@@ -1,31 +1,28 @@
-<x-layouts::auth :title="__('Forgot password')">
+@extends('layouts.auth-simple')
+
+@section('title', __('Forgot password'))
+
+@section('content')
     <div class="flex flex-col gap-6">
-        <x-auth-header :title="__('Reset account access')" :description="__('Enter your email address to receive a TaskForge password reset link.')" />
+        <h1 class="text-2xl font-bold text-center">{{ __('Reset account access') }}</h1>
+        <p class="text-sm text-center text-zinc-600">{{ __('Enter your email address to receive a TaskForge password reset link.') }}</p>
 
-        <!-- Session Status -->
-        <x-auth-session-status class="text-center" :status="session('status')" />
+        @if (session('status'))
+            <div class="text-sm text-green-600">{{ session('status') }}</div>
+        @endif
 
-        <form method="POST" action="{{ route('password.email') }}" class="flex flex-col gap-6">
+        <form method="POST" action="{{ route('password.email') }}" class="flex flex-col gap-4">
             @csrf
-
-            <!-- Email Address -->
-            <flux:input
-                name="email"
-                :label="__('Email address')"
-                type="email"
-                required
-                autofocus
-                placeholder="email@example.com"
-            />
-
-            <flux:button variant="primary" type="submit" class="w-full" data-test="email-password-reset-link-button">
-                {{ __('Email password reset link') }}
-            </flux:button>
+            <div>
+                <label class="block text-sm font-medium">{{ __('Email') }}</label>
+                <input type="email" name="email" value="{{ old('email') }}" required autofocus class="mt-1 block w-full rounded-md border-zinc-300 shadow-sm">
+                @error('email')
+                    <span class="text-red-600 text-sm">{{ $message }}</span>
+                @enderror
+            </div>
+            <button type="submit" class="w-full rounded-md bg-blue-600 px-4 py-2 text-white">
+                {{ __('Email Password Reset Link') }}
+            </button>
         </form>
-
-        <div class="space-x-1 rtl:space-x-reverse text-center text-sm text-zinc-400">
-            <span>{{ __('Or, return to') }}</span>
-            <flux:link :href="route('login')" wire:navigate>{{ __('log in') }}</flux:link>
-        </div>
     </div>
-</x-layouts::auth>
+@endsection

@@ -1,4 +1,8 @@
-<x-layouts::auth :title="__('Log in')">
+@extends('layouts.auth-simple')
+
+@section('title', __('Log in'))
+
+@section('content')
     <div class="flex flex-col gap-6">
         <x-auth-header :title="__('Sign in to TaskForge')" :description="__('Access your workspace, tasks, and team updates.')" />
 
@@ -56,4 +60,4 @@
             </div>
         @endif
     </div>
-</x-layouts::auth>
+@endsection

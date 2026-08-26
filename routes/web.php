@@ -98,6 +98,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         }
     )->name('projects.show');
 
+    
+
     Route::get(
         '/projects/{project}/attachments/{attachment}/download',
         function (Project $project, \App\Models\FileAttachment $attachment, \App\Domain\Storage\Actions\DownloadProjectAttachmentAction $download) {
@@ -202,6 +204,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get(
         '/organizations/{organization}/billing',
         function (Organization $organization) {
+            Gate::authorize('update', $organization);
             return view('pages.billing.show', compact('organization'));
         }
     )->name('organizations.billing');

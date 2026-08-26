@@ -71,7 +71,7 @@ test('two factor authentication disabled when confirmation abandoned between req
 
 test('password can be updated', function () {
     $user = User::factory()->create([
-        'password' => Hash::make('password'),
+        'password' => 'NewPassword123!',
     ]);
 
     $this->actingAs($user);
@@ -89,7 +89,7 @@ test('password can be updated', function () {
 
 test('correct password must be provided to update password', function () {
     $user = User::factory()->create([
-        'password' => Hash::make('password'),
+        'password' => 'NewPassword123!',
     ]);
 
     $this->actingAs($user);

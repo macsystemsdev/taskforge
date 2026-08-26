@@ -5,6 +5,7 @@ namespace App\Domain\Usage\Services;
 use App\Events\UsageUpdated;
 use App\Models\Organization;
 use App\Models\OrganizationUsage;
+use Illuminate\Support\Facades\DB;
 
 class OrganizationUsageService
 {
@@ -80,9 +81,17 @@ class OrganizationUsageService
         $this->organization->usage()->firstOrCreate()->increment($column, $amount);
     }
 
+
     protected function decrement(string $column, int $amount): void
     {
-        $this->organization->usage()->firstOrCreate()->decrement($column, $amount);
+        $usage = $this->organization->usage()->firstOrCreate();
+
+        // Check if current value is greater than 0 before decrementing
+        if ($usage->{$column} > 0) {
+            // Only decrement by the minimum of current value or amount
+            $decrementAmount = min($usage->{$column}, $amount);
+            $usage->decrement($column, $decrementAmount);
+        }
     }
 
     /**

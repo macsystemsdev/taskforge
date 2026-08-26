@@ -106,7 +106,8 @@ trait HasTeams
      */
     public function isCurrentTeam(Team $team): bool
     {
-        return $this->team_id === $team->id;
+        // Use the attribute directly
+        return $this->getAttribute('current_team_id') === $team->id;
     }
 
     /**
@@ -137,7 +138,7 @@ trait HasTeams
     {
         return $this->teams()
             ->get()
-            ->map(fn (Team $team) => ! $includeCurrent && $this->isCurrentTeam($team) ? null : $this->toUserTeam($team))
+            ->map(fn(Team $team) => ! $includeCurrent && $this->isCurrentTeam($team) ? null : $this->toUserTeam($team))
             ->filter()
             ->values();
     }
@@ -178,10 +179,23 @@ trait HasTeams
 
     public function fallbackTeam(?Team $excluding = null): ?Team
     {
-        return $this->teams()
-            ->when($excluding, fn ($query) => $query->where('teams.id', '!=', $excluding->id))
-            ->orderByRaw('LOWER(teams.name)')
-            ->first();
+        $query = $this->teams()
+            ->when($excluding, fn($query) => $query->where('teams.id', '!=', $excluding->id));
+
+        // If excluding team has a workspace, prefer teams from the same workspace
+        if ($excluding && $excluding->workspace_id) {
+            $sameWorkspaceTeam = (clone $query)
+                ->where('teams.workspace_id', $excluding->workspace_id)
+                ->orderByRaw('LOWER(teams.name)')
+                ->first();
+
+            if ($sameWorkspaceTeam) {
+                return $sameWorkspaceTeam;
+            }
+        }
+
+        // Fallback to any team
+        return $query->orderByRaw('LOWER(teams.name)')->first();
     }
 
     /**

@@ -8,6 +8,7 @@ use Flux\Flux;
 use Livewire\Component;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Computed;
+use Illuminate\Validation\Rule;
 
 new class extends Component {
     public Workspace $workspace;
@@ -46,12 +47,15 @@ new class extends Component {
     public function rules(): array
     {
         return [
-            'name' => ['required', 'max:255'],
-
+            'name' => [
+                'required',
+                'max:255',
+                Rule::unique('projects', 'slug')->where(function ($query) {
+                    return $query->where('workspace_id', $this->workspace->id);
+                }),
+            ],
             'teamId' => ['required', 'exists:teams,id'],
-
             'description' => ['nullable'],
-
             'dueDate' => ['nullable', 'date', 'after_or_equal:today'],
         ];
     }

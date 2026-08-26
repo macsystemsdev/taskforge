@@ -11,7 +11,6 @@ use Livewire\Component;
 use App\Domain\Usage\Actions\DecreaseTeamsAction;
 
 new class extends Component {
-
     public Team $team;
 
     public DecreaseTeamsAction $decreaseTeam;
@@ -39,26 +38,40 @@ new class extends Component {
 
         if ($validated['deleteName'] !== $this->team->name) {
             $this->addError('deleteName', __('The team name does not match.'));
-
             return;
         }
 
         $user = Auth::user();
 
-        $fallbackTeam = $user->isCurrentTeam($this->team)
-            ? $user->fallbackTeam($this->team)
-            : null;
+        // Find fallback team BEFORE deletion
+        $fallbackTeam = null;
+        if ($user->isCurrentTeam($this->team)) {
+            $fallbackTeam = $user->fallbackTeam($this->team);
+        }
 
         DB::transaction(function () use ($user) {
+            // Switch other affected users to their fallback team
             User::where('current_team_id', $this->team->id)
                 ->where('id', '!=', $user->id)
-                ->each(fn (User $affectedUser) => $affectedUser->switchTeam($affectedUser->personalTeam()));
+                ->each(function (User $affectedUser) {
+                    $fallback = $affectedUser->fallbackTeam($this->team);
+                    if ($fallback) {
+                        $affectedUser->switchTeam($fallback);
+                    } else {
+                        // No fallback team, set to null
+                        $affectedUser->update(['current_team_id' => null]);
+                    }
+                });
 
-                app(DecreaseTeamsAction::class)->handle($this->team->workspace->organization);
-            $this->team->memberships()->delete();
+            // Decrease team count
+            app(DecreaseTeamsAction::class)->handle($this->team->workspace->organization);
+
+            // Delete memberships and team
+            $this->team->teamMemberships()->delete();
             $this->team->delete();
         });
 
+        // Switch the current user AFTER deletion
         if ($fallbackTeam) {
             $user->switchTeam($fallbackTeam);
         }
@@ -88,7 +101,8 @@ new class extends Component {
         </div>
 
         <div class="space-y-4">
-            <flux:input wire:model="deleteName" :label="$this->deleteConfirmLabel" required data-test="delete-team-name" />
+            <flux:input wire:model="deleteName" :label="$this->deleteConfirmLabel" required
+                data-test="delete-team-name" />
         </div>
 
         <div class="flex justify-end space-x-2 rtl:space-x-reverse">

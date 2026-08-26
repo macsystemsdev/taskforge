@@ -223,7 +223,7 @@ class SubscriptionPlan extends Model
 
     public function isPurchasable(): bool
     {
-        return $this->status->isPurchasable();
+        return $this->status->isPurchasable() && ! $this->isFree();
     }
 
     public function isVisible(): bool

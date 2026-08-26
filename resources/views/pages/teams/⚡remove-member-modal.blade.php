@@ -16,12 +16,7 @@ new class extends Component {
 
     public string $modalName = 'remove-member';
 
-    public function mount(
-        Team $team,
-        ?int $memberId = null,
-        ?string $memberName = null,
-        ?string $modalName = null,
-    ): void
+    public function mount(Team $team, ?int $memberId = null, ?string $memberName = null, ?string $modalName = null): void
     {
         $this->team = $team;
         $this->memberId = $memberId;
@@ -30,38 +25,42 @@ new class extends Component {
     }
 
     public function removeMember(): void
-    {
-        Gate::authorize('removeMember', $this->team);
+{
+    Gate::authorize('removeMember', $this->team);
 
-        $user = User::findOrFail($this->memberId);
+    $user = User::findOrFail($this->memberId);
 
-        if ($this->memberName === '') {
-            $this->memberName = $user->name;
-        }
-
-         $user->notify(
-
-                new TeamMemberRemovedNotification(
-                    team: $team,
-                    role: $user->role,
-                    removedBy: auth()->user()
-                )
-            );
-
-        $this->team->memberships()
-            ->where('user_id', $user->id)
-            ->delete();
-
-        if ($user->isCurrentTeam($this->team)) {
-            $user->switchTeam($user->personalTeam());
-        }
-
-        $this->dispatch('close-modal', name: $this->modalName);
-
-        Flux::toast(variant: 'success', text: __('Member removed.'));
-
-        $this->redirectRoute('teams.edit', ['team' => $this->team->slug], navigate: true);
+    if ($this->memberName === '') {
+        $this->memberName = $user->name;
     }
+
+    $role = $user->teamRole($this->team);  // Get the role before deletion
+    
+    $user->notify(
+        new TeamMemberRemovedNotification(
+            team: $this->team,
+            role: $role ?? TeamRole::MEMBER,  // Provide default role
+            removedBy: auth()->user()
+        )
+    );
+
+    $this->team->members()
+        ->where('user_id', $user->id)
+        ->delete();
+
+    if ($user->isCurrentTeam($this->team)) {
+        $fallback = $user->fallbackTeam($this->team);
+        if ($fallback) {
+            $user->switchTeam($fallback);
+        }
+    }
+
+    $this->dispatch('close-modal', name: $this->modalName);
+
+    Flux::toast(variant: 'success', text: __('Member removed.'));
+
+    $this->redirectRoute('teams.edit', ['team' => $this->team->slug], navigate: true);
+}
 }; ?>
 
 <flux:modal :name="$modalName" focusable class="max-w-lg">
@@ -76,7 +75,8 @@ new class extends Component {
             <flux:modal.close>
                 <flux:button variant="filled">{{ __('Cancel') }}</flux:button>
             </flux:modal.close>
-            <flux:button variant="danger" type="submit" data-test="remove-member-confirm">{{ __('Remove member') }}</flux:button>
+            <flux:button variant="danger" type="submit" data-test="remove-member-confirm">{{ __('Remove member') }}
+            </flux:button>
         </div>
     </form>
 </flux:modal>

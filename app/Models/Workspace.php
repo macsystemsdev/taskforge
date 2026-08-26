@@ -2,60 +2,29 @@
 
 namespace App\Models;
 
-use App\Domain\Projects\Enums\ProjectStatus;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Table;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Override;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Table('workspaces')]
-#[Fillable(['name', 'description', 'organization_id', 'slug', 'is_default'])]
 class Workspace extends Model
 {
+    use HasFactory;
 
+    protected $fillable = [
+        'organization_id',
+        'name',
+        'slug',
+        'description',
+        'is_default',
+    ];
 
-    public function organization(): BelongsTo
+    public function organization()
     {
         return $this->belongsTo(Organization::class);
     }
 
-    public function projects(): HasMany
-    {
-        return $this->hasMany(Project::class);
-    }
-
-    public function teams(): HasMany
+    public function teams()
     {
         return $this->hasMany(Team::class);
-    }
-
-    // activity log
-    public function activityLogs(): MorphMany
-    {
-        return $this->morphMany(ActivityLog::class, 'subject');
-    }
-
-    public function fileAttachments(): MorphMany
-    {
-        return $this->morphMany(
-            FileAttachment::class,
-            'attachable',
-        );
-    }
-
-    // route by slug
-    public function getRouteKeyName(): string
-    {
-        return 'slug';
-    }
-
-    public function leadershipMembers()
-    {
-        return $this
-            ->organization
-            ->administratorUsers();
     }
 }

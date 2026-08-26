@@ -19,7 +19,9 @@ use Illuminate\Database\Eloquent\Model;
     'provider',
     'provider_reference',
     'metadata',
-    'paid_at'
+    'paid_at',
+    'failure_reason',
+    'failed_at'
 ])]
 
 class PaymentTransaction extends Model
@@ -37,14 +39,11 @@ class PaymentTransaction extends Model
     protected function casts(): array
     {
         return [
-
             'provider' => PaymentProvider::class,
-
             'status' => PaymentStatus::class,
-
             'metadata' => 'array',
-
             'paid_at' => 'datetime',
+            'failed_at' => 'datetime',
         ];
     }
 
@@ -74,5 +73,14 @@ class PaymentTransaction extends Model
             ->whereKey($id)
             ->where('status', PaymentStatus::PROCESSING)
             ->first();
+    }
+
+    public function markFailed(?string $reason = null): void
+    {
+        $this->update([
+            'status' => PaymentStatus::FAILED,
+            'failure_reason' => $reason,
+            'failed_at' => now(),
+        ]);
     }
 }

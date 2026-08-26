@@ -3,8 +3,10 @@
 namespace Database\Factories;
 
 use App\Domain\Teams\Enums\TeamRole;
+use App\Models\Organization;
 use App\Models\Team;
 use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -14,16 +16,8 @@ use Illuminate\Support\Str;
  */
 class UserFactory extends Factory
 {
-    /**
-     * The current password being used by the factory.
-     */
     protected static ?string $password;
 
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         return [
@@ -41,8 +35,30 @@ class UserFactory extends Factory
     public function configure(): static
     {
         return $this->afterCreating(function (User $user) {
-            $team = Team::factory()->personal()->create([
+            // Create organization
+            $organization = Organization::create([
+                'owner_id' => $user->id,
+                'name' => "{$user->name}'s Org",
+                'slug' => Str::slug("{$user->name}-org-" . $user->id),
+                'subscription_plan' => 'free',
+                'subscription_status' => 'active',
+            ]);
+            
+            // Create workspace
+            $workspace = Workspace::create([
+                'organization_id' => $organization->id,
+                'name' => 'Personal Workspace',
+                'slug' => Str::slug("personal-workspace-" . $user->id),
+                'description' => 'Personal workspace',
+                'is_default' => true,
+            ]);
+            
+            // Create personal team
+            $team = Team::create([
+                'workspace_id' => $workspace->id,
                 'name' => "{$user->name}'s Team",
+                'slug' => Str::slug("{$user->name}-team-" . $user->id),
+                'is_personal' => true,
             ]);
 
             $team->members()->attach($user, [
@@ -53,9 +69,6 @@ class UserFactory extends Factory
         });
     }
 
-    /**
-     * Indicate that the model's email address should be unverified.
-     */
     public function unverified(): static
     {
         return $this->state(fn (array $attributes) => [
@@ -63,9 +76,6 @@ class UserFactory extends Factory
         ]);
     }
 
-    /**
-     * Indicate that the model has two-factor authentication configured.
-     */
     public function withTwoFactor(): static
     {
         return $this->state(fn (array $attributes) => [

@@ -1,69 +1,49 @@
-<x-layouts::auth :title="__('Register')">
+@extends('layouts.auth-simple')
+
+@section('title', __('Register'))
+
+@section('content')
     <div class="flex flex-col gap-6">
-        <x-auth-header :title="__('Create your TaskForge account')" :description="__('Start organizing your team, projects, and tasks.')" />
+        <h1 class="text-2xl font-bold text-center">{{ __('Create your TaskForge account') }}</h1>
+        <p class="text-sm text-center text-zinc-600">{{ __('Start organizing your team, projects, and tasks.') }}</p>
 
-        <!-- Session Status -->
-        <x-auth-session-status class="text-center" :status="session('status')" />
-
-        <form method="POST" action="{{ route('register.store') }}" class="flex flex-col gap-6">
+        <form method="POST" action="{{ route('register.store') }}" class="flex flex-col gap-4">
             @csrf
-            <!-- Name -->
-            <flux:input
-                name="name"
-                :label="__('Name')"
-                :value="old('name')"
-                type="text"
-                required
-                autofocus
-                autocomplete="name"
-                :placeholder="__('Full name')"
-            />
-
-            <!-- Email Address -->
-            <flux:input
-                name="email"
-                :label="__('Email address')"
-                :value="old('email')"
-                type="email"
-                required
-                autocomplete="email"
-                placeholder="email@example.com"
-            />
-
-            <!-- Password -->
-            <flux:input
-                name="password"
-                :label="__('Password')"
-                type="password"
-                required
-                autocomplete="new-password"
-                :placeholder="__('Password')"
-                passwordrules="{{ \Illuminate\Validation\Rules\Password::defaults()->toPasswordRulesString() }}"
-                viewable
-            />
-
-            <!-- Confirm Password -->
-            <flux:input
-                name="password_confirmation"
-                :label="__('Confirm password')"
-                type="password"
-                required
-                autocomplete="new-password"
-                :placeholder="__('Confirm password')"
-                passwordrules="{{ \Illuminate\Validation\Rules\Password::defaults()->toPasswordRulesString() }}"
-                viewable
-            />
-
-            <div class="flex items-center justify-end">
-                <flux:button type="submit" variant="primary" class="w-full" data-test="register-user-button">
-                    {{ __('Create account') }}
-                </flux:button>
+            <div>
+                <label class="block text-sm font-medium">{{ __('Name') }}</label>
+                <input type="text" name="name" value="{{ old('name') }}" required autofocus class="mt-1 block w-full rounded-md border-zinc-300 shadow-sm">
+                @error('name')
+                    <span class="text-red-600 text-sm">{{ $message }}</span>
+                @enderror
             </div>
+            <div>
+                <label class="block text-sm font-medium">{{ __('Email') }}</label>
+                <input type="email" name="email" value="{{ old('email') }}" required class="mt-1 block w-full rounded-md border-zinc-300 shadow-sm">
+                @error('email')
+                    <span class="text-red-600 text-sm">{{ $message }}</span>
+                @enderror
+            </div>
+            <div>
+                <label class="block text-sm font-medium">{{ __('Password') }}</label>
+                <input type="password" name="password" required class="mt-1 block w-full rounded-md border-zinc-300 shadow-sm">
+                @error('password')
+                    <span class="text-red-600 text-sm">{{ $message }}</span>
+                @enderror
+            </div>
+            <div>
+                <label class="block text-sm font-medium">{{ __('Confirm Password') }}</label>
+                <input type="password" name="password_confirmation" required class="mt-1 block w-full rounded-md border-zinc-300 shadow-sm">
+            </div>
+            <button type="submit" class="w-full rounded-md bg-blue-600 px-4 py-2 text-white">
+                {{ __('Register') }}
+            </button>
         </form>
 
-        <div class="space-x-1 rtl:space-x-reverse text-center text-sm text-zinc-600 dark:text-zinc-400">
-            <span>{{ __('Already have an account?') }}</span>
-            <flux:link :href="route('login')" wire:navigate>{{ __('Log in') }}</flux:link>
-        </div>
+        @if (Route::has('login'))
+            <div class="text-sm text-center">
+                {{ __('Already have an account?') }}
+                <a href="{{ route('login') }}" class="text-blue-600">{{ __('Log in') }}</a>
+            </div>
+        @endif
     </div>
-</x-layouts::auth>
+@endsection

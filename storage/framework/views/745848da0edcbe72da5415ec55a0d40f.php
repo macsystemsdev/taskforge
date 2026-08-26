@@ -1,28 +1,30 @@
 <?php if (isset($component)) { $__componentOriginal17e56bc23bb0192e474b351c4358d446 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal17e56bc23bb0192e474b351c4358d446 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::sidebar.index','data' => ['sticky' => true,'collapsible' => 'mobile','class' => 'border-e border-zinc-200 bg-white/95 shadow-sm dark:border-white/10 dark:bg-zinc-950/95']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::sidebar.index','data' => ['sticky' => true,'collapsible' => 'mobile','class' => 'border-e border-zinc-200/80 bg-gradient-to-b from-white via-white to-zinc-50/80 shadow-sm backdrop-blur-xl dark:border-white/10 dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-900/80']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::sidebar'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['sticky' => true,'collapsible' => 'mobile','class' => 'border-e border-zinc-200 bg-white/95 shadow-sm dark:border-white/10 dark:bg-zinc-950/95']); ?>
+<?php $component->withAttributes(['sticky' => true,'collapsible' => 'mobile','class' => 'border-e border-zinc-200/80 bg-gradient-to-b from-white via-white to-zinc-50/80 shadow-sm backdrop-blur-xl dark:border-white/10 dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-900/80']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
+    
     <?php if (isset($component)) { $__componentOriginal837232b594bf97def5cd04bcaa1b6bb0 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal837232b594bf97def5cd04bcaa1b6bb0 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::sidebar.header','data' => ['class' => 'border-b border-zinc-200/70 pb-3 dark:border-white/10']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::sidebar.header','data' => ['class' => 'relative border-b border-zinc-200/60 pb-3 dark:border-white/10']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::sidebar.header'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['class' => 'border-b border-zinc-200/70 pb-3 dark:border-white/10']); ?>
+<?php $component->withAttributes(['class' => 'relative border-b border-zinc-200/60 pb-3 dark:border-white/10']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-        <?php if (isset($component)) { $__componentOriginal7b17d80ff7900603fe9e5f0b453cc7c3 = $component; } ?>
+        <div class="flex items-center justify-between gap-3">
+            <?php if (isset($component)) { $__componentOriginal7b17d80ff7900603fe9e5f0b453cc7c3 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal7b17d80ff7900603fe9e5f0b453cc7c3 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.app-logo','data' => ['sidebar' => true,'href' => ''.e(route('dashboard')).'','wire:navigate' => true]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('app-logo'); ?>
@@ -44,7 +46,7 @@
 <?php $component = $__componentOriginal7b17d80ff7900603fe9e5f0b453cc7c3; ?>
 <?php unset($__componentOriginal7b17d80ff7900603fe9e5f0b453cc7c3); ?>
 <?php endif; ?>
-        <?php if (isset($component)) { $__componentOriginal27b151307b59a43acdad47db3fb6fbd0 = $component; } ?>
+            <?php if (isset($component)) { $__componentOriginal27b151307b59a43acdad47db3fb6fbd0 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal27b151307b59a43acdad47db3fb6fbd0 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::sidebar.collapse','data' => ['class' => 'lg:hidden']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::sidebar.collapse'); ?>
@@ -66,6 +68,7 @@
 <?php $component = $__componentOriginal27b151307b59a43acdad47db3fb6fbd0; ?>
 <?php unset($__componentOriginal27b151307b59a43acdad47db3fb6fbd0); ?>
 <?php endif; ?>
+        </div>
      <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginal837232b594bf97def5cd04bcaa1b6bb0)): ?>
@@ -76,10 +79,6 @@
 <?php $component = $__componentOriginal837232b594bf97def5cd04bcaa1b6bb0; ?>
 <?php unset($__componentOriginal837232b594bf97def5cd04bcaa1b6bb0); ?>
 <?php endif; ?>
-
-    <div class="px-2 py-3">
-        <!-- Team switcher removed - teams are now organization-scoped -->
-    </div>
 
     <?php
         $currentProject = request()->route('project');
@@ -210,32 +209,20 @@
 <?php endif; ?>
 
             
-            <?php if (isset($component)) { $__componentOriginal2b4bb2cd4b8f1a3c08bae49ea918b888 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal2b4bb2cd4b8f1a3c08bae49ea918b888 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::dropdown','data' => ['position' => 'bottom','align' => 'start']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::dropdown'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['position' => 'bottom','align' => 'start']); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
-                <?php if (isset($component)) { $__componentOriginalfe86969babb72517ecf97426e7c9330d = $component; } ?>
+            <?php if (isset($component)) { $__componentOriginalfe86969babb72517ecf97426e7c9330d = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalfe86969babb72517ecf97426e7c9330d = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::sidebar.item','data' => ['icon' => 'bell','current' => request()->routeIs('notifications.*'),'class' => 'cursor-pointer']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::sidebar.item','data' => ['icon' => 'bell','href' => route('notifications.index'),'current' => request()->routeIs('notifications.*'),'wire:navigate' => true]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::sidebar.item'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['icon' => 'bell','current' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(request()->routeIs('notifications.*')),'class' => 'cursor-pointer']); ?>
+<?php $component->withAttributes(['icon' => 'bell','href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('notifications.index')),'current' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(request()->routeIs('notifications.*')),'wire:navigate' => true]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
+                <span class="flex items-center justify-between gap-2 w-full">
                     <?php echo e(__('Notifications')); ?>
-
 
                     <?php
 $__split = function ($name, $params = []) {
@@ -263,7 +250,8 @@ unset($__params);
 unset($__componentSlots);
 unset($__split);
 ?>
-                 <?php echo $__env->renderComponent(); ?>
+                </span>
+             <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginalfe86969babb72517ecf97426e7c9330d)): ?>
 <?php $attributes = $__attributesOriginalfe86969babb72517ecf97426e7c9330d; ?>
@@ -272,65 +260,6 @@ unset($__split);
 <?php if (isset($__componentOriginalfe86969babb72517ecf97426e7c9330d)): ?>
 <?php $component = $__componentOriginalfe86969babb72517ecf97426e7c9330d; ?>
 <?php unset($__componentOriginalfe86969babb72517ecf97426e7c9330d); ?>
-<?php endif; ?>
-
-                <?php if (isset($component)) { $__componentOriginalf7749b857446d2788d0b6ca0c63f9d3a = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginalf7749b857446d2788d0b6ca0c63f9d3a = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::menu.index','data' => ['class' => 'w-96 overflow-hidden p-0']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('flux::menu'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['class' => 'w-96 overflow-hidden p-0']); ?>
-<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
-                    <?php
-$__split = function ($name, $params = []) {
-    return [$name, $params];
-};
-[$__name, $__params] = $__split('notifications.notification-dropdown', []);
-
-$__keyOuter = $__key ?? null;
-
-$__key = null;
-$__componentSlots = [];
-
-$__key ??= \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::generateKey('lw-3043395526-1', $__key);
-
-$__html = app('livewire')->mount($__name, $__params, $__key, $__componentSlots);
-
-echo $__html;
-
-unset($__html);
-unset($__key);
-$__key = $__keyOuter;
-unset($__keyOuter);
-unset($__name);
-unset($__params);
-unset($__componentSlots);
-unset($__split);
-?>
-                 <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginalf7749b857446d2788d0b6ca0c63f9d3a)): ?>
-<?php $attributes = $__attributesOriginalf7749b857446d2788d0b6ca0c63f9d3a; ?>
-<?php unset($__attributesOriginalf7749b857446d2788d0b6ca0c63f9d3a); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalf7749b857446d2788d0b6ca0c63f9d3a)): ?>
-<?php $component = $__componentOriginalf7749b857446d2788d0b6ca0c63f9d3a; ?>
-<?php unset($__componentOriginalf7749b857446d2788d0b6ca0c63f9d3a); ?>
-<?php endif; ?>
-             <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginal2b4bb2cd4b8f1a3c08bae49ea918b888)): ?>
-<?php $attributes = $__attributesOriginal2b4bb2cd4b8f1a3c08bae49ea918b888; ?>
-<?php unset($__attributesOriginal2b4bb2cd4b8f1a3c08bae49ea918b888); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginal2b4bb2cd4b8f1a3c08bae49ea918b888)): ?>
-<?php $component = $__componentOriginal2b4bb2cd4b8f1a3c08bae49ea918b888; ?>
-<?php unset($__componentOriginal2b4bb2cd4b8f1a3c08bae49ea918b888); ?>
 <?php endif; ?>
          <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
@@ -346,14 +275,14 @@ unset($__split);
         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($currentProject): ?>
             <?php if (isset($component)) { $__componentOriginal31257750338e37e989bcfa8eb3c88bb1 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal31257750338e37e989bcfa8eb3c88bb1 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::sidebar.group','data' => ['heading' => __('Current project'),'class' => 'grid gap-1']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::sidebar.group','data' => ['heading' => __('Current project'),'class' => 'grid gap-1 mt-4']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::sidebar.group'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['heading' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(__('Current project')),'class' => 'grid gap-1']); ?>
+<?php $component->withAttributes(['heading' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(__('Current project')),'class' => 'grid gap-1 mt-4']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                 <?php if (isset($component)) { $__componentOriginalfe86969babb72517ecf97426e7c9330d = $component; } ?>
@@ -394,14 +323,14 @@ unset($__split);
             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($team = $currentProject?->team): ?>
                 <?php if (isset($component)) { $__componentOriginal31257750338e37e989bcfa8eb3c88bb1 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal31257750338e37e989bcfa8eb3c88bb1 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::sidebar.group','data' => ['heading' => __('Team'),'class' => 'grid gap-1']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::sidebar.group','data' => ['heading' => __('Team'),'class' => 'grid gap-1 mt-4']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::sidebar.group'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['heading' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(__('Team')),'class' => 'grid gap-1']); ?>
+<?php $component->withAttributes(['heading' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(__('Team')),'class' => 'grid gap-1 mt-4']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                     <?php if (isset($component)) { $__componentOriginalfe86969babb72517ecf97426e7c9330d = $component; } ?>
@@ -443,14 +372,14 @@ unset($__split);
 
         <?php if (isset($component)) { $__componentOriginal31257750338e37e989bcfa8eb3c88bb1 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal31257750338e37e989bcfa8eb3c88bb1 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::sidebar.group','data' => ['heading' => __('Administration'),'class' => 'grid gap-1']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::sidebar.group','data' => ['heading' => __('Administration'),'class' => 'grid gap-1 mt-4']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::sidebar.group'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['heading' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(__('Administration')),'class' => 'grid gap-1']); ?>
+<?php $component->withAttributes(['heading' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(__('Administration')),'class' => 'grid gap-1 mt-4']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
             <?php if (isset($component)) { $__componentOriginalfe86969babb72517ecf97426e7c9330d = $component; } ?>
@@ -599,5 +528,4 @@ unset($__split);
 <?php if (isset($__componentOriginal17e56bc23bb0192e474b351c4358d446)): ?>
 <?php $component = $__componentOriginal17e56bc23bb0192e474b351c4358d446; ?>
 <?php unset($__componentOriginal17e56bc23bb0192e474b351c4358d446); ?>
-<?php endif; ?>
-<?php /**PATH /var/www/html/resources/views/layouts/app/sidebar.blade.php ENDPATH**/ ?>
+<?php endif; ?><?php /**PATH /var/www/html/resources/views/layouts/app/sidebar.blade.php ENDPATH**/ ?>

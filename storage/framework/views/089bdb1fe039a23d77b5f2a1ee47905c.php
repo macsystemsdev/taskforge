@@ -10,6 +10,7 @@ use App\Domain\Billing\Enum\PaymentProvider;
 use App\Domain\Billing\Services\CreateCheckoutService;
 use App\Domain\Billing\Services\StartTrialService;
 use App\Exceptions\Billing\TrialUnavailableException;
+use Illuminate\Support\Facades\Gate;
 
 new class extends Component {
     public ?SubscriptionPlan $selectedPlan = null;
@@ -29,6 +30,10 @@ new class extends Component {
 
     public function selectPlan(SubscriptionPlan $plan): void
     {
+        Gate::authorize('update', $this->organization);
+
+        abort_unless($plan->isPurchasable(), 404);
+
         $this->selectedPlan = $plan;
 
         Flux::modal('confirm-subscription')->show();
@@ -43,17 +48,22 @@ new class extends Component {
 
     public function confirmPlanChange(): mixed
     {
+        Gate::authorize('update', $this->organization);
+
         if (!$this->selectedPlan) {
             return null;
         }
 
-        $response = app(CreateCheckoutService::class)->handle(new CheckoutData(organization: $this->organization, plan: $this->selectedPlan, provider: PaymentProvider::STRIPE));
+        $plan = SubscriptionPlan::query()->purchasable()->findOrFail($this->selectedPlan->id);
+
+        $response = app(CreateCheckoutService::class)->handle(new CheckoutData(organization: $this->organization, plan: $plan, provider: PaymentProvider::STRIPE));
 
         return redirect()->away($response->url);
     }
 
     public function startTrial(StartTrialService $service)
     {
+        Gate::authorize('update', $this->organization);
         try {
             $service->handle($this->organization->subscription);
 
@@ -76,15 +86,19 @@ new class extends Component {
 <div class="space-y-8">
     <?php
         $subscription = $organization->subscription;
-        $currentAccessLabel = $subscription->isTrial() ? 'Pro Trial' : ($subscription?->plan?->name ?? 'No Active Plan');
-        $currentAccessDescription = $subscription->isTrial() ? '14-day trial active' : ($subscription?->plan?->billingIntervalLabel() ?? 'Free');
+        $currentAccessLabel = $subscription->isTrial() ? 'Pro Trial' : $subscription?->plan?->name ?? 'No Active Plan';
+        $currentAccessDescription = $subscription->isTrial()
+            ? '14-day trial active'
+            : $subscription?->plan?->billingIntervalLabel() ?? 'Free';
         $currentAccessBadge = $subscription->isTrial() ? 'Trial' : 'Active';
     ?>
 
-    <div class="overflow-hidden rounded-3xl border border-zinc-200 bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-500 p-8 text-white shadow-2xl shadow-indigo-950/10">
+    <div
+        class="overflow-hidden rounded-3xl border border-zinc-200 bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-500 p-8 text-white shadow-2xl shadow-indigo-950/10">
         <div class="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
             <div class="max-w-2xl">
-                <div class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-white/90">
+                <div
+                    class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-white/90">
                     <span class="h-2 w-2 rounded-full bg-emerald-300"></span>
                     Billing & plans
                 </div>
@@ -94,7 +108,8 @@ new class extends Component {
                 </h1>
 
                 <p class="mt-3 max-w-xl text-sm leading-6 text-indigo-50 sm:text-base">
-                    Unlock more workspaces, projects, and collaboration power as your team grows. Start a free trial in one click or switch to a plan that fits your momentum.
+                    Unlock more workspaces, projects, and collaboration power as your team grows. Start a free trial in
+                    one click or switch to a plan that fits your momentum.
                 </p>
             </div>
 
@@ -137,7 +152,8 @@ new class extends Component {
                     </p>
                 </div>
 
-                <span class="inline-flex w-fit items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
+                <span
+                    class="inline-flex w-fit items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
                     Trial
                 </span>
             </div>
@@ -176,12 +192,13 @@ new class extends Component {
 
                     </h2>
                     <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-300">
-                        <?php echo e($subscription->isTrial() ? 'Trial is active right now.' : ($subscription?->status?->value ?? '-')); ?>
+                        <?php echo e($subscription->isTrial() ? 'Trial is active right now.' : $subscription?->status?->value ?? '-'); ?>
 
                     </p>
                 </div>
 
-                <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+                <span
+                    class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
                     <?php echo e($currentAccessBadge); ?>
 
                 </span>
@@ -210,7 +227,7 @@ new class extends Component {
                 <div>
                     <p class="text-sm font-medium text-zinc-500">Billing</p>
                     <p class="mt-2 text-lg font-semibold text-zinc-950 dark:text-white">
-                        <?php echo e($subscription->isTrial() ? 'Trial' : ($subscription?->plan?->billingIntervalLabel() ?? 'Free')); ?>
+                        <?php echo e($subscription->isTrial() ? 'Trial' : $subscription?->plan?->billingIntervalLabel() ?? 'Free'); ?>
 
                     </p>
                 </div>
@@ -218,7 +235,7 @@ new class extends Component {
                 <div>
                     <p class="text-sm font-medium text-zinc-500">Next Billing Date</p>
                     <p class="mt-2 text-lg font-semibold text-zinc-950 dark:text-white">
-                        <?php echo e($subscription->isTrial() ? 'Ends after 14 days' : ($subscription->ends_at?->format('M d, Y') ?? 'No active renewal')); ?>
+                        <?php echo e($subscription->isTrial() ? 'Ends after 14 days' : $subscription->ends_at?->format('M d, Y') ?? 'No active renewal'); ?>
 
                     </p>
                 </div>
@@ -302,7 +319,8 @@ new class extends Component {
                     </p>
                 </div>
 
-                <span class="inline-flex w-fit items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-blue-700">
+                <span
+                    class="inline-flex w-fit items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-blue-700">
                     Scheduled
                 </span>
             </div>
@@ -340,7 +358,8 @@ new class extends Component {
                         Start your 14-day Pro trial
                     </h3>
                     <p class="mt-3 text-sm leading-6 text-indigo-50 sm:text-base">
-                        Get full access to premium collaboration features, higher limits, and a polished workspace experience without entering a credit card.
+                        Get full access to premium collaboration features, higher limits, and a polished workspace
+                        experience without entering a credit card.
                     </p>
                 </div>
 
@@ -351,8 +370,11 @@ new class extends Component {
                     </span>
                     <span wire:loading.flex wire:target="startTrial" class="items-center justify-center gap-2">
                         <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z"></path>
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z">
+                            </path>
                         </svg>
                         <span>Starting...</span>
                     </span>
@@ -402,7 +424,8 @@ new class extends Component {
                     </div>
 
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($current): ?>
-                        <span class="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300">
+                        <span
+                            class="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300">
                             Current
                         </span>
                     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
@@ -427,13 +450,15 @@ new class extends Component {
                         <p class="text-[11px] font-semibold uppercase tracking-[0.25em] text-zinc-500">
                             Plan details
                         </p>
-                        <span class="rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-zinc-600">
+                        <span
+                            class="rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-zinc-600">
                             Included
                         </span>
                     </div>
                     <ul class="space-y-3 text-sm text-zinc-700 dark:text-zinc-300">
                         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $plan->featureHighlights(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $feature): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                            <li class="flex items-center justify-between rounded-lg border border-zinc-200/80 bg-white/70 px-3 py-2">
+                            <li
+                                class="flex items-center justify-between rounded-lg border border-zinc-200/80 bg-white/70 px-3 py-2">
                                 <span><?php echo e($feature['label']); ?></span>
                                 <span class="font-semibold text-zinc-950"><?php echo e($feature['value']); ?></span>
                             </li>
@@ -443,24 +468,34 @@ new class extends Component {
 
                 <div class="mt-auto pt-8">
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($current && $organization->subscription->isTrial()): ?>
-                        <span class="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
+                        <span
+                            class="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
                             Trial Active
                         </span>
                     <?php elseif($current): ?>
-                        <button disabled class="w-full cursor-not-allowed rounded-full border border-zinc-200 bg-zinc-100 px-4 py-3 text-sm font-semibold text-zinc-500">
+                        <button disabled
+                            class="w-full cursor-not-allowed rounded-full border border-zinc-200 bg-zinc-100 px-4 py-3 text-sm font-semibold text-zinc-500">
                             Current Plan
                         </button>
                     <?php elseif($scheduled): ?>
-                        <button disabled class="w-full cursor-not-allowed rounded-full border border-zinc-200 bg-zinc-100 px-4 py-3 text-sm font-semibold text-zinc-500">
+                        <button disabled
+                            class="w-full cursor-not-allowed rounded-full border border-zinc-200 bg-zinc-100 px-4 py-3 text-sm font-semibold text-zinc-500">
                             Scheduled Plan
                         </button>
                     <?php else: ?>
-                        <button wire:click="selectPlan(<?php echo e($plan->id); ?>)" wire:loading.attr="disabled" wire:target="selectPlan(<?php echo e($plan->id); ?>)" class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-zinc-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800">
+                        <button wire:click="selectPlan(<?php echo e($plan->id); ?>)" wire:loading.attr="disabled"
+                            wire:target="selectPlan(<?php echo e($plan->id); ?>)"
+                            class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-zinc-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800">
                             <span wire:loading.remove wire:target="selectPlan(<?php echo e($plan->id); ?>)">Choose Plan</span>
-                            <span wire:loading.flex wire:target="selectPlan(<?php echo e($plan->id); ?>)" class="items-center justify-center gap-2">
-                                <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z"></path>
+                            <span wire:loading.flex wire:target="selectPlan(<?php echo e($plan->id); ?>)"
+                                class="items-center justify-center gap-2">
+                                <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"
+                                    aria-hidden="true">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10"
+                                        stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor"
+                                        d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z">
+                                    </path>
                                 </svg>
                                 <span>Choosing...</span>
                             </span>
@@ -533,8 +568,10 @@ new class extends Component {
                         </div>
                     </div>
 
-                    <div class="rounded-2xl border-2 border-indigo-500 bg-indigo-50/60 p-5 dark:border-indigo-400 dark:bg-indigo-500/10">
-                        <p class="text-xs font-semibold uppercase tracking-[0.25em] text-indigo-600 dark:text-indigo-300">
+                    <div
+                        class="rounded-2xl border-2 border-indigo-500 bg-indigo-50/60 p-5 dark:border-indigo-400 dark:bg-indigo-500/10">
+                        <p
+                            class="text-xs font-semibold uppercase tracking-[0.25em] text-indigo-600 dark:text-indigo-300">
                             New Plan
                         </p>
                         <h3 class="mt-2 text-xl font-semibold">
@@ -567,7 +604,8 @@ new class extends Component {
                     </div>
                 </div>
 
-                <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-900 dark:bg-amber-950/20">
+                <div
+                    class="rounded-2xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-900 dark:bg-amber-950/20">
                     <h4 class="font-medium text-amber-900 dark:text-amber-300">
                         Before you continue
                     </h4>
@@ -616,10 +654,14 @@ new class extends Component {
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
                         <span wire:loading.remove wire:target="confirmPlanChange">Continue to Payment</span>
-                        <span wire:loading.flex wire:target="confirmPlanChange" class="items-center justify-center gap-2">
+                        <span wire:loading.flex wire:target="confirmPlanChange"
+                            class="items-center justify-center gap-2">
                             <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z"></path>
+                                <circle class="opacity-25" cx="12" cy="12" r="10"
+                                    stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z">
+                                </path>
                             </svg>
                             <span>Continuing...</span>
                         </span>
