@@ -29,14 +29,26 @@ docker compose exec app php artisan test tests/Unit/Billing/PaymentAmountTest.ph
 echo "❌ Checkout Failure Tests:"
 docker compose exec app php artisan test tests/Feature/Billing/CheckoutFailureTest.php --compact
 
+echo "🔒 Checkout Failure Recovery Tests:"
+docker compose exec app php artisan test tests/Feature/Billing/CheckoutFailureRecoveryTest.php --compact
+
 echo "🔄 Webhook Tests:"
 docker compose exec app php artisan test tests/Feature/Billing/WebhookTest.php --compact
+
+echo "✍️ Webhook Signature Tests:"
+docker compose exec app php artisan test tests/Feature/Billing/WebhookSignatureTest.php --compact
 
 echo "👤 Stripe Customer Tests:"
 docker compose exec app php artisan test tests/Feature/Billing/StripeCustomerTest.php --compact
 
 echo "🔒 Stripe Customer Isolation Tests:"
 docker compose exec app php artisan test tests/Feature/Billing/StripeCustomerIsolationTest.php --compact
+
+echo "🎮 Livewire Authorization Tests:"
+docker compose exec app php artisan test tests/Feature/Billing/LivewireAuthorizationTest.php --compact
+
+echo "📄 Success/Cancel Page Tests:"
+docker compose exec app php artisan test tests/Feature/Billing/SuccessCancelPageTest.php --compact
 
 echo "📅 Subscription Lifecycle Tests:"
 docker compose exec app php artisan test tests/Feature/Billing/SubscriptionLifecycleTest.php --compact

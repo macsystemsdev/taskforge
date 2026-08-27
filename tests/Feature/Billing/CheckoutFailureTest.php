@@ -1,7 +1,5 @@
 <?php
 
-use App\Contracts\Billing\PaymentGateway;
-use App\Domain\Billing\Actions\CreatePaymentTransactionAction;
 use App\Domain\Billing\DataTransferObjects\CheckoutData;
 use App\Domain\Billing\Enum\PaymentProvider;
 use App\Domain\Billing\Services\CreateCheckoutService;
@@ -24,9 +22,8 @@ test('checkout rejects free plan', function () {
     
     $service = app(CreateCheckoutService::class);
     
-    // The service checks isPurchasable() first, which excludes free plans
-    // So it throws SubscriptionPlanInactiveException
-    $this->expectException(SubscriptionPlanInactiveException::class);
+    // Free plan throws specific exception
+    $this->expectException(CannotPurchaseFreePlanException::class);
     $service->handle($data);
 });
 
@@ -104,6 +101,7 @@ test('checkout rejects retired plan', function () {
     
     $service = app(CreateCheckoutService::class);
     
+    // Retired plan is not purchasable, throws generic inactive exception
     $this->expectException(SubscriptionPlanInactiveException::class);
     $service->handle($data);
 });
