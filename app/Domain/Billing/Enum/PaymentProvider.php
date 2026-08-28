@@ -16,4 +16,18 @@ enum PaymentProvider: string
             self::ORANGE => 'Orange Money',
         };
     }
+
+    public function description(): string
+    {
+        return match ($this) {
+            self::STRIPE => 'Card / international payment',
+            self::MTN => 'Mobile money payment',
+            self::ORANGE => 'Mobile money payment',
+        };
+    }
+
+    public function isSupported(): bool
+    {
+        return $this === self::STRIPE;
+    }
 }

@@ -10,6 +10,7 @@ use App\Actions\Tasks\DeleteTaskAction;
 use App\Actions\Tasks\ReassignTaskAction;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Computed;
+use Flux\Flux;
 
 new class extends Component {
     use AuthorizesRequests;
@@ -20,7 +21,16 @@ new class extends Component {
 
     public function mount(Task $task): void
     {
-        $this->task = $task;
+        $this->authorize('view', $task);
+
+        $this->task = $task->load([
+            'project.workspace.organization',
+            'project.team.members',
+            'assignee',
+            'creator',
+            'activityLogs' => fn($query) => $query->with('user')->latest(),
+            'fileReferences.fileAttachment.storedFile',
+        ]);
 
         $this->assigneeId = $task->assignee_id;
     }
@@ -31,31 +41,40 @@ new class extends Component {
         return $this->task->project->team->members->sortBy('name');
     }
 
+    #[Computed]
+    public function activityLogs()
+    {
+        return $this->task->activityLogs;
+    }
+
+    #[Computed]
+    public function fileReferences()
+    {
+        return $this->task->fileReferences;
+    }
+
     public function startTask(StartTaskAction $action): void
     {
         $this->authorize('start', $this->task);
-
         $action->handle($this->task);
-
         $this->task->refresh();
+        Flux::toast(variant: 'success', text: __('Task started.'));
     }
 
     public function completeTask(CompleteTaskAction $action): void
     {
         $this->authorize('complete', $this->task);
-
         $action->handle($this->task);
-
         $this->task->refresh();
+        Flux::toast(variant: 'success', text: __('Task completed.'));
     }
 
     public function cancelTask(CancelTaskAction $action): void
     {
         $this->authorize('cancel', $this->task);
-
         $action->handle($this->task);
-
         $this->task->refresh();
+        Flux::toast(variant: 'success', text: __('Task cancelled.'));
     }
 
     public function reassignTask(ReassignTaskAction $action): void
@@ -63,10 +82,10 @@ new class extends Component {
         $this->authorize('reassign', $this->task);
 
         $user = User::findOrFail($this->assigneeId);
-
         $action->handle($this->task, $user);
-
         $this->task->refresh();
+
+        Flux::toast(variant: 'success', text: __('Task reassigned.'));
     }
 
     public function deleteTask(DeleteTaskAction $action): void
@@ -74,328 +93,168 @@ new class extends Component {
         $this->authorize('delete', $this->task);
 
         $project = $this->task->project;
-
         $action->handle($this->task);
 
+        Flux::toast(variant: 'success', text: __('Task deleted.'));
+
         $this->redirect(route('projects.show', $project), navigate: true);
-    }
-
-    public function getActivityLogsProperty()
-    {
-        return $this->task->activityLogs->sortByDesc('created_at');
-    }
-
-    #[Computed]
-    public function fileReferences()
-    {
-        return $this->task
-            ->fileReferences()
-            ->with(['fileAttachment.storedFile', 'fileAttachment'])
-            ->get();
-    }
-
-    public function render()
-    {
-        $this->task->load(['project.team.workspace', 'assignee', 'creator', 'activityLogs.user', 'fileReferences.fileAttachment.storedFile']);
-
-        return view('livewire.tasks.show-task');
     }
 };
 ?>
 
-<x-ui.page>
-    <div
-        class="mb-6 overflow-hidden rounded-3xl border border-zinc-200 bg-white/80 p-5 shadow-sm backdrop-blur sm:p-6 dark:border-white/10 dark:bg-zinc-900/70">
-        <x-ui.page-header :title="$task->title" :description="$task->description ?: __('No task description has been added yet.')" :eyebrow="$task->project->workspace->name . ' / ' . $task->project->team->name . ' / ' . $task->project->name">
-            <x-slot:actions>
-                <x-ui.status-badge :status="$task->status" />
-            </x-slot:actions>
-        </x-ui.page-header>
+<div class="space-y-6">
+    {{-- Header --}}
+    <div class="overflow-hidden rounded-3xl border border-zinc-200 bg-white/80 p-5 shadow-sm backdrop-blur sm:p-6 dark:border-white/10 dark:bg-zinc-900/70">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div class="min-w-0">
+                <a href="{{ route('projects.show', $task->project) }}"
+                    class="text-xs font-medium uppercase tracking-[0.15em] text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300"
+                    wire:navigate>
+                    {{ $task->project->workspace->name }} / {{ $task->project->name }}
+                </a>
 
-        <div
-            class="mt-5 rounded-2xl border border-zinc-200 bg-zinc-50/80 p-4 text-sm text-zinc-600 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-400">
-            Keep this task moving with clear ownership, deadlines, and next actions.
+                <h1 class="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+                    {{ $task->title }}
+                </h1>
+
+                @if ($task->description)
+                    <p class="mt-2 max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">
+                        {{ $task->description }}
+                    </p>
+                @endif
+
+                @if ($task->isOverdue())
+                    <div class="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300">
+                        {{ __('This task is overdue.') }}
+                    </div>
+                @endif
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+                <x-ui.status-badge :status="$task->status" />
+
+                @if (auth()->user()->can('start', $task) && $task->status->isTodo())
+                    <flux:button size="sm" variant="primary" wire:click="startTask">Start</flux:button>
+                @endif
+
+                @if (auth()->user()->can('complete', $task) && $task->status->isInProgress())
+                    <flux:button size="sm" variant="primary" wire:click="completeTask">Complete</flux:button>
+                @endif
+
+                @if (auth()->user()->can('cancel', $task) && !$task->status->isDone() && !$task->status->isCancelled())
+                    <flux:button size="sm" wire:click="cancelTask">Cancel</flux:button>
+                @endif
+
+                @if (auth()->user()->can('delete', $task))
+                    <flux:button size="sm" variant="danger" wire:click="deleteTask">Delete</flux:button>
+                @endif
+            </div>
+        </div>
+
+        {{-- Quick Info --}}
+        <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div class="rounded-xl bg-zinc-50 p-3 text-center dark:bg-white/[0.03]">
+                <p class="text-xs text-zinc-500">Assignee</p>
+                <p class="mt-1 truncate text-sm font-semibold text-zinc-950 dark:text-white">{{ $task->assignee?->name ?? 'Unassigned' }}</p>
+            </div>
+
+            <div class="rounded-xl bg-zinc-50 p-3 text-center dark:bg-white/[0.03]">
+                <p class="text-xs text-zinc-500">Due Date</p>
+                <p class="mt-1 text-sm font-semibold text-zinc-950 dark:text-white">{{ $task->due_date?->format('M d, Y') ?? '—' }}</p>
+            </div>
+
+            <div class="rounded-xl bg-zinc-50 p-3 text-center dark:bg-white/[0.03]">
+                <p class="text-xs text-zinc-500">Created By</p>
+                <p class="mt-1 truncate text-sm font-semibold text-zinc-950 dark:text-white">{{ $task->creator?->name ?? '—' }}</p>
+            </div>
+
+            <div class="rounded-xl bg-zinc-50 p-3 text-center dark:bg-white/[0.03]">
+                <p class="text-xs text-zinc-500">Team</p>
+                <p class="mt-1 truncate text-sm font-semibold text-zinc-950 dark:text-white">{{ $task->project->team->name }}</p>
+            </div>
         </div>
     </div>
 
-    {{-- MAIN CONTENT - 2 COLUMN LAYOUT --}}
-    <div class="grid gap-6 lg:grid-cols-2">
-
-        {{-- LEFT COLUMN --}}
-        <div class="space-y-6">
-            {{-- Assignee / Due / Created --}}
-            <x-ui.card class="border-zinc-200/80 bg-white/90 shadow-sm">
-                <div class="grid gap-5 sm:grid-cols-3">
-                    <div>
-                        <p class="tf-muted">Assignee</p>
-                        <div class="mt-2 flex items-center gap-2">
-                            <x-ui.avatar :name="$task->assignee?->name ?? 'Unassigned'" size="sm" />
-                            <p class="font-medium text-zinc-950 dark:text-white">
-                                {{ $task->assignee?->name ?? 'Unassigned' }}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div>
-                        <p class="tf-muted">Due date</p>
-                        <p class="mt-2 font-medium text-zinc-950 dark:text-white">
-                            {{ $task->due_date?->format('M d, Y') ?? 'No date' }}
-                        </p>
-
-                        @if ($task->due_date && !$task->isOverdue())
-                            <p class="mt-1 text-sm text-zinc-500">
-                                {{ ceil(now()->diffInDays($task->due_date, false)) }}
-                                days remaining
-                            </p>
-                        @endif
-
-                        @if ($task->isOverdue())
-                            <p class="mt-1 text-sm font-medium text-red-600">
-                                Overdue by {{ ceil(now()->diffInDays($task->due_date, true)) }} days
-                            </p>
-                        @endif
-                    </div>
-
-                    <div>
-                        <p class="tf-muted">Created by</p>
-                        <p class="mt-2 font-medium text-zinc-950 dark:text-white">
-                            {{ $task->creator?->name ?? 'Unknown' }}
-                        </p>
-                    </div>
-                </div>
-            </x-ui.card>
-
-            {{-- Task Metadata --}}
-            <x-ui.card class="border-zinc-200/80 bg-white/90 shadow-sm">
-                <h2 class="tf-panel-title">Task Metadata</h2>
-                <dl class="mt-5 space-y-3 text-sm">
-                    <div class="flex items-center justify-between gap-4">
-                        <dt class="text-zinc-500 dark:text-zinc-400">Project</dt>
-                        <dd class="text-right font-medium text-zinc-950 dark:text-white">
-                            <a href="{{ route('projects.show', $task->project) }}" class="hover:underline"
-                                wire:navigate>
-                                {{ $task->project->name }}
-                            </a>
-                        </dd>
-                    </div>
-
-                    <div class="flex items-center justify-between gap-4">
-                        <dt class="text-zinc-500 dark:text-zinc-400">Team</dt>
-                        <dd class="text-right font-medium text-zinc-950 dark:text-white">
-                            {{ $task->project->team->name }}
-                        </dd>
-                    </div>
-
-                    <div class="flex items-center justify-between gap-4">
-                        <dt class="text-zinc-500 dark:text-zinc-400">Workspace</dt>
-                        <dd class="text-right font-medium text-zinc-950 dark:text-white">
-                            {{ $task->project->workspace->name }}
-                        </dd>
-                    </div>
-
-                    <div class="flex items-center justify-between gap-4">
-                        <dt class="text-zinc-500 dark:text-zinc-400">Created</dt>
-                        <dd class="text-right font-medium text-zinc-950 dark:text-white">
-                            {{ $task->created_at->format('M d, Y') }}
-                        </dd>
-                    </div>
-
-                    <div class="flex items-center justify-between gap-4">
-                        <dt class="text-zinc-500 dark:text-zinc-400">Updated</dt>
-                        <dd class="text-right font-medium text-zinc-950 dark:text-white">
-                            {{ $task->updated_at->diffForHumans() }}
-                        </dd>
-                    </div>
-
-                    @if ($task->completed_at)
-                        <div class="flex items-center justify-between gap-4">
-                            <dt class="text-zinc-500 dark:text-zinc-400">Completed</dt>
-                            <dd class="text-right font-medium text-zinc-950 dark:text-white">
-                                {{ $task->completed_at->format('M d, Y') }}
-                            </dd>
-                        </div>
-                    @endif
-                </dl>
-            </x-ui.card>
-
-            {{-- Activity --}}
-            <x-ui.card class="border-zinc-200/80 bg-white/90 shadow-sm">
-                <h2 class="tf-panel-title">Activity</h2>
-                <div class="mt-5 space-y-4">
-                    @forelse ($this->activityLogs as $log)
-                        <div class="relative border-l border-zinc-200 pl-4 dark:border-white/10">
-                            <span
-                                class="absolute -left-1.5 top-1.5 size-3 rounded-full border-2 border-white bg-zinc-400 dark:border-zinc-900 dark:bg-zinc-500"></span>
-                            <p class="text-sm font-medium text-zinc-950 dark:text-white">
-                                {{ str($log->event)->headline() }}
-                            </p>
-                            <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                                {{ $log->user?->name ?? 'System' }} - {{ $log->created_at->diffForHumans() }}
-                            </p>
-                        </div>
-                    @empty
-                        <x-ui.empty-state title="No activity yet"
-                            description="Task events will appear here as work changes." class="py-8" />
-                    @endforelse
-                </div>
-            </x-ui.card>
-        </div>
-
-        {{-- RIGHT COLUMN --}}
-        <div class="space-y-6">
-            {{-- Task Actions --}}
-            <x-ui.card class="border-zinc-200/80 bg-white/90 shadow-sm">
-                <h2 class="tf-panel-title">Task Actions</h2>
-
-                @if ($task->status->isDone())
-                    <p class="mt-4 text-sm text-zinc-500">This task has been completed.</p>
-                @endif
-
-                @if ($task->status->isCancelled())
-                    <p class="mt-4 text-sm text-zinc-500">This task has been cancelled.</p>
-                @endif
-
-                <div class="mt-4 flex flex-col gap-2">
-                    @if (auth()->user()->can('start', $task))
-                        <button wire:click="startTask" class="tf-button-primary">Start Task</button>
-                    @endif
-
-                    @if (auth()->user()->can('block', $task))
-                        <button wire:click="startTask" class="tf-button-primary">Block Task</button>
-                    @endif
-
-                    @if (auth()->user()->can('complete', $task))
-                        <button wire:click="completeTask" class="tf-button-primary">Complete Task</button>
-                    @endif
-
-                    @if (auth()->user()->can('cancel', $task))
-                        <button wire:click="cancelTask" class="tf-button-secondary">Cancel Task</button>
-                    @endif
-
-                    @if (auth()->user()->can('delete', $task))
-                        @if ($task->status->isTodo() || $task->status->isCancelled())
-                            <button wire:click="deleteTask" wire:confirm="Delete this task?"
-                                class="tf-button-danger">Delete Task</button>
-                        @endif
-                    @endif
-                </div>
-            </x-ui.card>
-
-            {{-- Reassign Task --}}
+    {{-- Main Content --}}
+    <div class="grid gap-6 lg:grid-cols-[1fr_340px]">
+        {{-- Left column --}}
+        <div class="space-y-6 min-w-0">
+            {{-- Reassign --}}
             @if (auth()->user()->can('reassign', $task) && !$task->status->isDone() && !$task->status->isCancelled())
                 <x-ui.card class="border-zinc-200/80 bg-white/90 shadow-sm">
                     <h2 class="tf-panel-title">Reassign Task</h2>
-                    <p class="mt-2 text-sm text-zinc-500">
-                        Current assignee: {{ $task->assignee?->name ?? 'Unassigned' }}
-                    </p>
-                    <div class="mt-4 space-y-3">
-                        <select wire:model="assigneeId" class="w-full px-3 py-2.5">
+                    <p class="mt-1 text-sm text-zinc-500">Current: {{ $task->assignee?->name ?? 'Unassigned' }}</p>
+
+                    <div class="mt-4 flex gap-2">
+                        <select wire:model="assigneeId" class="flex-1 px-3 py-2.5">
                             @foreach ($this->teamMembers as $member)
                                 <option value="{{ $member->id }}">{{ $member->name }}</option>
                             @endforeach
                         </select>
-                        <button wire:click="reassignTask" class="tf-button-primary w-full">Reassign</button>
+                        <flux:button variant="primary" wire:click="reassignTask">Reassign</flux:button>
                     </div>
                 </x-ui.card>
             @endif
 
-            {{-- Task Resources --}}
+            {{-- Activity --}}
             <x-ui.card class="border-zinc-200/80 bg-white/90 shadow-sm">
-                <div>
-                    <h2 class="tf-panel-title">Task Resources</h2>
-                    <p class="tf-panel-subtitle">Project resources referenced for this task.</p>
-                </div>
+                <h2 class="tf-panel-title">Activity</h2>
 
-                <div class="mt-5 space-y-3">
-                    @php $references = $this->fileReferences; @endphp
-
-                    @if ($references->isEmpty())
-                        <x-ui.empty-state title="No resources"
-                            description="No project resources have been referenced for this task." class="py-8" />
-                    @else
-                        @foreach ($references as $reference)
-                            @php
-                                // The relationship is fileAttachment, not attachment
-                                $attachment = $reference->fileAttachment ?? $reference->attachment;
-                                $file = $attachment?->storedFile;
-                            @endphp
-                            @if ($file)
-                                <div
-                                    class="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-zinc-950/80">
-                                    <div class="flex items-start gap-3">
-                                        <div
-                                            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-zinc-100 text-2xl dark:bg-zinc-800">
-                                            @php
-                                                $icon = match (true) {
-                                                    str_starts_with($file->mime_type, 'image/') => '🖼️',
-                                                    str_contains($file->mime_type, 'pdf') => '📄',
-                                                    str_contains($file->mime_type, 'word') ||
-                                                        str_contains($file->mime_type, 'document')
-                                                        => '📝',
-                                                    str_contains($file->mime_type, 'excel') ||
-                                                        str_contains($file->mime_type, 'sheet')
-                                                        => '📊',
-                                                    str_contains($file->mime_type, 'zip') ||
-                                                        str_contains($file->mime_type, 'rar')
-                                                        => '📦',
-                                                    default => '📎',
-                                                };
-                                            @endphp
-                                            {{ $icon }}
-                                        </div>
-
-                                        <div class="min-w-0 flex-1">
-                                            <div
-                                                class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                                <div class="min-w-0">
-                                                    <p
-                                                        class="truncate text-sm font-semibold text-zinc-950 dark:text-white">
-                                                        {{ $file->original_filename }}
-                                                    </p>
-                                                    <p class="text-xs text-zinc-500">
-                                                        Added to project:
-                                                        {{ $attachment?->created_at?->diffForHumans() ?? 'Unknown' }}
-                                                    </p>
-                                                </div>
-
-                                                <div class="flex flex-wrap items-center gap-2">
-                                                    @if ($attachment)
-                                                        <a href="{{ route('projects.attachments.download', [$task->project, $attachment]) }}"
-                                                            class="tf-button-secondary inline-flex items-center justify-center gap-2 text-sm">
-                                                            Download
-                                                        </a>
-
-                                                        @if (str_starts_with($file->mime_type, 'image/') || $file->mime_type === 'application/pdf')
-                                                            <a href="{{ route('projects.attachments.view', [$task->project, $attachment]) }}"
-                                                                target="_blank"
-                                                                class="tf-button-secondary inline-flex items-center justify-center gap-2 text-sm">
-                                                                Preview
-                                                            </a>
-                                                        @endif
-                                                    @endif
-                                                </div>
-                                            </div>
-
-                                            <p class="mt-2 text-xs text-zinc-500">
-                                                {{ number_format($file->size / 1024, 1) }} KB
-                                            </p>
-
-                                            @if (str_starts_with($file->mime_type, 'image/'))
-                                                <div
-                                                    class="mt-3 overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-50 dark:border-white/10">
-                                                    <img src="{{ asset('storage/' . $file->path) }}"
-                                                        alt="{{ $file->original_filename }}"
-                                                        class="h-32 w-full object-cover" />
-                                                </div>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
-                        @endforeach
-                    @endif
+                <div class="mt-4 space-y-4">
+                    @forelse ($this->activityLogs as $log)
+                        <div class="relative border-l border-zinc-200 pl-4 dark:border-white/10">
+                            <span class="absolute -left-1.5 top-1.5 size-3 rounded-full border-2 border-white bg-zinc-400 dark:border-zinc-900 dark:bg-zinc-500"></span>
+                            <p class="text-sm font-medium text-zinc-950 dark:text-white">
+                                {{ str($log->event)->headline() }}
+                            </p>
+                            <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                                {{ $log->user?->name ?? 'System' }} • {{ $log->created_at->diffForHumans() }}
+                            </p>
+                        </div>
+                    @empty
+                        <p class="py-8 text-center text-sm text-zinc-500">No activity yet.</p>
+                    @endforelse
                 </div>
             </x-ui.card>
+
+            {{-- Comments --}}
         </div>
+
+        {{-- Right column --}}
+        <aside class="space-y-6 lg:sticky lg:top-20 h-fit">
+            {{-- Task Resources --}}
+            <x-ui.card class="border-zinc-200/80 bg-white/90 shadow-sm">
+                <h2 class="tf-panel-title">Resources</h2>
+
+                <div class="mt-4 space-y-3">
+                    @forelse ($this->fileReferences as $reference)
+                        @php
+                            $attachment = $reference->fileAttachment;
+                            $file = $attachment?->storedFile;
+                        @endphp
+
+                        @if ($file)
+                            <a href="{{ route('projects.attachments.download', [$task->project, $attachment]) }}"
+                                wire:key="ref-{{ $reference->id }}"
+                                class="flex items-center gap-3 rounded-xl border border-zinc-200 p-3 transition hover:border-zinc-300 hover:bg-zinc-50 dark:border-white/10 dark:hover:border-white/20 dark:hover:bg-white/[0.03]">
+                                <span class="text-xl">
+                                    @if (str_starts_with($file->mime_type, 'image/')) 🖼️
+                                    @elseif ($file->mime_type === 'application/pdf') 📄
+                                    @elseif (str_contains($file->mime_type, 'spreadsheet')) 📊
+                                    @else 📎
+                                    @endif
+                                </span>
+                                <span class="min-w-0 flex-1">
+                                    <span class="block truncate text-sm font-medium text-zinc-950 dark:text-white">{{ $file->original_filename }}</span>
+                                    <span class="block text-xs text-zinc-500">{{ number_format($file->size / 1024, 1) }} KB</span>
+                                </span>
+                            </a>
+                        @endif
+                    @empty
+                        <p class="py-6 text-center text-sm text-zinc-500">No resources attached.</p>
+                    @endforelse
+                </div>
+            </x-ui.card>
+        </aside>
     </div>
-</x-ui.page>
+</div>

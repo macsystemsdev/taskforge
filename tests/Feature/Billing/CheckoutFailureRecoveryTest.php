@@ -7,10 +7,11 @@ use App\Domain\Billing\DataTransferObjects\PaymentResponse;
 use App\Domain\Billing\Enum\PaymentProvider;
 use App\Domain\Billing\Enum\PaymentStatus;
 use App\Domain\Billing\Services\CreateCheckoutService;
+use App\Domain\Billing\Services\PaymentGatewayResolver;
 use App\Models\PaymentTransaction;
 use App\Models\SubscriptionPlan;
 
-test('checkout failure marks transaction as failed', function () {
+test('checkout failure does not leave orphaned transaction', function () {
     $this->createBillingPlans();
     [$organization, $owner] = $this->createOrganizationWithOwner();
     $proPlan = SubscriptionPlan::where('slug', 'pro-monthly')->first();
@@ -27,7 +28,16 @@ test('checkout failure marks transaction as failed', function () {
         }
     };
     
-    $this->app->instance(PaymentGateway::class, $failingGateway);
+    $resolver = new class($failingGateway) extends PaymentGatewayResolver {
+        public function __construct(private PaymentGateway $gateway) {}
+        
+        public function resolve(PaymentProvider $provider): PaymentGateway
+        {
+            return $this->gateway;
+        }
+    };
+    
+    $this->app->instance(PaymentGatewayResolver::class, $resolver);
     
     $data = new CheckoutData(
         organization: $organization,
@@ -41,14 +51,16 @@ test('checkout failure marks transaction as failed', function () {
         $service->handle($data);
         $this->fail('Expected exception');
     } catch (\Exception $e) {
-        // Expected
+        expect($e->getMessage())->toBe('Stripe API unavailable');
     }
     
-    $transaction = PaymentTransaction::where('organization_id', $organization->id)->first();
+    // Transaction should not exist (rolled back)
+    $transactionCount = PaymentTransaction::where('organization_id', $organization->id)->count();
+    expect($transactionCount)->toBe(0);
     
-    expect($transaction)->not->toBeNull()
-        ->and($transaction->status)->toBe(PaymentStatus::FAILED)
-        ->and($transaction->failure_reason)->toBe('Stripe API unavailable');
+    // Subscription should remain unchanged
+    $subscription = $organization->subscription->fresh();
+    expect($subscription->subscription_plan_id)->not->toBe($proPlan->id);
 });
 
 test('stripe customer creation failure is handled', function () {
@@ -68,7 +80,16 @@ test('stripe customer creation failure is handled', function () {
         }
     };
     
-    $this->app->instance(PaymentGateway::class, $failingGateway);
+    $resolver = new class($failingGateway) extends PaymentGatewayResolver {
+        public function __construct(private PaymentGateway $gateway) {}
+        
+        public function resolve(PaymentProvider $provider): PaymentGateway
+        {
+            return $this->gateway;
+        }
+    };
+    
+    $this->app->instance(PaymentGatewayResolver::class, $resolver);
     
     $data = new CheckoutData(
         organization: $organization,

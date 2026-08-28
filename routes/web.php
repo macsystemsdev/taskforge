@@ -28,10 +28,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::view('dashboard', 'dashboard')->name('dashboard');
 
+    Route::get('/reports', function () {
+        return view('pages.reports.index');
+    })->name('reports.index');
+
     Route::view('/organizations', 'pages.organizations.index')->name('organizations.index');
 
     // Create and show organization
-    Route::get('/organizations/create', fn() => view('pages.organizations.create'))->name('organizations.create');
+    Route::redirect('/organizations/create', '/organizations')->name('organizations.create');
 
     Route::get(
         '/organizations/{organization}',
@@ -202,11 +206,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('notifications.redirect');
 
     Route::get(
+        '/billing',
+        \App\Livewire\Billing\BillingDashboard::class
+    )->name('billing.index');
+
+    Route::get(
         '/organizations/{organization}/billing',
-        function (Organization $organization) {
-            Gate::authorize('update', $organization);
-            return view('pages.billing.show', compact('organization'));
-        }
+        \App\Livewire\Billing\BillingDashboard::class
     )->name('organizations.billing');
 
     Route::get(

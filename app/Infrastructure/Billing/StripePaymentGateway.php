@@ -13,6 +13,7 @@ use App\Exceptions\Billing\MissingPaymentMethodException;
 use App\Models\Organization;
 use App\Models\PaymentTransaction;
 use App\Models\Subscription;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Stripe\Exception\ApiErrorException;
 use Stripe\StripeClient;
@@ -46,18 +47,30 @@ class StripePaymentGateway implements PaymentGateway
             return $organization->stripe_customer_id;
         }
 
-        $customer = $this->stripe->customers->create([
-            'name' => $organization->name,
-            'metadata' => [
-                'organization_id' => $organization->id,
-            ],
-        ]);
+        // Use database transaction with lock to prevent concurrent customer creation
+        return DB::transaction(function () use ($organization) {
+            // Re-check after lock
+            $lockedOrg = Organization::whereKey($organization->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        $organization->update([
-            'stripe_customer_id' => $customer->id,
-        ]);
+            if ($lockedOrg->hasStripeCustomer()) {
+                return $lockedOrg->stripe_customer_id;
+            }
 
-        return $customer->id;
+            $customer = $this->stripe->customers->create([
+                'name' => $lockedOrg->name,
+                'metadata' => [
+                    'organization_id' => $lockedOrg->id,
+                ],
+            ]);
+
+            $lockedOrg->update([
+                'stripe_customer_id' => $customer->id,
+            ]);
+
+            return $customer->id;
+        });
     }
 
 

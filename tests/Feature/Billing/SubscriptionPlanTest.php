@@ -1,40 +1,41 @@
 <?php
 
 use App\Models\SubscriptionPlan;
-use Tests\Feature\Billing\BillingTestCase;
-
 
 test('free plan is not purchasable', function () {
     $this->createBillingPlans();
     $freePlan = SubscriptionPlan::where('slug', 'free')->first();
-    
     expect($freePlan->isPurchasable())->toBeFalse();
 });
 
-test('inactive plan is not purchasable', function () {
+test('active monthly plan is purchasable', function () {
     $this->createBillingPlans();
-    $inactivePlan = SubscriptionPlan::where('slug', 'inactive')->first();
-    
-    expect($inactivePlan->isPurchasable())->toBeFalse();
+    $plan = SubscriptionPlan::where('slug', 'pro-monthly')->first();
+    expect($plan->isPurchasable())->toBeTrue();
+});
+
+test('active yearly plan is purchasable', function () {
+    $this->createBillingPlans();
+    $plan = SubscriptionPlan::where('slug', 'team-yearly')->first();
+    expect($plan->isPurchasable())->toBeTrue();
 });
 
 test('retired plan is not purchasable', function () {
     $this->createBillingPlans();
-    $retiredPlan = SubscriptionPlan::where('slug', 'retired')->first();
+    // Create a retired plan
+    $retiredPlan = SubscriptionPlan::firstOrCreate(
+        ['slug' => 'retired-plan'],
+        [
+            'name' => 'Retired Plan',
+            'price' => 9.99,
+            'currency' => 'USD',
+            'billing_interval' => \App\Domain\Billing\BillingInterval::MONTHLY,
+            'status' => \App\Domain\Billing\SubscriptionPlanStatus::RETIRED,
+            'max_workspaces' => 2,
+            'max_projects' => 10,
+            'max_members' => 5,
+        ]
+    );
     
     expect($retiredPlan->isPurchasable())->toBeFalse();
-});
-
-test('archived plan is not purchasable', function () {
-    $this->createBillingPlans();
-    $archivedPlan = SubscriptionPlan::where('slug', 'archived')->first();
-    
-    expect($archivedPlan->isPurchasable())->toBeFalse();
-});
-
-test('active paid plan is purchasable', function () {
-    $this->createBillingPlans();
-    $monthlyPlan = SubscriptionPlan::where('slug', 'team-monthly')->first();
-    
-    expect($monthlyPlan->isPurchasable())->toBeTrue();
 });

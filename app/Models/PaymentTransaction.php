@@ -18,7 +18,8 @@ use Illuminate\Database\Eloquent\Model;
     'status',
     'provider',
     'provider_reference',
-    'metadata',
+    'idempotency_key',
+        'metadata',
     'paid_at',
     'failure_reason',
     'failed_at'

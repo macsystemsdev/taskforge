@@ -2,9 +2,7 @@
 
 namespace App\Exceptions\Billing;
 
-use Exception;
-
-class TrialUnavailableException extends Exception
+class TrialUnavailableException extends SubscriptionException
 {
-    //
+    protected $message = 'Free trial is no longer available for your organization.';
 }

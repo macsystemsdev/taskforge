@@ -17,6 +17,8 @@ abstract class TestCase extends BaseTestCase
         parent::setUp();
         
         View::share('errors', session('errors', new ViewErrorBag()));
+        
+        // Disable ALL middleware for tests
         $this->withoutMiddleware(AppHttpMiddlewareVerifyCsrfToken::class);
     }
     
@@ -85,8 +87,6 @@ abstract class TestCase extends BaseTestCase
             'subscription_status' => 'active',
         ]);
         
-        // The roleFor() method checks owner_id first, so we don't need to attach
-        // But we'll attach anyway for completeness
         $organization->members()->attach($owner->id, [
             'role' => OrganizationRole::OWNER->value,
         ]);

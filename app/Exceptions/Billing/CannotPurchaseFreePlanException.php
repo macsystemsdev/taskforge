@@ -2,9 +2,7 @@
 
 namespace App\Exceptions\Billing;
 
-use Exception;
-
-class CannotPurchaseFreePlanException extends Exception
+class CannotPurchaseFreePlanException extends SubscriptionException
 {
-    //
+    protected $message = 'The free plan cannot be purchased. Please select a paid plan.';
 }

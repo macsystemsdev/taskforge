@@ -1,30 +1,27 @@
 <?php if (isset($component)) { $__componentOriginal81a506f898233b9e7d58286e6bea3c18 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal81a506f898233b9e7d58286e6bea3c18 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'f4ac99e09542ff494432bc959d4fee61::app','data' => []] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'f4ac99e09542ff494432bc959d4fee61::app','data' => ['title' => __('Dashboard')]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('layouts::app'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes([]); ?>
+<?php $component->withAttributes(['title' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(__('Dashboard'))]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
-
 
     <?php
 $__split = function ($name, $params = []) {
     return [$name, $params];
 };
-[$__name, $__params] = $__split('billing.show-billing', [
-        'organization' => $organization,
-    ]);
+[$__name, $__params] = $__split('dashboard');
 
 $__keyOuter = $__key ?? null;
 
 $__key = null;
 $__componentSlots = [];
 
-$__key ??= \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::generateKey('lw-2635851700-0', $__key);
+$__key ??= \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::generateKey('lw-2464479465-0', $__key);
 
 $__html = app('livewire')->mount($__name, $__params, $__key, $__componentSlots);
 
@@ -39,7 +36,6 @@ unset($__params);
 unset($__componentSlots);
 unset($__split);
 ?>
-
  <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginal81a506f898233b9e7d58286e6bea3c18)): ?>
@@ -49,4 +45,5 @@ unset($__split);
 <?php if (isset($__componentOriginal81a506f898233b9e7d58286e6bea3c18)): ?>
 <?php $component = $__componentOriginal81a506f898233b9e7d58286e6bea3c18; ?>
 <?php unset($__componentOriginal81a506f898233b9e7d58286e6bea3c18); ?>
-<?php endif; ?><?php /**PATH /var/www/html/resources/views/pages/billing/show.blade.php ENDPATH**/ ?>
+<?php endif; ?>
+<?php /**PATH /var/www/html/resources/views/dashboard.blade.php ENDPATH**/ ?>

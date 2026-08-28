@@ -9,38 +9,60 @@ use App\Models\Workspace;
 use Flux\Flux;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
-use App\Models\Organization;
+use Livewire\Attributes\Computed;
 
 new class extends Component {
     public Workspace $workspace;
 
-    public Organization $organization;
-
     public bool $showEditWorkspaceModal = false;
-
     public bool $showDeleteWorkspaceModal = false;
 
     public string $name = '';
-
     public ?string $description = null;
 
     public function mount(Workspace $workspace): void
     {
         $this->authorize('view', $workspace);
 
-        $this->workspace = $workspace->load(['organization', 'teams.members', 'projects'])->loadCount(['teams', 'projects']);
+        $this->workspace = $workspace->load([
+            'organization.subscription.plan',
+            'teams' => fn($query) => $query->withCount('members'),
+            'projects' => fn($query) => $query->withCount('tasks'),
+        ]);
 
         $this->name = $workspace->name;
-
         $this->description = $workspace->description;
+    }
+
+    #[Computed]
+    public function teamsUsage(): int
+    {
+        return $this->workspace->teams->count();
+    }
+
+    #[Computed]
+    public function projectsUsage(): int
+    {
+        return $this->workspace->projects->count();
+    }
+
+    #[Computed]
+    public function lockedTeams()
+    {
+        return $this->workspace->organization->lockedTeams();
+    }
+
+    #[Computed]
+    public function lockedProjects()
+    {
+        return $this->workspace->organization->lockedProjects();
     }
 
     public function openEditWorkspaceModal(): void
     {
         Gate::authorize('update', $this->workspace);
-
-        $this->workspaceName = $this->workspace->name;
-
+        $this->name = $this->workspace->name;
+        $this->description = $this->workspace->description;
         $this->showEditWorkspaceModal = true;
     }
 
@@ -62,23 +84,17 @@ new class extends Component {
         );
 
         $this->workspace->refresh();
-
         $this->showEditWorkspaceModal = false;
 
         Flux::toast(text: 'Workspace updated.', variant: 'success');
     }
 
-    // Delete Workspace modal
     public function openDeleteWorkspaceModal(): void
     {
         Gate::authorize('delete', $this->workspace);
-
-        $this->workspaceName = $this->workspace->name;
-
         $this->showDeleteWorkspaceModal = true;
     }
 
-    // Delete organization
     public function deleteWorkspace(): void
     {
         Gate::authorize('delete', $this->workspace);
@@ -97,379 +113,206 @@ new class extends Component {
         }
     }
 };
-
 ?>
 
-
-<div class="space-y-8">
-
-    {{-- Workspace Header --}}
-    <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-
-        <div>
-            <h1 class="text-3xl font-bold text-zinc-950 dark:text-white">
-                {{ $workspace->name }}
-            </h1>
-
-            @if ($workspace->description)
-                <p class="mt-2 max-w-2xl text-zinc-600 dark:text-zinc-400">
-                    {{ $workspace->description }}
-                </p>
-            @endif
-
-            <p class="mt-3 text-sm text-zinc-500">
-                Organization:
-                {{ $workspace->organization->name }}
-            </p>
-        </div>
-
-        <div class="flex gap-2">
-
-            @if (auth()->user()->can('update', $workspace))
-                <flux:button wire:click="openEditWorkspaceModal" wire:loading.attr="disabled"
-                    wire:target="openEditWorkspaceModal">
-                    Edit workspace
-                </flux:button>
-            @endif
-
-            @if (auth()->user()->can('delete', $workspace))
-                <flux:button variant="danger" wire:click="openDeleteWorkspaceModal" wire:loading.attr="disabled"
-                    wire:target="openDeleteWorkspaceModal">
-                    Delete workspace
-                </flux:button>
-            @endif
-
-        </div>
-
-    </div>
-
-    {{-- Workspace Stats --}}
+<div class="space-y-6">
     @php
         $organization = $workspace->organization;
-        $teamLimit = $organization->currentPlan()?->max_teams;
-        $projectLimit = $organization->currentPlan()?->max_projects;
-        $lockedTeams = $organization->lockedTeams();
-        $lockedProjects = $organization->lockedProjects();
+        $currentPlan = $organization->currentPlan();
+        $teamLimit = $currentPlan?->max_teams;
+        $projectLimit = $currentPlan?->max_projects;
     @endphp
 
-    <div class="grid gap-4 md:grid-cols-2">
+    {{-- Header --}}
+    <div class="overflow-hidden rounded-3xl border border-zinc-200 bg-white/80 p-5 shadow-sm backdrop-blur sm:p-6 dark:border-white/10 dark:bg-zinc-900/70">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+                <h1 class="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+                    {{ $workspace->name }}
+                </h1>
 
-        <x-ui.card class="space-y-2">
-            <p class="tf-muted">Teams</p>
+                @if ($workspace->description)
+                    <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                        {{ $workspace->description }}
+                    </p>
+                @endif
 
-            <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
-                {{ $workspace->teams->count() }} / {{ $teamLimit === null ? 'Unlimited' : $teamLimit }}
-            </p>
-        </x-ui.card>
+                <a href="{{ route('organizations.show', $organization) }}"
+                    class="mt-3 inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300"
+                    wire:navigate>
+                    <span>{{ $organization->name }}</span>
+                    <span>→</span>
+                </a>
+            </div>
 
-        <x-ui.card class="space-y-2">
-            <p class="tf-muted">Projects</p>
+            <div class="flex gap-2">
+                @if (auth()->user()->can('update', $workspace))
+                    <flux:button size="sm" wire:click="openEditWorkspaceModal">Edit</flux:button>
+                @endif
 
-            <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">
-                {{ $workspace->projects->count() }} / {{ $projectLimit === null ? 'Unlimited' : $projectLimit }}
-            </p>
-        </x-ui.card>
+                @if (auth()->user()->can('delete', $workspace))
+                    <flux:button size="sm" variant="danger" wire:click="openDeleteWorkspaceModal">Delete</flux:button>
+                @endif
+            </div>
+        </div>
 
+        {{-- Quick Stats --}}
+        <div class="mt-6 grid grid-cols-2 gap-3">
+            <div class="rounded-xl bg-zinc-50 p-3 text-center dark:bg-white/[0.03]">
+                <p class="text-xs text-zinc-500">Teams</p>
+                <p class="mt-1 text-lg font-semibold text-zinc-950 dark:text-white">
+                    {{ $this->teamsUsage }} / {{ $teamLimit === null ? 'Unlimited' : $teamLimit }}
+                </p>
+            </div>
+
+            <div class="rounded-xl bg-zinc-50 p-3 text-center dark:bg-white/[0.03]">
+                <p class="text-xs text-zinc-500">Projects</p>
+                <p class="mt-1 text-lg font-semibold text-zinc-950 dark:text-white">
+                    {{ $this->projectsUsage }} / {{ $projectLimit === null ? 'Unlimited' : $projectLimit }}
+                </p>
+            </div>
+        </div>
     </div>
 
-    {{-- Teams --}}
-    <x-ui.card class="space-y-5">
-
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-
+    {{-- Teams Section --}}
+    <x-ui.card class="border-zinc-200/80 bg-white/90 shadow-sm">
+        <div class="flex flex-col gap-4 border-b border-zinc-200/70 pb-5 sm:flex-row sm:items-end sm:justify-between dark:border-white/10">
             <div>
-                <h2 class="tf-panel-title">
-                    Teams
-                </h2>
-
-                <p class="tf-panel-subtitle">
-                    Organize members into teams within this workspace.
-                </p>
+                <h2 class="tf-panel-title">Teams</h2>
+                <p class="tf-panel-subtitle">Organize members into teams within this workspace.</p>
             </div>
 
-            @if (auth()->user()->can('createTeam', $workspace))
-                @if ($organization->canCreateTeam())
-                    <a href="{{ route('teams.create', $workspace) }}" class="tf-button-primary px-3 py-2" wire:navigate>
-                        Create Team
-                    </a>
-                @else
-                    <a href="{{ route('organizations.billing', $organization) }}" class="tf-button-secondary px-3 py-2"
-                        wire:navigate>
-                        Upgrade plan
-                    </a>
-                @endif
+            @if (auth()->user()->can('createTeam', $workspace) && $organization->canCreateTeam())
+                <a href="{{ route('teams.create', $workspace) }}" class="tf-button-primary" wire:navigate>
+                    <flux:icon name="plus" class="size-4" />
+                    New Team
+                </a>
             @endif
-
         </div>
 
-        <div class="grid gap-4 lg:grid-cols-2">
+        @if ($workspace->teams->isNotEmpty())
+            <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                @foreach ($workspace->teams as $team)
+                    @php
+                        $isTeamLocked = $this->lockedTeams->contains(fn($locked) => $locked->id === $team->id);
+                    @endphp
 
-            @forelse ($workspace->teams as $team)
-                @php
-                    $isTeamLocked = $lockedTeams->contains(fn($lockedTeam) => $lockedTeam->id === $team->id);
-                @endphp
-
-                @if ($isTeamLocked)
-                    <div
-                        class="rounded-lg border border-amber-200 bg-amber-50/40 p-4 opacity-70 dark:border-amber-500/20 dark:bg-amber-500/5">
-
-                        <div class="flex items-start justify-between">
-
-                            <div class="space-y-2">
-
-                                <h3 class="font-semibold text-zinc-950 dark:text-white">
-                                    {{ $team->name }}
-                                </h3>
-
-                                <p class="text-sm text-zinc-600 dark:text-zinc-400">
-                                    {{ $team->description ?: 'No team description.' }}
-                                </p>
-
+                    @if ($isTeamLocked)
+                        <div class="rounded-xl border border-amber-200 bg-amber-50/40 p-4 opacity-70 dark:border-amber-500/20 dark:bg-amber-500/5">
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <p class="text-sm font-semibold text-zinc-950 dark:text-white">{{ $team->name }}</p>
+                                    <p class="mt-1 text-xs text-zinc-500">{{ $team->members_count }} members</p>
+                                </div>
+                                <span class="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400">
+                                    Locked
+                                </span>
                             </div>
-
-                            <span
-                                class="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400">
-                                Locked
-                            </span>
-
                         </div>
-
-                        <div class="mt-4 border-t border-zinc-100 pt-4 dark:border-white/5">
-
-                            <span class="text-sm text-zinc-500 dark:text-zinc-400">
-
-                                {{ $team->members->count() }} members
-
-                            </span>
-
-                        </div>
-
-                    </div>
-                @else
-                    <a href="{{ route('teams.show', ['workspace' => $workspace, 'team' => $team]) }}"
-                        class="rounded-lg border border-zinc-200 p-4 transition hover:bg-zinc-50 dark:border-white/10 dark:hover:bg-white/[0.03]"
-                        wire:navigate>
-
-
-
-                        <div class="space-y-2">
-
-                            <h3 class="font-semibold text-zinc-950 dark:text-white">
-                                {{ $team->name }}
-                            </h3>
-
-                            <p class="text-sm text-zinc-600 dark:text-zinc-400">
-                                {{ $team->description ?: 'No team description.' }}
-                            </p>
-
-                        </div>
-
-                        <div class="mt-4 border-t border-zinc-100 pt-4 dark:border-white/5">
-
-                            <span class="text-sm text-zinc-500 dark:text-zinc-400">
-                                {{ $team->members->count() }} members
-                            </span>
-
-                        </div>
-
-                    </a>
-                @endif
-
-            @empty
-
-                <x-ui.empty-state title="No teams yet" description="Create your first team in this workspace." />
-            @endforelse
-
-        </div>
-
+                    @else
+                        <a href="{{ route('teams.show', ['workspace' => $workspace, 'team' => $team]) }}"
+                            wire:key="team-{{ $team->id }}"
+                            class="group flex items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-zinc-50/50 p-4 transition hover:border-zinc-300 hover:bg-white dark:border-white/10 dark:bg-white/[0.02] dark:hover:border-white/20 dark:hover:bg-white/[0.04]"
+                            wire:navigate>
+                            <div class="min-w-0">
+                                <p class="truncate text-sm font-semibold text-zinc-950 dark:text-white">{{ $team->name }}</p>
+                                <p class="mt-1 truncate text-xs text-zinc-500 dark:text-zinc-400">
+                                    {{ $team->members_count }} members
+                                </p>
+                            </div>
+                            <span class="text-zinc-400 transition group-hover:translate-x-1 group-hover:text-zinc-600 dark:text-zinc-500 dark:group-hover:text-zinc-300">→</span>
+                        </a>
+                    @endif
+                @endforeach
+            </div>
+        @else
+            <div class="mt-4 rounded-xl border border-dashed border-zinc-300 p-6 text-center dark:border-white/10">
+                <p class="text-sm font-medium text-zinc-950 dark:text-white">No teams yet</p>
+                <p class="mt-1 text-sm text-zinc-500">Create your first team in this workspace.</p>
+            </div>
+        @endif
     </x-ui.card>
 
-    {{-- Projects --}}
-    <x-ui.card class="space-y-5">
-
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-
+    {{-- Projects Section --}}
+    <x-ui.card class="border-zinc-200/80 bg-white/90 shadow-sm">
+        <div class="flex flex-col gap-4 border-b border-zinc-200/70 pb-5 sm:flex-row sm:items-end sm:justify-between dark:border-white/10">
             <div>
-                <h2 class="tf-panel-title">
-                    Projects
-                </h2>
-
-                <p class="tf-panel-subtitle">
-                    Manage work being delivered inside this workspace.
-                </p>
+                <h2 class="tf-panel-title">Projects</h2>
+                <p class="tf-panel-subtitle">Manage work being delivered inside this workspace.</p>
             </div>
 
-            @if (auth()->user()->can('createProject', $workspace))
-                @if ($organization->canCreateProject())
-                    <a href="{{ route('projects.create', $workspace) }}" class="tf-button-primary px-3 py-2"
-                        wire:navigate>
-                        Create Project
-                    </a>
-                @else
-                    <a href="{{ route('organizations.billing', $organization) }}" class="tf-button-secondary px-3 py-2"
-                        wire:navigate>
-                        Upgrade plan
-                    </a>
-                @endif
+            @if (auth()->user()->can('createProject', $workspace) && $organization->canCreateProject())
+                <a href="{{ route('projects.create', $workspace) }}" class="tf-button-primary" wire:navigate>
+                    <flux:icon name="plus" class="size-4" />
+                    New Project
+                </a>
             @endif
-
         </div>
 
-        <div class="grid gap-4 lg:grid-cols-2">
+        @if ($workspace->projects->isNotEmpty())
+            <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                @foreach ($workspace->projects as $project)
+                    @php
+                        $isProjectLocked = $this->lockedProjects->contains(fn($locked) => $locked->id === $project->id);
+                    @endphp
 
-            @forelse ($workspace->projects as $project)
-                @php
-                    $isProjectLocked = $lockedProjects->contains(
-                        fn($lockedProject) => $lockedProject->id === $project->id,
-                    );
-                @endphp
-                @if ($isProjectLocked)
-                    <div
-                        class="rounded-lg border border-amber-200 bg-amber-50/40 p-4 opacity-70 dark:border-amber-500/20 dark:bg-amber-500/5">
-
-                        <div class="flex items-start justify-between">
-
-                            <div class="space-y-2">
-
-                                <h3 class="font-semibold text-zinc-950 dark:text-white">
-                                    {{ $project->name }}
-                                </h3>
-
-                                <p class="text-sm text-zinc-600 dark:text-zinc-400">
-                                    {{ $project->description ?: 'No project description.' }}
+                    @if ($isProjectLocked)
+                        <div class="rounded-xl border border-amber-200 bg-amber-50/40 p-4 opacity-70 dark:border-amber-500/20 dark:bg-amber-500/5">
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <p class="text-sm font-semibold text-zinc-950 dark:text-white">{{ $project->name }}</p>
+                                    <p class="mt-1 text-xs text-zinc-500">{{ $project->tasks_count }} tasks</p>
+                                </div>
+                                <span class="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400">
+                                    Locked
+                                </span>
+                            </div>
+                        </div>
+                    @else
+                        <a href="{{ route('projects.show', $project) }}"
+                            wire:key="project-{{ $project->id }}"
+                            class="group flex items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-zinc-50/50 p-4 transition hover:border-zinc-300 hover:bg-white dark:border-white/10 dark:bg-white/[0.02] dark:hover:border-white/20 dark:hover:bg-white/[0.04]"
+                            wire:navigate>
+                            <div class="min-w-0">
+                                <p class="truncate text-sm font-semibold text-zinc-950 dark:text-white">{{ $project->name }}</p>
+                                <p class="mt-1 truncate text-xs text-zinc-500 dark:text-zinc-400">
+                                    {{ $project->tasks_count }} tasks
                                 </p>
-
                             </div>
-
-                            <span
-                                class="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400">
-                                Locked
-                            </span>
-
-                        </div>
-
-                        <div class="mt-4 border-t border-zinc-100 pt-4 dark:border-white/5">
-
-                            <span class="text-sm text-zinc-500 dark:text-zinc-400">
-
-                                {{ $project->count() }} projects
-
-                            </span>
-
-                        </div>
-
-                    </div>
-                @else
-                    <a href="{{ route('projects.show', $project) }}"
-                        class="rounded-lg border border-zinc-200 p-4 transition hover:bg-zinc-50 dark:border-white/10 dark:hover:bg-white/[0.03]"
-                        wire:navigate>
-
-                        <div class="space-y-2">
-
-                            <div class="flex items-center gap-2">
-                                <h3 class="font-semibold text-zinc-950 dark:text-white">
-                                    {{ $project->name }}
-                                </h3>
-
-                            </div>
-
-                            <p class="text-sm text-zinc-600 dark:text-zinc-400">
-                                {{ $project->description ?: 'No project description.' }}
-                            </p>
-
-                        </div>
-
-                    </a>
-                @endif
-
-            @empty
-
-                <x-ui.empty-state title="No projects yet" description="Create your first project in this workspace." />
-            @endforelse
-
-        </div>
-
-        {{-- Modal to edit workspace --}}
-        <flux:modal wire:model="showEditWorkspaceModal">
-
-            <div class="space-y-4">
-
-                <flux:heading>
-                    Edit Workspace
-                </flux:heading>
-
-                <flux:input wire:model="name" label="Workspace Name" />
-
-                <flux:textarea wire:model="description" label="Description" />
-
-                <div class="flex justify-end gap-2">
-
-                    <flux:button variant="ghost" wire:click="$set('showEditWorkspaceModal', false)">
-                        Cancel
-                    </flux:button>
-
-                    <flux:button wire:click="updateWorkspace" wire:loading.attr="disabled" wire:target="updateWorkspace"
-                        class="inline-flex items-center justify-center gap-2">
-                        <span wire:loading.remove wire:target="updateWorkspace">Save Changes</span>
-                        <span wire:loading.flex wire:target="updateWorkspace" class="items-center justify-center gap-2">
-                            <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                    stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor"
-                                    d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z">
-                                </path>
-                            </svg>
-                            <span>Saving...</span>
-                        </span>
-                    </flux:button>
-
-                </div>
-
+                            <span class="text-zinc-400 transition group-hover:translate-x-1 group-hover:text-zinc-600 dark:text-zinc-500 dark:group-hover:text-zinc-300">→</span>
+                        </a>
+                    @endif
+                @endforeach
             </div>
-
-        </flux:modal>
-
-        {{-- Modal to delete workspace --}}
-        <flux:modal wire:model="showDeleteWorkspaceModal">
-
-            <div class="space-y-4">
-
-                <flux:heading>
-                    Delete Workspace
-                </flux:heading>
-
-                <p>
-                    Delete all teams and projects before deleting this Workspace.
-                </p>
-
-                <div class="flex justify-end gap-2">
-
-                    <flux:button variant="ghost" wire:click="$set('showDeleteWorkspaceModal', false)">
-                        Cancel
-                    </flux:button>
-
-                    <flux:button variant="danger" wire:click="deleteWorkspace" wire:loading.attr="disabled"
-                        wire:target="deleteWorkspace" class="inline-flex items-center justify-center gap-2">
-                        <span wire:loading.remove wire:target="deleteWorkspace">Delete</span>
-                        <span wire:loading.flex wire:target="deleteWorkspace"
-                            class="items-center justify-center gap-2">
-                            <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                <circle class="opacity-25" cx="12" cy="12" r="10"
-                                    stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor"
-                                    d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z">
-                                </path>
-                            </svg>
-                            <span>Deleting...</span>
-                        </span>
-                    </flux:button>
-
-                </div>
-
+        @else
+            <div class="mt-4 rounded-xl border border-dashed border-zinc-300 p-6 text-center dark:border-white/10">
+                <p class="text-sm font-medium text-zinc-950 dark:text-white">No projects yet</p>
+                <p class="mt-1 text-sm text-zinc-500">Create your first project in this workspace.</p>
             </div>
-
-        </flux:modal>
-
+        @endif
     </x-ui.card>
 
+    {{-- Modals --}}
+    <flux:modal wire:model="showEditWorkspaceModal" class="max-w-lg">
+        <div class="space-y-4">
+            <flux:heading>Edit Workspace</flux:heading>
+            <flux:input wire:model="name" label="Workspace Name" required />
+            <flux:textarea wire:model="description" label="Description" />
+            <div class="flex justify-end gap-2">
+                <flux:button variant="ghost" wire:click="$set('showEditWorkspaceModal', false)">Cancel</flux:button>
+                <flux:button wire:click="updateWorkspace">Save</flux:button>
+            </div>
+        </div>
+    </flux:modal>
+
+    <flux:modal wire:model="showDeleteWorkspaceModal" class="max-w-lg">
+        <div class="space-y-4">
+            <flux:heading>Delete Workspace</flux:heading>
+            <p class="text-sm text-zinc-600">Delete all teams and projects before deleting this workspace.</p>
+            <div class="flex justify-end gap-2">
+                <flux:button variant="ghost" wire:click="$set('showDeleteWorkspaceModal', false)">Cancel</flux:button>
+                <flux:button variant="danger" wire:click="deleteWorkspace">Delete</flux:button>
+            </div>
+        </div>
+    </flux:modal>
 </div>

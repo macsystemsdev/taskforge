@@ -7,6 +7,7 @@ use App\Domain\Organizations\Enums\OrganizationRole;
 use App\Support\UserTeam;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Table;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -21,7 +22,6 @@ use Override;
 #[Fillable(['name', 'slug', 'subscription_plan', 'subscription_status', 'owner_id', 'stripe_customer_id', 'stripe_payment_method_id'])]
 class Organization extends Model
 {
-
 
     public function owner(): BelongsTo
     {

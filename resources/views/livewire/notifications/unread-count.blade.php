@@ -1,7 +1,7 @@
-<div class="inline-flex">
+<div class="absolute -right-0.5 -top-0.5">
     @if ($count > 0)
-        <span class="ml-2 inline-flex items-center justify-center rounded-full bg-rose-600 px-2 py-0.5 text-[10px] font-semibold text-white">
-            {{ $count }}
+        <span class="flex size-4 items-center justify-center rounded-full bg-rose-600 text-[10px] font-bold text-white shadow-sm">
+            {{ $count > 9 ? '9+' : $count }}
         </span>
     @endif
 </div>

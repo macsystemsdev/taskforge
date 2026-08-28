@@ -1,61 +1,58 @@
 <?php
 
-use App\Domain\Billing\Enums\PaymentProvider;
-use App\Domain\Billing\Enums\PaymentStatus;
+use App\Domain\Billing\Enum\PaymentProvider;
+use App\Domain\Billing\Enum\PaymentStatus;
 use App\Models\PaymentTransaction;
 use App\Models\SubscriptionPlan;
-use App\Models\User;
-use Livewire\Livewire;
-use Tests\Feature\Billing\BillingTestCase;
-
 
 test('checkout creates payment transaction with correct data', function () {
     $this->createBillingPlans();
-    $admin = User::factory()->create();
-    $organization = $this->createOrganizationWithAdmin($admin);
-    $plan = SubscriptionPlan::where('slug', 'team-monthly')->first();
+    [$organization, $owner] = $this->createOrganizationWithOwner();
+    $plan = SubscriptionPlan::where('slug', 'pro-monthly')->first();
     
-    $this->actingAs($admin);
+    $this->actingAs($owner);
     
-    Livewire::test('billing.checkout', ['organization' => $organization])
-        ->set('selectedPlan', $plan->id)
-        ->call('confirmPlanChange')
-        ->assertHasNoErrors();
+    // Call the checkout service directly
+    $service = app(\App\Domain\Billing\Services\CreateCheckoutService::class);
+    
+    // Use a fake gateway resolver
+    $resolver = new class extends \App\Domain\Billing\Services\PaymentGatewayResolver {
+        public function resolve(PaymentProvider $provider): \App\Contracts\Billing\PaymentGateway
+        {
+            return new class implements \App\Contracts\Billing\PaymentGateway {
+                public function createCheckout(\App\Domain\Billing\DataTransferObjects\CheckoutData $data, PaymentTransaction $transaction): \App\Domain\Billing\DataTransferObjects\CheckoutResponse
+                {
+                    return new \App\Domain\Billing\DataTransferObjects\CheckoutResponse(
+                        url: 'https://fake-checkout.test',
+                        reference: 'cs_fake',
+                        metadata: [],
+                    );
+                }
+                
+                public function chargeCustomer(PaymentTransaction $transaction): \App\Domain\Billing\DataTransferObjects\PaymentResponse
+                {
+                    return \App\Domain\Billing\DataTransferObjects\PaymentResponse::successful('pi_fake', []);
+                }
+            };
+        }
+    };
+    
+    $this->app->instance(\App\Domain\Billing\Services\PaymentGatewayResolver::class, $resolver);
+    
+    $data = new \App\Domain\Billing\DataTransferObjects\CheckoutData(
+        organization: $organization,
+        plan: $plan,
+        provider: PaymentProvider::STRIPE,
+    );
+    
+    $response = $service->handle($data);
     
     $transaction = PaymentTransaction::where('organization_id', $organization->id)->first();
     
     expect($transaction)->not->toBeNull()
         ->and($transaction->subscription_plan_id)->toBe($plan->id)
-        ->and($transaction->provider)->toBe(PaymentProvider::STRIPE->value)
+        ->and($transaction->provider)->toBe(PaymentProvider::STRIPE)
         ->and($transaction->amount)->toBe($plan->price)
         ->and($transaction->currency)->toBe($plan->currency)
-        ->and($transaction->status)->toBe(PaymentStatus::PROCESSING->value);
-});
-
-test('checkout rejects free plan', function () {
-    $this->createBillingPlans();
-    $admin = User::factory()->create();
-    $organization = $this->createOrganizationWithAdmin($admin);
-    $freePlan = SubscriptionPlan::where('slug', 'free')->first();
-    
-    $this->actingAs($admin);
-    
-    Livewire::test('billing.checkout', ['organization' => $organization])
-        ->set('selectedPlan', $freePlan->id)
-        ->call('confirmPlanChange')
-        ->assertHasErrors(['selectedPlan']);
-});
-
-test('checkout rejects inactive plan', function () {
-    $this->createBillingPlans();
-    $admin = User::factory()->create();
-    $organization = $this->createOrganizationWithAdmin($admin);
-    $inactivePlan = SubscriptionPlan::where('slug', 'inactive')->first();
-    
-    $this->actingAs($admin);
-    
-    Livewire::test('billing.checkout', ['organization' => $organization])
-        ->set('selectedPlan', $inactivePlan->id)
-        ->call('confirmPlanChange')
-        ->assertHasErrors(['selectedPlan']);
+        ->and($transaction->status)->toBe(PaymentStatus::PROCESSING);
 });

@@ -4,45 +4,63 @@
 
 @section('content')
     <div class="flex flex-col gap-6">
-        <h1 class="text-2xl font-bold text-center">{{ __('Create your TaskForge account') }}</h1>
-        <p class="text-sm text-center text-zinc-600">{{ __('Start organizing your team, projects, and tasks.') }}</p>
+        <x-auth-header :title="__('Create your TaskForge account')" :description="__('Start organizing your team, projects, and tasks.')" />
 
         <form method="POST" action="{{ route('register.store') }}" class="flex flex-col gap-4">
             @csrf
-            <div>
-                <label class="block text-sm font-medium">{{ __('Name') }}</label>
-                <input type="text" name="name" value="{{ old('name') }}" required autofocus class="mt-1 block w-full rounded-md border-zinc-300 shadow-sm">
-                @error('name')
-                    <span class="text-red-600 text-sm">{{ $message }}</span>
-                @enderror
+
+            <flux:input
+                name="name"
+                :label="__('Name')"
+                :value="old('name')"
+                type="text"
+                required
+                autofocus
+                autocomplete="name"
+                placeholder="John Doe"
+            />
+
+            <flux:input
+                name="email"
+                :label="__('Email address')"
+                :value="old('email')"
+                type="email"
+                required
+                autocomplete="email"
+                placeholder="email@example.com"
+            />
+
+            <flux:input
+                name="password"
+                :label="__('Password')"
+                type="password"
+                required
+                autocomplete="new-password"
+                placeholder="••••••••"
+                viewable
+            />
+
+            <flux:input
+                name="password_confirmation"
+                :label="__('Confirm Password')"
+                type="password"
+                required
+                autocomplete="new-password"
+                placeholder="••••••••"
+                viewable
+            />
+
+            <div class="flex items-center justify-end mt-2">
+                <flux:button variant="primary" type="submit" class="w-full" data-test="register-button">
+                    {{ __('Create Account') }}
+                </flux:button>
             </div>
-            <div>
-                <label class="block text-sm font-medium">{{ __('Email') }}</label>
-                <input type="email" name="email" value="{{ old('email') }}" required class="mt-1 block w-full rounded-md border-zinc-300 shadow-sm">
-                @error('email')
-                    <span class="text-red-600 text-sm">{{ $message }}</span>
-                @enderror
-            </div>
-            <div>
-                <label class="block text-sm font-medium">{{ __('Password') }}</label>
-                <input type="password" name="password" required class="mt-1 block w-full rounded-md border-zinc-300 shadow-sm">
-                @error('password')
-                    <span class="text-red-600 text-sm">{{ $message }}</span>
-                @enderror
-            </div>
-            <div>
-                <label class="block text-sm font-medium">{{ __('Confirm Password') }}</label>
-                <input type="password" name="password_confirmation" required class="mt-1 block w-full rounded-md border-zinc-300 shadow-sm">
-            </div>
-            <button type="submit" class="w-full rounded-md bg-blue-600 px-4 py-2 text-white">
-                {{ __('Register') }}
-            </button>
         </form>
 
         @if (Route::has('login'))
-            <div class="text-sm text-center">
-                {{ __('Already have an account?') }}
-                <a href="{{ route('login') }}" class="text-blue-600">{{ __('Log in') }}</a>
+            <div class="space-x-1 text-sm text-center rtl:space-x-reverse text-zinc-600 dark:text-zinc-400">
+                <span>{{ __('Already have an account?') }}</span>
+                <flux:link :href="route('login')" wire:navigate>{{ __('Log in') }}</flux:link>
             </div>
         @endif
     </div>

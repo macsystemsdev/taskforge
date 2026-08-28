@@ -5,7 +5,6 @@ use App\Models\Team;
 use App\Models\User;
 use App\Policies\TeamPolicy;
 
-uses(Tests\TestCase::class);
 
 class TestableUser extends User
 {

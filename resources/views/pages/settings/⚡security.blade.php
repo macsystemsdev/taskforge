@@ -27,11 +27,12 @@ new #[Title('Security settings')] class extends Component {
     /**
      * Mount the component.
      */
-    public function mount(DisableTwoFactorAuthentication $disableTwoFactorAuthentication): void
+    public function mount(DisableTwoFactorAuthentication $disableTwoFactorAuthentication)
     {
         // Check if password confirmation is required
         if (session('auth.password_confirmed_at') === null) {
-            return redirect()->route('password.confirm');
+            $this->redirect(route('password.confirm'));
+            return;
         }
         $this->canManageTwoFactor = Features::canManageTwoFactorAuthentication();
 

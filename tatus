@@ -1,0 +1,1962 @@
+[1mdiff --git a/app/Domain/Billing/Actions/CreatePaymentTransactionAction.php b/app/Domain/Billing/Actions/CreatePaymentTransactionAction.php[m
+[1mindex 0351c7c..1351c29 100644[m
+[1m--- a/app/Domain/Billing/Actions/CreatePaymentTransactionAction.php[m
+[1m+++ b/app/Domain/Billing/Actions/CreatePaymentTransactionAction.php[m
+[36m@@ -3,30 +3,32 @@[m
+ namespace App\Domain\Billing\Actions;[m
+ [m
+ use App\Domain\Billing\DataTransferObjects\CheckoutData;[m
+[31m-use App\Domain\Billing\DataTransferObjects\CreatePaymentTransactionData;[m
+ use App\Domain\Billing\Enum\PaymentStatus;[m
+ use App\Models\PaymentTransaction;[m
+[32m+[m[32muse Illuminate\Support\Str;[m
+ [m
+ class CreatePaymentTransactionAction[m
+ {[m
+[31m-    public function handle([m
+[31m-        CheckoutData $data,[m
+[31m-    ): PaymentTransaction {[m
+[32m+[m[32m    public function handle(CheckoutData $data, ?string $idempotencyKey = null): PaymentTransaction[m
+[32m+[m[32m    {[m
+[32m+[m[32m        // Client-generated idempotency key or fallback to a UUID[m
+[32m+[m[32m        $idempotencyKey = $idempotencyKey ?? (string) Str::uuid();[m
+ [m
+[31m-        return PaymentTransaction::create([[m
+[32m+[m[32m        // Check if a transaction with this key already exists[m
+[32m+[m[32m        $existing = PaymentTransaction::where('idempotency_key', $idempotencyKey)->first();[m
+ [m
+[31m-            'organization_id' => $data->organization->id,[m
+[32m+[m[32m        if ($existing) {[m
+[32m+[m[32m            return $existing;[m
+[32m+[m[32m        }[m
+ [m
+[32m+[m[32m        return PaymentTransaction::create([[m
+[32m+[m[32m            'idempotency_key' => $idempotencyKey,[m
+[32m+[m[32m            'organization_id' => $data->organization->id,[m
+             'subscription_plan_id' => $data->plan->id,[m
+[31m-[m
+             'provider' => $data->provider,[m
+[31m-[m
+             'amount' => $data->plan->price,[m
+[31m-[m
+             'currency' => $data->plan->currency,[m
+[31m-[m
+             'status' => PaymentStatus::PROCESSING,[m
+[31m-[m
+         ]);[m
+     }[m
+ }[m
+[1mdiff --git a/app/Domain/Billing/Enum/PaymentProvider.php b/app/Domain/Billing/Enum/PaymentProvider.php[m
+[1mindex 4319607..000b3fa 100644[m
+[1m--- a/app/Domain/Billing/Enum/PaymentProvider.php[m
+[1m+++ b/app/Domain/Billing/Enum/PaymentProvider.php[m
+[36m@@ -16,4 +16,18 @@[m [mpublic function label(): string[m
+             self::ORANGE => 'Orange Money',[m
+         };[m
+     }[m
+[32m+[m
+[32m+[m[32m    public function description(): string[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return match ($this) {[m
+[32m+[m[32m            self::STRIPE => 'Card / international payment',[m
+[32m+[m[32m            self::MTN => 'Mobile money payment',[m
+[32m+[m[32m            self::ORANGE => 'Mobile money payment',[m
+[32m+[m[32m        };[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    public function isSupported(): bool[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return $this === self::STRIPE;[m
+[32m+[m[32m    }[m
+ }[m
+[1mdiff --git a/app/Domain/Billing/Services/CreateCheckoutService.php b/app/Domain/Billing/Services/CreateCheckoutService.php[m
+[1mindex 28f2c14..307f729 100644[m
+[1m--- a/app/Domain/Billing/Services/CreateCheckoutService.php[m
+[1m+++ b/app/Domain/Billing/Services/CreateCheckoutService.php[m
+[36m@@ -2,21 +2,21 @@[m
+ [m
+ namespace App\Domain\Billing\Services;[m
+ [m
+[31m-use App\Contracts\Billing\PaymentGateway;[m
+ use App\Domain\Billing\Actions\CreatePaymentTransactionAction;[m
+ use App\Domain\Billing\DataTransferObjects\CheckoutData;[m
+ use App\Domain\Billing\DataTransferObjects\CheckoutResponse;[m
+[31m-use App\Domain\Billing\Enum\PaymentStatus;[m
+ use App\Exceptions\Billing\CannotPurchaseFreePlanException;[m
+ use App\Exceptions\Billing\SubscriptionAlreadyActiveException;[m
+ use App\Exceptions\Billing\SubscriptionChangeAlreadyScheduledException;[m
+ use App\Exceptions\Billing\SubscriptionPlanInactiveException;[m
+[32m+[m[32muse Illuminate\Support\Facades\DB;[m
+ use Illuminate\Support\Facades\Log;[m
+[32m+[m[32muse Illuminate\Support\Str;[m
+ [m
+ class CreateCheckoutService[m
+ {[m
+     public function __construct([m
+[31m-        protected PaymentGateway $paymentGateway,[m
+[32m+[m[32m        protected PaymentGatewayResolver $gatewayResolver,[m
+         protected CreatePaymentTransactionAction $createPaymentTransaction,[m
+     ) {}[m
+ [m
+[36m@@ -24,54 +24,56 @@[m [mpublic function handle(CheckoutData $data): CheckoutResponse[m
+     {[m
+         $this->ensurePlanCanBeChanged($data);[m
+ [m
+[31m-        $transaction = $this->createPaymentTransaction->handle(data: $data);[m
+[32m+[m[32m        return DB::transaction(function () use ($data) {[m
+[32m+[m[32m            // Lock the subscription row to prevent concurrent checkouts[m
+[32m+[m[32m            $subscription = $data->organization->subscription()->lockForUpdate()->firstOrFail();[m
+ [m
+[31m-        try {[m
+[31m-            $response = $this->paymentGateway->createCheckout($data, $transaction);[m
+[32m+[m[32m            if ($subscription->hasPendingPlan()) {[m
+[32m+[m[32m                throw new SubscriptionChangeAlreadyScheduledException();[m
+[32m+[m[32m            }[m
+ [m
+[31m-            $transaction->update([[m
+[31m-                'provider_reference' => $response->reference,[m
+[31m-                'metadata' => $response->metadata,[m
+[31m-            ]);[m
+[32m+[m[32m            // Generate a UUID as the idempotency key for this checkout attempt[m
+[32m+[m[32m            $idempotencyKey = (string) Str::uuid();[m
+ [m
+[31m-            return $response;[m
+[31m-        } catch (\Exception $e) {[m
+[31m-            // Mark the transaction as failed so it doesn't remain PROCESSING forever[m
+[31m-            $transaction->markFailed([m
+[31m-                reason: $e->getMessage()[m
+[32m+[m[32m            $transaction = $this->createPaymentTransaction->handle([m
+[32m+[m[32m                data: $data,[m
+[32m+[m[32m                idempotencyKey: $idempotencyKey,[m
+             );[m
+ [m
+[31m-            Log::error('Checkout creation failed', [[m
+[31m-                'transaction_id' => $transaction->id,[m
+[31m-                'error' => $e->getMessage(),[m
+[31m-            ]);[m
+[32m+[m[32m            try {[m
+[32m+[m[32m                $gateway = $this->gatewayResolver->resolve($data->provider);[m
+[32m+[m[32m                $response = $gateway->createCheckout($data, $transaction);[m
+ [m
+[31m-            throw $e;[m
+[31m-        }[m
+[32m+[m[32m                $transaction->update([[m
+[32m+[m[32m                    'provider_reference' => $response->reference,[m
+[32m+[m[32m                    'metadata' => $response->metadata,[m
+[32m+[m[32m                ]);[m
+[32m+[m
+[32m+[m[32m                return $response;[m
+[32m+[m[32m            } catch (\Exception $e) {[m
+[32m+[m[32m                $transaction->markFailed(reason: $e->getMessage());[m
+[32m+[m[32m                Log::error('Checkout creation failed', [[m
+[32m+[m[32m                    'transaction_id' => $transaction->id,[m
+[32m+[m[32m                    'provider' => $data->provider->value,[m
+[32m+[m[32m                    'error' => $e->getMessage(),[m
+[32m+[m[32m                ]);[m
+[32m+[m[32m                throw $e;[m
+[32m+[m[32m            }[m
+[32m+[m[32m        });[m
+     }[m
+ [m
+     protected function ensurePlanCanBeChanged(CheckoutData $data): void[m
+     {[m
+[31m-        // Check free plan FIRST (more specific exception)[m
+         if ($data->plan->isFree()) {[m
+             throw new CannotPurchaseFreePlanException();[m
+         }[m
+ [m
+[31m-        // Then check if purchasable[m
+         if (!$data->plan->isPurchasable()) {[m
+             throw new SubscriptionPlanInactiveException();[m
+         }[m
+ [m
+[31m-        // Then check if already subscribed[m
+         if ($data->organization->isSubscribedTo($data->plan)) {[m
+             throw new SubscriptionAlreadyActiveException();[m
+         }[m
+[31m-[m
+[31m-        // Then check pending plan[m
+[31m-        $subscription = $data->organization->subscription;[m
+[31m-[m
+[31m-        if ($subscription->hasPendingPlan()) {[m
+[31m-            throw new SubscriptionChangeAlreadyScheduledException();[m
+[31m-        }[m
+     }[m
+ }[m
+[1mdiff --git a/app/Domain/Billing/Services/StartTrialService.php b/app/Domain/Billing/Services/StartTrialService.php[m
+[1mindex c29940d..b5531df 100644[m
+[1m--- a/app/Domain/Billing/Services/StartTrialService.php[m
+[1m+++ b/app/Domain/Billing/Services/StartTrialService.php[m
+[36m@@ -4,28 +4,28 @@[m
+ [m
+ use App\Exceptions\Billing\TrialUnavailableException;[m
+ use App\Models\Subscription;[m
+[32m+[m[32muse Illuminate\Support\Facades\DB;[m
+ [m
+ class StartTrialService[m
+ {[m
+[31m-[m
+[31m-    public function handle([m
+[31m-        Subscription $subscription[m
+[31m-    ): void {[m
+[31m-[m
+[31m-        if ([m
+[31m-            ! $subscription->canStartTrial()[m
+[31m-        ) {[m
+[31m-            throw new TrialUnavailableException();[m
+[31m-        }[m
+[31m-[m
+[31m-        $subscription->update([[m
+[31m-[m
+[31m-            'has_used_trial' => true,[m
+[31m-[m
+[31m-            'trial_starts_at' => now(),[m
+[31m-[m
+[31m-            'trial_ends_at' =>[m
+[31m-            now()->addDays(14),[m
+[31m-        ]);[m
+[32m+[m[32m    public function handle(Subscription $subscription): void[m
+[32m+[m[32m    {[m
+[32m+[m[32m        // Use database lock to prevent concurrent trials[m
+[32m+[m[32m        DB::transaction(function () use ($subscription) {[m
+[32m+[m[32m            // Lock the subscription row[m
+[32m+[m[32m            $lockedSubscription = Subscription::whereKey($subscription->id)[m
+[32m+[m[32m                ->lockForUpdate()[m
+[32m+[m[32m                ->firstOrFail();[m
+[32m+[m
+[32m+[m[32m            if (!$lockedSubscription->canStartTrial()) {[m
+[32m+[m[32m                throw new TrialUnavailableException();[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m            $lockedSubscription->update([[m
+[32m+[m[32m                'has_used_trial' => true,[m
+[32m+[m[32m                'trial_starts_at' => now(),[m
+[32m+[m[32m                'trial_ends_at' => now()->addDays(14),[m
+[32m+[m[32m            ]);[m
+[32m+[m[32m        });[m
+     }[m
+ }[m
+[1mdiff --git a/app/Exceptions/Billing/CannotPurchaseFreePlanException.php b/app/Exceptions/Billing/CannotPurchaseFreePlanException.php[m
+[1mindex 71ff931..4d14cdb 100644[m
+[1m--- a/app/Exceptions/Billing/CannotPurchaseFreePlanException.php[m
+[1m+++ b/app/Exceptions/Billing/CannotPurchaseFreePlanException.php[m
+[36m@@ -2,9 +2,7 @@[m
+ [m
+ namespace App\Exceptions\Billing;[m
+ [m
+[31m-use Exception;[m
+[31m-[m
+[31m-class CannotPurchaseFreePlanException extends Exception[m
+[32m+[m[32mclass CannotPurchaseFreePlanException extends SubscriptionException[m
+ {[m
+[31m-    //[m
+[32m+[m[32m    protected $message = 'The free plan cannot be purchased. Please select a paid plan.';[m
+ }[m
+[1mdiff --git a/app/Exceptions/Billing/SubscriptionAlreadyActiveException.php b/app/Exceptions/Billing/SubscriptionAlreadyActiveException.php[m
+[1mindex 9f468be..6eab51c 100644[m
+[1m--- a/app/Exceptions/Billing/SubscriptionAlreadyActiveException.php[m
+[1m+++ b/app/Exceptions/Billing/SubscriptionAlreadyActiveException.php[m
+[36m@@ -2,8 +2,7 @@[m
+ [m
+ namespace App\Exceptions\Billing;[m
+ [m
+[31m-[m
+ class SubscriptionAlreadyActiveException extends SubscriptionException[m
+ {[m
+[31m-    protected $message = 'Organization is already subscribed to this plan.';[m
+[32m+[m[32m    protected $message = 'Your organization is already subscribed to this plan.';[m
+ }[m
+[1mdiff --git a/app/Exceptions/Billing/SubscriptionChangeAlreadyScheduledException.php b/app/Exceptions/Billing/SubscriptionChangeAlreadyScheduledException.php[m
+[1mindex abea2e2..3f57315 100644[m
+[1m--- a/app/Exceptions/Billing/SubscriptionChangeAlreadyScheduledException.php[m
+[1m+++ b/app/Exceptions/Billing/SubscriptionChangeAlreadyScheduledException.php[m
+[36m@@ -2,9 +2,7 @@[m
+ [m
+ namespace App\Exceptions\Billing;[m
+ [m
+[31m-use Exception;[m
+[31m-[m
+[31m-class SubscriptionChangeAlreadyScheduledException extends Exception[m
+[32m+[m[32mclass SubscriptionChangeAlreadyScheduledException extends SubscriptionException[m
+ {[m
+[31m-    //[m
+[32m+[m[32m    protected $message = 'A subscription change is already scheduled. Please wait for it to complete before making another change.';[m
+ }[m
+[1mdiff --git a/app/Exceptions/Billing/SubscriptionPlanInactiveException.php b/app/Exceptions/Billing/SubscriptionPlanInactiveException.php[m
+[1mindex b43120b..d77f477 100644[m
+[1m--- a/app/Exceptions/Billing/SubscriptionPlanInactiveException.php[m
+[1m+++ b/app/Exceptions/Billing/SubscriptionPlanInactiveException.php[m
+[36m@@ -2,7 +2,6 @@[m
+ [m
+ namespace App\Exceptions\Billing;[m
+ [m
+[31m-[m
+ class SubscriptionPlanInactiveException extends SubscriptionException[m
+ {[m
+     protected $message = 'This subscription plan is no longer available.';[m
+[1mdiff --git a/app/Exceptions/Billing/TrialUnavailableException.php b/app/Exceptions/Billing/TrialUnavailableException.php[m
+[1mindex 61ac238..7a7ffb4 100644[m
+[1m--- a/app/Exceptions/Billing/TrialUnavailableException.php[m
+[1m+++ b/app/Exceptions/Billing/TrialUnavailableException.php[m
+[36m@@ -2,9 +2,7 @@[m
+ [m
+ namespace App\Exceptions\Billing;[m
+ [m
+[31m-use Exception;[m
+[31m-[m
+[31m-class TrialUnavailableException extends Exception[m
+[32m+[m[32mclass TrialUnavailableException extends SubscriptionException[m
+ {[m
+[31m-    //[m
+[32m+[m[32m    protected $message = 'Free trial is no longer available for your organization.';[m
+ }[m
+[1mdiff --git a/app/Http/Controllers/StripeWebhookController.php b/app/Http/Controllers/StripeWebhookController.php[m
+[1mindex 27b1eeb..78636c2 100644[m
+[1m--- a/app/Http/Controllers/StripeWebhookController.php[m
+[1m+++ b/app/Http/Controllers/StripeWebhookController.php[m
+[36m@@ -11,66 +11,17 @@[m
+ use Stripe\Webhook;[m
+ use Stripe\StripeClient;[m
+ [m
+[31m-[m
+ class StripeWebhookController[m
+ {[m
+[31m-    /**[m
+[31m-     * Stripe API client.[m
+[31m-     *[m
+[31m-     * This is used when webhook data alone is not sufficient and we need[m
+[31m-     * to retrieve additional information directly from Stripe.[m
+[31m-     *[m
+[31m-     * Example:[m
+[31m-     * A checkout.session.completed event gives us the Checkout Session,[m
+[31m-     * including the Payment Intent ID. We retrieve the Payment Intent to[m
+[31m-     * obtain the payment_method ID that will later be reused for renewals.[m
+[31m-     */[m
+     protected StripeClient $stripe;[m
+ [m
+[31m-    /**[m
+[31m-     * Check whether this exact Stripe event has already been processed.[m
+[31m-     *[m
+[31m-     * Webhooks must be treated as potentially duplicated.[m
+[31m-     *[m
+[31m-     * Stripe can retry delivery, and the same event can arrive more than[m
+[31m-     * once. We therefore use Stripe's unique event ID as an idempotency key.[m
+[31m-     *[m
+[31m-     * Without this protection, the same successful payment could potentially[m
+[31m-     * trigger subscription/payment completion logic multiple times.[m
+[31m-     */[m
+     protected function alreadyProcessed($event): bool[m
+     {[m
+         return WebhookEvent::query()[m
+[31m-            ->where([m
+[31m-                'event_id',[m
+[31m-                $event->id[m
+[31m-            )[m
+[32m+[m[32m            ->where('event_id', $event->id)[m
+             ->exists();[m
+     }[m
+ [m
+[31m-    /**[m
+[31m-     * Record that a Stripe webhook event has been handled.[m
+[31m-     *[m
+[31m-     * The event ID is stored so that future deliveries of the same event[m
+[31m-     * can be identified as duplicates and ignored.[m
+[31m-     *[m
+[31m-     * provider:[m
+[31m-     *     Identifies which payment provider produced the event. This matters[m
+[31m-     *     because TaskForge is designed to support multiple payment providers,[m
+[31m-     *     not only Stripe.[m
+[31m-     *[m
+[31m-     * event_id:[m
+[31m-     *     Stripe's unique identifier for this specific webhook event.[m
+[31m-     *[m
+[31m-     * event_type:[m
+[31m-     *     The Stripe event that was handled, for example:[m
+[31m-     *     - checkout.session.completed[m
+[31m-     *     - payment_intent.succeeded[m
+[31m-     *     - payment_intent.payment_failed[m
+[31m-     *[m
+[31m-     * processed_at:[m
+[31m-     *     Records when TaskForge considers this event processed.[m
+[31m-     */[m
+     protected function storeWebhookEvent($event): void[m
+     {[m
+         WebhookEvent::create([[m
+[36m@@ -81,373 +32,107 @@[m [mprotected function storeWebhookEvent($event): void[m
+         ]);[m
+     }[m
+ [m
+[31m-    /**[m
+[31m-     * Inject the application service responsible for completing a payment.[m
+[31m-     *[m
+[31m-     * The webhook controller should not contain the full subscription[m
+[31m-     * activation/renewal business logic.[m
+[31m-     *[m
+[31m-     * Its responsibility is mainly:[m
+[31m-     *[m
+[31m-     * 1. Verify that the request genuinely came from Stripe.[m
+[31m-     * 2. Identify the Stripe event.[m
+[31m-     * 3. Prevent duplicate processing.[m
+[31m-     * 4. Route the event to the appropriate application workflow.[m
+[31m-     *[m
+[31m-     * CompletePaymentService owns the actual payment completion logic.[m
+[31m-     */[m
+[31m-    public function __construct([m
+[31m-        protected CompletePaymentService $service,[m
+[31m-    ) {[m
+[31m-        /**[m
+[31m-         * Stripe's secret API key is used for server-to-server communication[m
+[31m-         * with Stripe.[m
+[31m-         *[m
+[31m-         * This is different from the webhook signing secret.[m
+[31m-         *[m
+[31m-         * Secret API key:[m
+[31m-         *     Allows TaskForge's backend to call the Stripe API.[m
+[31m-         *[m
+[31m-         * Webhook signing secret:[m
+[31m-         *     Allows TaskForge to verify that an incoming webhook payload[m
+[31m-         *     was genuinely signed by Stripe.[m
+[31m-         */[m
+[31m-        $this->stripe = new StripeClient([m
+[31m-            config('services.stripe.secret')[m
+[31m-        );[m
+[32m+[m[32m    public function __construct(protected CompletePaymentService $service)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $this->stripe = new StripeClient(config('services.stripe.secret'));[m
+     }[m
+ [m
+[31m-    /**[m
+[31m-     * Receive and process an incoming Stripe webhook.[m
+[31m-     *[m
+[31m-     * IMPORTANT:[m
+[31m-     * A webhook request is not trusted simply because it reaches this route.[m
+[31m-     *[m
+[31m-     * Stripe signs webhook requests. We verify the payload using the[m
+[31m-     * Stripe-Signature header and the configured webhook signing secret[m
+[31m-     * before doing anything with the event.[m
+[31m-     */[m
+     public function __invoke(Request $request)[m
+     {[m
+[31m-        /**[m
+[31m-         * Get the raw request body exactly as Stripe sent it.[m
+[31m-         *[m
+[31m-         * Signature verification depends on the original payload, so we use[m
+[31m-         * getContent() rather than transforming the request into an array[m
+[31m-         * before verification.[m
+[31m-         */[m
+         $payload = $request->getContent();[m
+[31m-[m
+[31m-        /**[m
+[31m-         * Stripe includes a signature in this request header.[m
+[31m-         */[m
+         $signature = $request->header('Stripe-Signature');[m
+[31m-[m
+[31m-        /**[m
+[31m-         * This secret belongs specifically to the configured Stripe webhook[m
+[31m-         * endpoint and is used to verify incoming webhook signatures.[m
+[31m-         */[m
+         $secret = config('services.stripe.webhook_secret');[m
+ [m
+         try {[m
+[31m-            /**[m
+[31m-             * Verify the webhook signature and construct a Stripe Event object.[m
+[31m-             *[m
+[31m-             * If verification fails, the event must not be trusted or processed.[m
+[31m-             */[m
+[31m-            $event = Webhook::constructEvent([m
+[31m-                $payload,[m
+[31m-                $signature,[m
+[31m-                $secret[m
+[31m-            );[m
+[32m+[m[32m            $event = Webhook::constructEvent($payload, $signature, $secret);[m
+         } catch (SignatureVerificationException $e) {[m
+[31m-            /**[m
+[31m-             * The request either did not come from Stripe or the payload/signature[m
+[31m-             * combination failed verification.[m
+[31m-             */[m
+             return response('Invalid signature', 400);[m
+         }[m
+ [m
+[31m-        /**[m
+[31m-         * Webhooks are at-least-once delivery systems.[m
+[31m-         *[m
+[31m-         * Stripe may send the same event again, so do not run payment logic twice[m
+[31m-         * for an event we have already processed.[m
+[31m-         */[m
+         if ($this->alreadyProcessed($event)) {[m
+[31m-            return response()->json([[m
+[31m-                'duplicate' => true,[m
+[31m-            ]);[m
+[32m+[m[32m            return response()->json(['duplicate' => true]);[m
+         }[m
+ [m
+[31m-        /**[m
+[31m-         * Route the event to the correct handler based on its Stripe event type.[m
+[31m-         */[m
+         $response = $this->handleEvent($event);[m
+ [m
+[31m-        /**[m
+[31m-         * Only record the event after it has been handled.[m
+[31m-         *[m
+[31m-         * This means a failure before this point does not incorrectly mark[m
+[31m-         * the event as successfully processed.[m
+[31m-         */[m
+         $this->storeWebhookEvent($event);[m
+ [m
+         return $response;[m
+     }[m
+ [m
+[31m-    /**[m
+[31m-     * Route supported Stripe events to their corresponding application flow.[m
+[31m-     *[m
+[31m-     * Events not relevant to TaskForge are deliberately acknowledged but ignored.[m
+[31m-     *[m
+[31m-     * This prevents the controller from attempting to handle every Stripe event[m
+[31m-     * Stripe may send.[m
+[31m-     */[m
+     protected function handleEvent($event)[m
+     {[m
+         return match ($event->type) {[m
+[31m-[m
+[31m-            /**[m
+[31m-             * Initial subscription/payment checkout completed successfully.[m
+[31m-             */[m
+[31m-            'checkout.session.completed' =>[m
+[31m-[m
+[31m-            $this->handleCheckoutCompleted([m
+[31m-                $event->data->object[m
+[31m-            ),[m
+[31m-[m
+[31m-            /**[m
+[31m-             * A Payment Intent used for a subscription renewal succeeded.[m
+[31m-             */[m
+[31m-            'payment_intent.succeeded'[m
+[31m-[m
+[31m-            => $this->handleRenewalCompleted([m
+[31m-[m
+[31m-                $event->data->object[m
+[31m-            ),[m
+[31m-[m
+[31m-            /**[m
+[31m-             * A renewal Payment Intent failed.[m
+[31m-             */[m
+[31m-            'payment_intent.payment_failed'[m
+[31m-            =>[m
+[31m-            $this->handleRenewalFailed([m
+[31m-                $event->data->object[m
+[31m-            ),[m
+[31m-[m
+[31m-            /**[m
+[31m-             * Stripe events that TaskForge does not currently use are[m
+[31m-             * acknowledged without triggering application logic.[m
+[31m-             */[m
+[31m-            default => response()->json([[m
+[31m-                'ignored' => true,[m
+[31m-            ]),[m
+[32m+[m[32m            'checkout.session.completed' => $this->handleCheckoutCompleted($event->data->object),[m
+[32m+[m[32m            'payment_intent.succeeded' => $this->handleRenewalCompleted($event->data->object),[m
+[32m+[m[32m            'payment_intent.payment_failed' => $this->handleRenewalFailed($event->data->object),[m
+[32m+[m[32m            default => response()->json(['ignored' => true]),[m
+         };[m
+     }[m
+ [m
+[31m-    /**[m
+[31m-     * Handle a completed Stripe Checkout Session.[m
+[31m-     *[m
+[31m-     * This is used for the initial successful payment flow.[m
+[31m-     */[m
+     protected function handleCheckoutCompleted($session)[m
+     {[m
+[31m-        /**[m
+[31m-         * The internal TaskForge payment transaction ID was attached to Stripe[m
+[31m-         * metadata when the checkout/payment flow was created.[m
+[31m-         *[m
+[31m-         * Metadata gives us a reliable way to connect Stripe's external payment[m
+[31m-         * object back to the correct internal PaymentTransaction.[m
+[31m-         */[m
+[31m-        $transactionId =[m
+[31m-            $session->metadata->payment_transaction_id[m
+[31m-            ?? null;[m
+[31m-[m
+[31m-        /**[m
+[31m-         * Only continue with a transaction that is still in the expected[m
+[31m-         * processing state.[m
+[31m-         *[m
+[31m-         * This provides another layer of protection against accidentally[m
+[31m-         * completing a transaction that has already been finalized or is[m
+[31m-         * otherwise no longer eligible for completion.[m
+[31m-         */[m
+[31m-        $transaction =[m
+[31m-            PaymentTransaction::processing([m
+[31m-                $transactionId[m
+[31m-            );[m
+[31m-[m
+[31m-        if (! $transaction) {[m
+[31m-            return response()->json([[m
+[31m-                'not_found',[m
+[31m-            ], 404);[m
+[32m+[m[32m        $transactionId = $session->metadata->payment_transaction_id ?? null;[m
+[32m+[m
+[32m+[m[32m        $transaction = PaymentTransaction::processing($transactionId);[m
+[32m+[m
+[32m+[m[32m        if (!$transaction) {[m
+[32m+[m[32m            return response()->json(['not_found'], 404);[m
+         }[m
+ [m
+[31m-        /**[m
+[31m-         * A Checkout Session references the Payment Intent created for the payment.[m
+[31m-         *[m
+[31m-         * We retrieve the Payment Intent because it contains the payment method[m
+[31m-         * that successfully funded this transaction.[m
+[31m-         *[m
+[31m-         * The Payment Intent is Stripe's object representing the lifecycle of[m
+[31m-         * an attempt to collect payment.[m
+[31m-         *[m
+[31m-         * In simplified terms:[m
+[31m-         *[m
+[31m-         * Checkout Session[m
+[31m-         *      ↓[m
+[31m-         * Customer completes checkout[m
+[31m-         *      ↓[m
+[31m-         * Stripe creates/completes Payment Intent[m
+[31m-         *      ↓[m
+[31m-         * Payment Intent records payment outcome and payment method[m
+[31m-         *[m
+[31m-         * We store the successful payment method ID on the organization so[m
+[31m-         * TaskForge can later use that saved payment method for subscription[m
+[31m-         * renewal attempts.[m
+[31m-         */[m
+[31m-        $paymentIntent = $this->stripe[m
+[31m-            ->paymentIntents[m
+[31m-            ->retrieve([m
+[31m-                $session->payment_intent[m
+[31m-            );[m
+[31m-[m
+[31m-        /**[m
+[31m-         * Save the Stripe payment method that successfully completed checkout.[m
+[31m-         *[m
+[31m-         * This does NOT store card details in TaskForge.[m
+[31m-         *[m
+[31m-         * TaskForge stores Stripe's payment method identifier, while sensitive[m
+[31m-         * payment details remain managed by Stripe.[m
+[31m-         */[m
+[31m-        $transaction[m
+[31m-            ->organization[m
+[31m-            ->update([[m
+[31m-                'stripe_payment_method_id' =>[m
+[31m-                    $paymentIntent->payment_method,[m
+[31m-            ]);[m
+[31m-[m
+[31m-        /**[m
+[31m-         * Hand the internal transaction to the payment completion service.[m
+[31m-         *[m
+[31m-         * This is where TaskForge performs the actual application-side work[m
+[31m-         * associated with a successful payment, rather than putting that[m
+[31m-         * business logic inside the webhook controller.[m
+[31m-         */[m
+[31m-        $this->service->handle([m
+[31m-            $transactionId[m
+[31m-        );[m
+[31m-[m
+[31m-        return response()->json([[m
+[31m-            'ok' => true,[m
+[32m+[m[32m        $paymentIntent = $this->stripe->paymentIntents->retrieve($session->payment_intent);[m
+[32m+[m
+[32m+[m[32m        $transaction->organization->update([[m
+[32m+[m[32m            'stripe_payment_method_id' => $paymentIntent->payment_method,[m
+         ]);[m
+[32m+[m
+[32m+[m[32m        $this->service->handle($transactionId);[m
+[32m+[m
+[32m+[m[32m        return response()->json(['ok' => true]);[m
+     }[m
+ [m
+[31m-    /**[m
+[31m-     * Handle a successful renewal payment.[m
+[31m-     *[m
+[31m-     * Renewals use Payment Intents directly rather than the initial[m
+[31m-     * Checkout Session flow.[m
+[31m-     */[m
+[31m-    protected function handleRenewalCompleted([m
+[31m-        $paymentIntent[m
+[31m-    ) {[m
+[31m-        /**[m
+[31m-         * Defensively confirm that the Payment Intent actually succeeded.[m
+[31m-         *[m
+[31m-         * The webhook event name already indicates success, but checking the[m
+[31m-         * object state avoids blindly trusting assumptions about the payload.[m
+[31m-         */[m
+[31m-        if ([m
+[31m-            $paymentIntent->status[m
+[31m-            !== 'succeeded'[m
+[31m-        ) {[m
+[31m-            return;[m
+[32m+[m[32m    protected function handleRenewalCompleted($paymentIntent)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        // Only handle if this is a renewal (has payment_transaction_id in metadata)[m
+[32m+[m[32m        $transactionId = $paymentIntent->metadata->payment_transaction_id ?? null;[m
+[32m+[m
+[32m+[m[32m        if (!$transactionId) {[m
+[32m+[m[32m            // This is part of a checkout session, not a renewal[m
+[32m+[m[32m            return response()->json(['ignored' => true]);[m
+         }[m
+ [m
+[31m-        /**[m
+[31m-         * Retrieve the internal TaskForge transaction ID from Stripe metadata.[m
+[31m-         *[m
+[31m-         * This links the external Stripe payment back to the internal[m
+[31m-         * PaymentTransaction that TaskForge created for this renewal attempt.[m
+[31m-         */[m
+[31m-        $transactionId =[m
+[31m-            $paymentIntent[m
+[31m-            ->metadata[m
+[31m-            ->payment_transaction_id[m
+[31m-            ?? null;[m
+[31m-[m
+[31m-        /**[m
+[31m-         * Find the renewal transaction only while it is still processing.[m
+[31m-         */[m
+[31m-        $transaction =[m
+[31m-            PaymentTransaction::processing([m
+[31m-                $transactionId[m
+[31m-            );[m
+[31m-[m
+[31m-        if (! $transaction) {[m
+[31m-            return response()->json([[m
+[31m-                'missing_transaction',[m
+[31m-            ]);[m
+[32m+[m[32m        if ($paymentIntent->status !== 'succeeded') {[m
+[32m+[m[32m            return response()->json(['ignored' => true]);[m
+         }[m
+ [m
+[31m-        /**[m
+[31m-         * Complete the internal payment workflow.[m
+[31m-         */[m
+[31m-        $this->service->handle([m
+[31m-            $transaction->id[m
+[31m-        );[m
+[32m+[m[32m        $transaction = PaymentTransaction::processing($transactionId);[m
+ [m
+[31m-        return response()->json([[m
+[31m-            'ok' => true,[m
+[31m-        ]);[m
+[32m+[m[32m        if (!$transaction) {[m
+[32m+[m[32m            // Already processed or not found[m
+[32m+[m[32m            return response()->json(['already_processed' => true]);[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        $this->service->handle($transaction->id);[m
+[32m+[m
+[32m+[m[32m        return response()->json(['ok' => true]);[m
+     }[m
+ [m
+[31m-    /**[m
+[31m-     * Handle a failed renewal payment.[m
+[31m-     *[m
+[31m-     * A failed Payment Intent means Stripe was unable to collect the renewal[m
+[31m-     * payment using the attempted payment method.[m
+[31m-     */[m
+[31m-    protected function handleRenewalFailed([m
+[31m-        $paymentIntent[m
+[31m-    ) {[m
+[31m-        /**[m
+[31m-         * Link the Stripe Payment Intent back to TaskForge's internal[m
+[31m-         * PaymentTransaction.[m
+[31m-         */[m
+[31m-        $transactionId =[m
+[31m-            $paymentIntent[m
+[31m-            ->metadata[m
+[31m-            ->payment_transaction_id[m
+[31m-            ?? null;[m
+[31m-[m
+[31m-        /**[m
+[31m-         * Only mark a transaction as failed if it is still processing.[m
+[31m-         */[m
+[31m-        $transaction =[m
+[31m-            PaymentTransaction::processing([m
+[31m-                $transactionId[m
+[31m-            );[m
+[31m-[m
+[31m-        if (! $transaction) {[m
+[31m-            return;[m
+[32m+[m[32m    protected function handleRenewalFailed($paymentIntent)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $transactionId = $paymentIntent->metadata->payment_transaction_id ?? null;[m
+[32m+[m
+[32m+[m[32m        if (!$transactionId) {[m
+[32m+[m[32m            return response()->json(['ignored' => true]);[m
+         }[m
+ [m
+[31m-        /**[m
+[31m-         * Record the failure on the internal transaction.[m
+[31m-         *[m
+[31m-         * Stripe may provide a human-readable explanation through[m
+[31m-         * last_payment_error.[m
+[31m-         */[m
+[31m-        $transaction->markFailed([m
+[31m-            $paymentIntent[m
+[31m-                ->last_payment_error[m
+[31m-                ?->message[m
+[31m-        );[m
+[31m-[m
+[31m-        return response()->json([[m
+[31m-            'failed' => true,[m
+[31m-        ]);[m
+[32m+[m[32m        $transaction = PaymentTransaction::processing($transactionId);[m
+[32m+[m
+[32m+[m[32m        if (!$transaction) {[m
+[32m+[m[32m            return response()->json(['already_processed' => true]);[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        $transaction->markFailed($paymentIntent->last_payment_error?->message);[m
+[32m+[m
+[32m+[m[32m        return response()->json(['failed' => true]);[m
+     }[m
+[31m-}[m
+\ No newline at end of file[m
+[32m+[m[32m}[m
+[1mdiff --git a/app/Infrastructure/Billing/StripePaymentGateway.php b/app/Infrastructure/Billing/StripePaymentGateway.php[m
+[1mindex 2d3a90b..a8c3056 100644[m
+[1m--- a/app/Infrastructure/Billing/StripePaymentGateway.php[m
+[1m+++ b/app/Infrastructure/Billing/StripePaymentGateway.php[m
+[36m@@ -13,6 +13,7 @@[m
+ use App\Models\Organization;[m
+ use App\Models\PaymentTransaction;[m
+ use App\Models\Subscription;[m
+[32m+[m[32muse Illuminate\Support\Facades\DB;[m
+ use Illuminate\Support\Str;[m
+ use Stripe\Exception\ApiErrorException;[m
+ use Stripe\StripeClient;[m
+[36m@@ -46,18 +47,30 @@[m [mprotected function getOrCreateCustomer([m
+             return $organization->stripe_customer_id;[m
+         }[m
+ [m
+[31m-        $customer = $this->stripe->customers->create([[m
+[31m-            'name' => $organization->name,[m
+[31m-            'metadata' => [[m
+[31m-                'organization_id' => $organization->id,[m
+[31m-            ],[m
+[31m-        ]);[m
+[32m+[m[32m        // Use database transaction with lock to prevent concurrent customer creation[m
+[32m+[m[32m        return DB::transaction(function () use ($organization) {[m
+[32m+[m[32m            // Re-check after lock[m
+[32m+[m[32m            $lockedOrg = Organization::whereKey($organization->id)[m
+[32m+[m[32m                ->lockForUpdate()[m
+[32m+[m[32m                ->firstOrFail();[m
+[32m+[m
+[32m+[m[32m            if ($lockedOrg->hasStripeCustomer()) {[m
+[32m+[m[32m                return $lockedOrg->stripe_customer_id;[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m            $customer = $this->stripe->customers->create([[m
+[32m+[m[32m                'name' => $lockedOrg->name,[m
+[32m+[m[32m                'metadata' => [[m
+[32m+[m[32m                    'organization_id' => $lockedOrg->id,[m
+[32m+[m[32m                ],[m
+[32m+[m[32m            ]);[m
+ [m
+[31m-        $organization->update([[m
+[31m-            'stripe_customer_id' => $customer->id,[m
+[31m-        ]);[m
+[32m+[m[32m            $lockedOrg->update([[m
+[32m+[m[32m                'stripe_customer_id' => $customer->id,[m
+[32m+[m[32m            ]);[m
+ [m
+[31m-        return $customer->id;[m
+[32m+[m[32m            return $customer->id;[m
+[32m+[m[32m        });[m
+     }[m
+ [m
+ [m
+[1mdiff --git a/app/Models/Organization.php b/app/Models/Organization.php[m
+[1mindex ef7393a..a7fbff0 100644[m
+[1m--- a/app/Models/Organization.php[m
+[1m+++ b/app/Models/Organization.php[m
+[36m@@ -7,6 +7,7 @@[m
+ use App\Support\UserTeam;[m
+ use Illuminate\Database\Eloquent\Attributes\Fillable;[m
+ use Illuminate\Database\Eloquent\Attributes\Table;[m
+[32m+[m[32muse Illuminate\Database\Eloquent\Factories\HasFactory;[m
+ use Illuminate\Database\Eloquent\Model;[m
+ use Illuminate\Database\Eloquent\Relations\BelongsTo;[m
+ use Illuminate\Database\Eloquent\Relations\BelongsToMany;[m
+[36m@@ -22,7 +23,6 @@[m
+ class Organization extends Model[m
+ {[m
+ [m
+[31m-[m
+     public function owner(): BelongsTo[m
+     {[m
+         return $this->belongsTo([m
+[1mdiff --git a/app/Models/PaymentTransaction.php b/app/Models/PaymentTransaction.php[m
+[1mindex 64ecaec..1e996d0 100644[m
+[1m--- a/app/Models/PaymentTransaction.php[m
+[1m+++ b/app/Models/PaymentTransaction.php[m
+[36m@@ -18,7 +18,8 @@[m
+     'status',[m
+     'provider',[m
+     'provider_reference',[m
+[31m-    'metadata',[m
+[32m+[m[32m    'idempotency_key',[m
+[32m+[m[32m        'metadata',[m
+     'paid_at',[m
+     'failure_reason',[m
+     'failed_at'[m
+[1mdiff --git a/app/Models/Workspace.php b/app/Models/Workspace.php[m
+[1mindex e4ef46c..f51c96e 100644[m
+[1m--- a/app/Models/Workspace.php[m
+[1m+++ b/app/Models/Workspace.php[m
+[36m@@ -4,7 +4,7 @@[m
+ [m
+ use Illuminate\Database\Eloquent\Factories\HasFactory;[m
+ use Illuminate\Database\Eloquent\Model;[m
+[31m-use Illuminate\Database\Eloquent\SoftDeletes;[m
+[32m+[m[32muse Illuminate\Database\Eloquent\Relations\MorphMany;[m
+ [m
+ class Workspace extends Model[m
+ {[m
+[36m@@ -27,4 +27,14 @@[m [mpublic function teams()[m
+     {[m
+         return $this->hasMany(Team::class);[m
+     }[m
+[32m+[m
+[32m+[m[32m    public function projects()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return $this->hasMany(Project::class);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    public function activityLogs(): MorphMany[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return $this->morphMany(ActivityLog::class, 'subject');[m
+[32m+[m[32m    }[m
+ }[m
+[1mdiff --git a/app/Policies/OrganizationPolicy.php b/app/Policies/OrganizationPolicy.php[m
+[1mindex 7ccf3fe..a73873a 100644[m
+[1m--- a/app/Policies/OrganizationPolicy.php[m
+[1m+++ b/app/Policies/OrganizationPolicy.php[m
+[36m@@ -8,110 +8,68 @@[m
+ [m
+ class OrganizationPolicy[m
+ {[m
+[31m-[m
+[31m-    public function view([m
+[31m-        User $user,[m
+[31m-        Organization $organization[m
+[31m-    ): bool {[m
+[32m+[m[32m    public function view(User $user, Organization $organization): bool[m
+[32m+[m[32m    {[m
+         return $organization->roleFor($user) !== null;[m
+     }[m
+ [m
+[31m-    public function update([m
+[31m-        User $user,[m
+[31m-        Organization $organization[m
+[31m-    ): bool {[m
+[31m-        return OrganizationPermissions::canUpdate([m
+[31m-            $organization->roleFor($user)[m
+[31m-        );[m
+[32m+[m[32m    public function update(User $user, Organization $organization): bool[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return OrganizationPermissions::canUpdate($organization->roleFor($user));[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    public function delete(User $user, Organization $organization): bool[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return OrganizationPermissions::canDelete($organization->roleFor($user));[m
+     }[m
+ [m
+[31m-    public function delete([m
+[31m-        User $user,[m
+[31m-        Organization $organization[m
+[31m-    ): bool {[m
+[31m-        return OrganizationPermissions::canDelete([m
+[31m-            $organization->roleFor($user)[m
+[31m-        );[m
+[32m+[m[32m    public function inviteMembers(User $user, Organization $organization): bool[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return OrganizationPermissions::canInviteMembers($organization->roleFor($user));[m
+     }[m
+ [m
+[31m-    public function inviteMembers([m
+[31m-        User $user,[m
+[31m-        Organization $organization[m
+[31m-    ): bool {[m
+[31m-        return OrganizationPermissions::canInviteMembers([m
+[31m-            $organization->roleFor($user)[m
+[31m-        );[m
+[32m+[m[32m    public function removeMembers(User $user, Organization $organization): bool[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return OrganizationPermissions::canRemoveMembers($organization->roleFor($user));[m
+     }[m
+ [m
+[31m-    public function removeMembers([m
+[31m-        User $user,[m
+[31m-        Organization $organization[m
+[31m-    ): bool {[m
+[31m-        return OrganizationPermissions::canRemoveMembers([m
+[31m-            $organization->roleFor($user)[m
+[31m-        );[m
+[32m+[m[32m    public function changeMemberRole(User $user, Organization $organization): bool[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return OrganizationPermissions::canChangeMemberRole($organization->roleFor($user));[m
+     }[m
+ [m
+[31m-    public function changeMemberRole([m
+[31m-        User $user,[m
+[31m-        Organization $organization[m
+[31m-    ): bool {[m
+[31m-        return OrganizationPermissions::canChangeMemberRole([m
+[31m-            $organization->roleFor($user)[m
+[31m-        );[m
+[32m+[m[32m    public function createWorkspace(User $user, Organization $organization): bool[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return OrganizationPermissions::canCreateWorkspace($organization->roleFor($user));[m
+     }[m
+ [m
+[31m-    public function createWorkspace([m
+[31m-        User $user,[m
+[31m-        Organization $organization[m
+[31m-    ): bool {[m
+[31m-        return OrganizationPermissions::canCreateWorkspace([m
+[31m-            $organization->roleFor($user)[m
+[31m-        );[m
+[32m+[m[32m    public function createProject(User $user, Organization $organization): bool[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return OrganizationPermissions::canCreateProject($organization->roleFor($user));[m
+     }[m
+ [m
+[31m-    public function createProject([m
+[31m-        User $user,[m
+[31m-        Organization $organization[m
+[31m-    ): bool {[m
+[31m-        return OrganizationPermissions::canCreateProject([m
+[31m-            $organization->roleFor($user)[m
+[31m-        );[m
+[32m+[m[32m    public function viewActivityLog(User $user, Organization $organization): bool[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return OrganizationPermissions::canViewActivityLog($organization->roleFor($user));[m
+     }[m
+ [m
+[31m-    public function viewActivityLog([m
+[31m-        User $user,[m
+[31m-        Organization $organization[m
+[31m-    ): bool {[m
+[31m-        return OrganizationPermissions::canViewActivityLog([m
+[31m-            $organization->roleFor($user)[m
+[31m-        );[m
+[32m+[m[32m    public function viewLibrary(User $user, Organization $organization): bool[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return OrganizationPermissions::canViewLibrary($organization->roleFor($user));[m
+     }[m
+ [m
+[31m-    public function viewLibrary([m
+[31m-        User $user,[m
+[31m-        Organization $organization[m
+[31m-    ): bool {[m
+[31m-        return OrganizationPermissions::canViewLibrary([m
+[31m-            $organization->roleFor($user)[m
+[31m-        );[m
+[32m+[m[32m    public function manageLibrary(User $user, Organization $organization): bool[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return OrganizationPermissions::canManageLibrary($organization->roleFor($user));[m
+     }[m
+ [m
+[31m-    public function manageLibrary([m
+[31m-        User $user,[m
+[31m-        Organization $organization[m
+[31m-    ): bool {[m
+[31m-        return OrganizationPermissions::canManageLibrary([m
+[31m-            $organization->roleFor($user)[m
+[31m-        );[m
+[32m+[m[32m    public function uploadToLibrary(User $user, Organization $organization): bool[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return OrganizationPermissions::canUploadToLibrary($organization->roleFor($user));[m
+     }[m
+ [m
+[31m-    public function uploadToLibrary([m
+[31m-        User $user,[m
+[31m-        Organization $organization[m
+[31m-    ): bool {[m
+[31m-        return OrganizationPermissions::canUploadToLibrary([m
+[31m-            $organization->roleFor($user)[m
+[31m-        );[m
+[32m+[m[32m    public function viewReports(User $user, Organization $organization): bool[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return OrganizationPermissions::canViewActivityLog($organization->roleFor($user));[m
+     }[m
+ }[m
+[1mdiff --git a/database/factories/WorkspaceFactory.php b/database/factories/WorkspaceFactory.php[m
+[1mindex 340ee48..467ee34 100644[m
+[1m--- a/database/factories/WorkspaceFactory.php[m
+[1m+++ b/database/factories/WorkspaceFactory.php[m
+[36m@@ -3,6 +3,7 @@[m
+ namespace Database\Factories;[m
+ [m
+ use App\Models\Organization;[m
+[32m+[m[32muse App\Models\User;[m
+ use App\Models\Workspace;[m
+ use Illuminate\Database\Eloquent\Factories\Factory;[m
+ [m
+[1mdiff --git a/phpunit.xml b/phpunit.xml[m
+[1mindex e7f0a48..d703241 100644[m
+[1m--- a/phpunit.xml[m
+[1m+++ b/phpunit.xml[m
+[36m@@ -25,7 +25,6 @@[m
+         <env name="CACHE_STORE" value="array"/>[m
+         <env name="DB_CONNECTION" value="sqlite"/>[m
+         <env name="DB_DATABASE" value=":memory:"/>[m
+[31m-        <env name="DB_URL" value=""/>[m
+         <env name="MAIL_MAILER" value="array"/>[m
+         <env name="QUEUE_CONNECTION" value="sync"/>[m
+         <env name="SESSION_DRIVER" value="array"/>[m
+[1mdiff --git a/resources/views/components/app-logo.blade.php b/resources/views/components/app-logo.blade.php[m
+[1mindex 2b874c6..e437d99 100644[m
+[1m--- a/resources/views/components/app-logo.blade.php[m
+[1m+++ b/resources/views/components/app-logo.blade.php[m
+[36m@@ -4,14 +4,14 @@[m
+ [m
+ @if($sidebar)[m
+     <flux:sidebar.brand name="TaskForge" {{ $attributes }}>[m
+[31m-        <x-slot name="logo" class="flex aspect-square size-8 items-center justify-center rounded-md bg-accent-content text-accent-foreground">[m
+[31m-            <x-app-logo-icon class="size-5 fill-current text-white dark:text-black" />[m
+[32m+[m[32m        <x-slot name="logo" class="flex aspect-square size-8 items-center justify-center">[m
+[32m+[m[32m            <img src="/apple-touch-icon.png" alt="TaskForge" class="size-8 rounded-md" />[m
+         </x-slot>[m
+     </flux:sidebar.brand>[m
+ @else[m
+     <flux:brand name="TaskForge" {{ $attributes }}>[m
+[31m-        <x-slot name="logo" class="flex aspect-square size-8 items-center justify-center rounded-md bg-accent-content text-accent-foreground">[m
+[31m-            <x-app-logo-icon class="size-5 fill-current text-white dark:text-black" />[m
+[32m+[m[32m        <x-slot name="logo" class="flex aspect-square size-8 items-center justify-center">[m
+[32m+[m[32m            <img src="/apple-touch-icon.png" alt="TaskForge" class="size-8 rounded-md" />[m
+         </x-slot>[m
+     </flux:brand>[m
+ @endif[m
+[1mdiff --git a/resources/views/dashboard.blade.php b/resources/views/dashboard.blade.php[m
+[1mindex c0b2a11..d44d68f 100644[m
+[1m--- a/resources/views/dashboard.blade.php[m
+[1m+++ b/resources/views/dashboard.blade.php[m
+[36m@@ -1,63 +1,3 @@[m
+[31m-@php[m
+[31m-    try {[m
+[31m-        $user = auth()->user();[m
+[31m-        $organizations = $user ? ($user->organizations ?? collect()) : collect();[m
+[31m-        $ownedOrganizations = $user ? \App\Models\Organization::query()[m
+[31m-            ->where('owner_id', $user->id)[m
+[31m-            ->with('workspaces.projects.tasks')[m
+[31m-            ->get() : collect();[m
+[31m-[m
+[31m-        $allOrganizations = $ownedOrganizations->merge($organizations)->unique('id')->values();[m
+[31m-        $allOrganizationIds = $allOrganizations->pluck('id');[m
+[31m-        $workspaces = $allOrganizations->flatMap->workspaces;[m
+[31m-        $projects = $workspaces->flatMap->projects;[m
+[31m-        $tasks = $projects->flatMap->tasks;[m
+[31m-[m
+[31m-        $assignedTasks = $user ? $user->assignedTasks()->with('project.team')->latest()->limit(6)->get() : collect();[m
+[31m-        $unreadNotifications = $user ? $user->unreadNotifications()->count() : 0;[m
+[31m-[m
+[31m-        $dueSoon = \App\Models\Task::whereHas('project.workspace', function ($query) use ($allOrganizationIds) {[m
+[31m-            $query->whereIn('organization_id', $allOrganizationIds);[m
+[31m-        })[m
+[31m-            ->whereBetween('due_date', [now(), now()->addDays(7)])[m
+[31m-            ->count();[m
+[31m-    } catch (\Exception $e) {[m
+[31m-        $allOrganizations = collect();[m
+[31m-        $projects = collect();[m
+[31m-        $tasks = collect();[m
+[31m-        $assignedTasks = collect();[m
+[31m-        $unreadNotifications = 0;[m
+[31m-        $dueSoon = 0;[m
+[31m-    }[m
+[31m-@endphp[m
+[31m-[m
+[31m-<x-layouts-app :title="__('Dashboard')">[m
+[31m-    <div class="py-12">[m
+[31m-        <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">[m
+[31m-            <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg dark:bg-zinc-800">[m
+[31m-                <div class="p-6 text-zinc-900 dark:text-zinc-100">[m
+[31m-                    <h1 class="text-2xl font-semibold">{{ __('Operations Dashboard') }}</h1>[m
+[31m-                    [m
+[31m-                    <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">[m
+[31m-                        <div class="rounded-lg border p-4">[m
+[31m-                            <p class="text-sm text-zinc-500">Organizations</p>[m
+[31m-                            <p class="text-2xl font-bold">{{ $allOrganizations->count() }}</p>[m
+[31m-                        </div>[m
+[31m-                        <div class="rounded-lg border p-4">[m
+[31m-                            <p class="text-sm text-zinc-500">Projects</p>[m
+[31m-                            <p class="text-2xl font-bold">{{ $projects->count() }}</p>[m
+[31m-                        </div>[m
+[31m-                        <div class="rounded-lg border p-4">[m
+[31m-                            <p class="text-sm text-zinc-500">Tasks due soon</p>[m
+[31m-                            <p class="text-2xl font-bold">{{ $dueSoon }}</p>[m
+[31m-                        </div>[m
+[31m-                        <div class="rounded-lg border p-4">[m
+[31m-                            <p class="text-sm text-zinc-500">Unread notifications</p>[m
+[31m-                            <p class="text-2xl font-bold">{{ $unreadNotifications }}</p>[m
+[31m-                        </div>[m
+[31m-                    </div>[m
+[31m-                </div>[m
+[31m-            </div>[m
+[31m-        </div>[m
+[31m-    </div>[m
+[31m-</x-layouts-app>[m
+[32m+[m[32m<x-layouts::app :title="__('Dashboard')">[m
+[32m+[m[32m    @livewire('dashboard')[m
+[32m+[m[32m</x-layouts::app>[m
+[1mdiff --git a/resources/views/layouts/app/header.blade.php b/resources/views/layouts/app/header.blade.php[m
+[1mindex 9605398..4ed1b9b 100644[m
+[1m--- a/resources/views/layouts/app/header.blade.php[m
+[1m+++ b/resources/views/layouts/app/header.blade.php[m
+[36m@@ -1,8 +1,11 @@[m
+ <flux:header container class="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">[m
+     @php[m
+[31m-        $organization = request()->route('organization') ?? auth()->user()?->organizations()->first();[m
+[31m-        $billingRoute = $organization ? route('organizations.billing', ['organization' => $organization]) : route('dashboard');[m
+[31m-        $isBillingRoute = request()->routeIs('organizations.billing') || request()->routeIs('billing.*');[m
+[32m+[m[32m        // Only show Billing link when we have explicit organization context[m
+[32m+[m[32m        $routeOrganization = request()->route('organization');[m
+[32m+[m[32m        $billingRoute = $routeOrganization[m
+[32m+[m[32m            ? route('organizations.billing', ['organization' => $routeOrganization])[m
+[32m+[m[32m            : route('billing.index');[m
+[32m+[m[32m        $isBillingRoute = request()->routeIs('organizations.billing') || request()->routeIs('billing.*') || request()->routeIs('billing.index');[m
+     @endphp[m
+ [m
+     <flux:sidebar.toggle class="lg:hidden mr-2" icon="bars-2" inset="left" />[m
+[36m@@ -26,61 +29,70 @@[m
+             {{ __('Tasks') }}[m
+         </flux:navbar.item>[m
+ [m
+[31m-        <flux:navbar.item icon="credit-card" :href="$billingRoute" :current="$isBillingRoute" wire:navigate>[m
+[31m-            {{ __('Billing') }}[m
+[31m-        </flux:navbar.item>[m
+[32m+[m[32m        @if ($billingRoute)[m
+[32m+[m[32m            <flux:navbar.item icon="credit-card" :href="$billingRoute" :current="$isBillingRoute" wire:navigate>[m
+[32m+[m[32m                {{ __('Billing') }}[m
+[32m+[m[32m            </flux:navbar.item>[m
+[32m+[m[32m        @endif[m
+     </flux:navbar>[m
+ [m
+     <flux:spacer />[m
+ [m
+[31m-    <flux:navbar class="me-1.5 space-x-0.5 rtl:space-x-reverse py-0!">[m
+[31m-        <flux:tooltip :content="__('Search')" position="bottom">[m
+[31m-            <flux:navbar.item class="!h-10 [&>div>svg]:size-5" icon="magnifying-glass" href="#" :label="__('Search')" />[m
+[31m-        </flux:tooltip>[m
+[31m-    </flux:navbar>[m
+[32m+[m[32m    {{-- Global Search --}}[m
+[32m+[m[32m    <livewire:search.global-search />[m
+[32m+[m
+[32m+[m[32m    {{-- Notification Bell --}}[m
+[32m+[m[32m    <flux:dropdown position="bottom" align="end" class="max-w-sm">[m
+[32m+[m[32m        <button type="button"[m
+[32m+[m[32m            class="relative flex size-9 items-center justify-center rounded-lg text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-white">[m
+[32m+[m[32m            <flux:icon.bell class="size-5" />[m
+[32m+[m[32m            <livewire:notifications.unread-count />[m
+[32m+[m[32m        </button>[m
+[32m+[m
+[32m+[m[32m        <flux:menu class="!p-0 overflow-hidden rounded-xl border border-zinc-200 shadow-xl dark:border-white/10">[m
+[32m+[m[32m            <div class="flex items-center justify-between border-b border-zinc-200 bg-zinc-50/50 px-4 py-3 dark:border-white/10 dark:bg-white/[0.03]">[m
+[32m+[m[32m                <p class="text-sm font-semibold text-zinc-950 dark:text-white">Notifications</p>[m
+[32m+[m[32m                <a href="{{ route('notifications.index') }}" wire:navigate[m
+[32m+[m[32m                    class="text-xs font-medium text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">[m
+[32m+[m[32m                    View all[m
+[32m+[m[32m                </a>[m
+[32m+[m[32m            </div>[m
+[32m+[m
+[32m+[m[32m            <div class="max-h-80 overflow-y-auto">[m
+[32m+[m[32m                @php[m
+[32m+[m[32m                    $notifications = auth()->user()->notifications()->latest()->take(3)->get();[m
+[32m+[m[32m                @endphp[m
+[32m+[m
+[32m+[m[32m                @forelse ($notifications as $notification)[m
+[32m+[m[32m                    <a href="{{ route('notifications.redirect', $notification->id) }}" wire:navigate[m
+[32m+[m[32m                        class="group flex items-start gap-3 border-b border-zinc-100 px-4 py-3 transition hover:bg-zinc-50 dark:border-white/5 dark:hover:bg-white/[0.02]">[m
+[32m+[m[32m                        <div class="mt-1">[m
+[32m+[m[32m                            @if (!$notification->read_at)[m
+[32m+[m[32m                                <span class="block size-2 rounded-full bg-rose-500"></span>[m
+[32m+[m[32m                            @else[m
+[32m+[m[32m                                <span class="block size-2 rounded-full bg-zinc-300 dark:bg-zinc-700"></span>[m
+[32m+[m[32m                            @endif[m
+[32m+[m[32m                        </div>[m
+[32m+[m[32m                        <div class="min-w-0 flex-1">[m
+[32m+[m[32m                            <p class="truncate text-sm font-medium text-zinc-950 dark:text-white">[m
+[32m+[m[32m                                {{ $notification->data['title'] ?? class_basename($notification->type) }}[m
+[32m+[m[32m                            </p>[m
+[32m+[m[32m                            <p class="mt-0.5 line-clamp-1 text-xs text-zinc-500 dark:text-zinc-400">[m
+[32m+[m[32m                                {{ $notification->data['message'] ?? ($notification->data['body'] ?? __('Notification received.')) }}[m
+[32m+[m[32m                            </p>[m
+[32m+[m[32m                            <p class="mt-1 text-xs text-zinc-400 dark:text-zinc-500">[m
+[32m+[m[32m                                {{ $notification->created_at->diffForHumans() }}[m
+[32m+[m[32m                            </p>[m
+[32m+[m[32m                        </div>[m
+[32m+[m[32m                    </a>[m
+[32m+[m[32m                @empty[m
+[32m+[m[32m                    <div class="px-4 py-8 text-center">[m
+[32m+[m[32m                        <p class="text-sm text-zinc-500">No notifications yet</p>[m
+[32m+[m[32m                    </div>[m
+[32m+[m[32m                @endforelse[m
+[32m+[m[32m            </div>[m
+[32m+[m[32m        </flux:menu>[m
+[32m+[m[32m    </flux:dropdown>[m
+ [m
+     <x-desktop-user-menu :showTeam="false" />[m
+ </flux:header>[m
+[31m-[m
+[31m-<!-- Mobile Menu -->[m
+[31m-<flux:sidebar collapsible="mobile" sticky class="lg:hidden border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">[m
+[31m-    <flux:sidebar.header>[m
+[31m-        <x-app-logo :sidebar="true" href="{{ route('dashboard') }}" wire:navigate />[m
+[31m-        <flux:sidebar.collapse class="in-data-flux-sidebar-on-desktop:not-in-data-flux-sidebar-collapsed-desktop:-mr-2" />[m
+[31m-    </flux:sidebar.header>[m
+[31m-[m
+[31m-    <flux:sidebar.nav>[m
+[31m-        <flux:sidebar.group :heading="__('Platform')">[m
+[31m-            <flux:sidebar.item icon="layout-grid" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>[m
+[31m-                {{ __('Dashboard')  }}[m
+[31m-            </flux:sidebar.item>[m
+[31m-[m
+[31m-            <flux:sidebar.item icon="building-office-2" :href="route('organizations.index')" :current="request()->routeIs('organizations.*')" wire:navigate>[m
+[31m-                {{ __('Organizations') }}[m
+[31m-            </flux:sidebar.item>[m
+[31m-[m
+[31m-            <flux:sidebar.item icon="folder" :href="route('projects.index')" :current="request()->routeIs('projects.*')" wire:navigate>[m
+[31m-                {{ __('Projects') }}[m
+[31m-            </flux:sidebar.item>[m
+[31m-[m
+[31m-            <flux:sidebar.item icon="check-circle" :href="route('tasks.index')" :current="request()->routeIs('tasks.*')" wire:navigate>[m
+[31m-                {{ __('Tasks') }}[m
+[31m-            </flux:sidebar.item>[m
+[31m-[m
+[31m-        </flux:sidebar.group>[m
+[31m-[m
+[31m-        <flux:sidebar.group :heading="__('Administration')">[m
+[31m-            <flux:sidebar.item icon="cog-6-tooth" :href="route('profile.edit')" :current="request()->routeIs('profile.edit') || request()->routeIs('security.edit') || request()->routeIs('appearance.edit')" wire:navigate>[m
+[31m-                {{ __('Settings') }}[m
+[31m-            </flux:sidebar.item>[m
+[31m-        </flux:sidebar.group>[m
+[31m-    </flux:sidebar.nav>[m
+[31m-[m
+[31m-    <flux:spacer />[m
+[31m-[m
+[31m-    <flux:sidebar.nav>[m
+[31m-        <flux:sidebar.item icon="plus" :href="route('organizations.create')" :current="request()->routeIs('organizations.create')" wire:navigate>[m
+[31m-            {{ __('New Organization') }}[m
+[31m-        </flux:sidebar.item>[m
+[31m-    </flux:sidebar.nav>[m
+[31m-</flux:sidebar>[m
+[1mdiff --git a/resources/views/layouts/app/sidebar.blade.php b/resources/views/layouts/app/sidebar.blade.php[m
+[1mindex b39d497..3a404ce 100644[m
+[1m--- a/resources/views/layouts/app/sidebar.blade.php[m
+[1m+++ b/resources/views/layouts/app/sidebar.blade.php[m
+[36m@@ -14,69 +14,41 @@[m [mclass="border-e border-zinc-200/80 bg-gradient-to-b from-white via-white to-zinc[m
+ [m
+     <flux:sidebar.nav>[m
+         <flux:sidebar.group :heading="__('Workspace')" class="grid gap-1">[m
+[31m-            <flux:sidebar.item [m
+[31m-                icon="layout-grid" [m
+[31m-                :href="route('dashboard')" [m
+[31m-                :current="request()->routeIs('dashboard')"[m
+[31m-                wire:navigate>[m
+[32m+[m[32m            <flux:sidebar.item icon="layout-grid" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>[m
+                 {{ __('Dashboard') }}[m
+             </flux:sidebar.item>[m
+ [m
+[31m-            <flux:sidebar.item [m
+[31m-                icon="building-office-2" [m
+[31m-                :href="route('organizations.index')"[m
+[31m-                :current="request()->routeIs('organizations.*')" [m
+[31m-                wire:navigate>[m
+[32m+[m[32m            <flux:sidebar.item icon="building-office-2" :href="route('organizations.index')" :current="request()->routeIs('organizations.*')" wire:navigate>[m
+                 {{ __('Organizations') }}[m
+             </flux:sidebar.item>[m
+ [m
+[31m-            <flux:sidebar.item [m
+[31m-                icon="folder" [m
+[31m-                :href="route('projects.index')" [m
+[31m-                :current="request()->routeIs('projects.*')"[m
+[31m-                wire:navigate>[m
+[32m+[m[32m            <flux:sidebar.item icon="folder" :href="route('projects.index')" :current="request()->routeIs('projects.*')" wire:navigate>[m
+                 {{ __('Projects') }}[m
+             </flux:sidebar.item>[m
+ [m
+[31m-            <flux:sidebar.item [m
+[31m-                icon="check-circle" [m
+[31m-                :href="route('tasks.index')" [m
+[31m-                :current="request()->routeIs('tasks.*')"[m
+[31m-                wire:navigate>[m
+[32m+[m[32m            <flux:sidebar.item icon="check-circle" :href="route('tasks.index')" :current="request()->routeIs('tasks.*')" wire:navigate>[m
+                 {{ __('Tasks') }}[m
+             </flux:sidebar.item>[m
+ [m
+[31m-            {{-- Notifications - simple direct link, no dropdown --}}[m
+[31m-            <flux:sidebar.item [m
+[31m-                icon="bell" [m
+[31m-                :href="route('notifications.index')"[m
+[31m-                :current="request()->routeIs('notifications.*')"[m
+[31m-                wire:navigate>[m
+[31m-                <span class="flex items-center justify-between gap-2 w-full">[m
+[31m-                    {{ __('Notifications') }}[m
+[31m-                    <livewire:notifications.unread-count />[m
+[31m-                </span>[m
+[32m+[m[32m            <flux:sidebar.item icon="credit-card" :href="route('billing.index')" :current="request()->routeIs('billing.*')" wire:navigate>[m
+[32m+[m[32m                {{ __('Billing') }}[m
+[32m+[m[32m            </flux:sidebar.item>[m
+[32m+[m
+[32m+[m[32m            <flux:sidebar.item icon="chart-bar" :href="route('reports.index')" :current="request()->routeIs('reports.*')" wire:navigate>[m
+[32m+[m[32m                {{ __('Reports') }}[m
+             </flux:sidebar.item>[m
+         </flux:sidebar.group>[m
+ [m
+         @if ($currentProject)[m
+             <flux:sidebar.group :heading="__('Current project')" class="grid gap-1 mt-4">[m
+[31m-                <flux:sidebar.item [m
+[31m-                    icon="folder-open" [m
+[31m-                    :href="route('projects.show', $currentProject)"[m
+[31m-                    :current="request()->routeIs('projects.show')" [m
+[31m-                    wire:navigate>[m
+[32m+[m[32m                <flux:sidebar.item icon="folder-open" :href="route('projects.show', $currentProject)" :current="request()->routeIs('projects.show')" wire:navigate>[m
+                     {{ $currentProject->name }}[m
+                 </flux:sidebar.item>[m
+             </flux:sidebar.group>[m
+ [m
+             @if ($team = $currentProject?->team)[m
+                 <flux:sidebar.group :heading="__('Team')" class="grid gap-1 mt-4">[m
+[31m-                    <flux:sidebar.item [m
+[31m-                        icon="users" [m
+[31m-                        :href="route('teams.edit', $team)"[m
+[31m-                        :current="request()->routeIs('teams.edit') && request()->route('team')->is($team)"[m
+[31m-                        wire:navigate>[m
+[32m+[m[32m                    <flux:sidebar.item icon="users" :href="route('teams.edit', $team)" :current="request()->routeIs('teams.edit') && request()->route('team')->is($team)" wire:navigate>[m
+                         {{ $team->name }}[m
+                     </flux:sidebar.item>[m
+                 </flux:sidebar.group>[m
+[36m@@ -84,11 +56,7 @@[m [mclass="border-e border-zinc-200/80 bg-gradient-to-b from-white via-white to-zinc[m
+         @endif[m
+ [m
+         <flux:sidebar.group :heading="__('Administration')" class="grid gap-1 mt-4">[m
+[31m-            <flux:sidebar.item [m
+[31m-                icon="cog-6-tooth" [m
+[31m-                :href="route('profile.edit')"[m
+[31m-                :current="request()->routeIs('profile.edit') || request()->routeIs('security.edit') || request()->routeIs('appearance.edit')"[m
+[31m-                wire:navigate>[m
+[32m+[m[32m            <flux:sidebar.item icon="cog-6-tooth" :href="route('profile.edit')" :current="request()->routeIs('profile.edit') || request()->routeIs('security.edit') || request()->routeIs('appearance.edit')" wire:navigate>[m
+                 {{ __('Settings') }}[m
+             </flux:sidebar.item>[m
+         </flux:sidebar.group>[m
+[36m@@ -97,14 +65,10 @@[m [mclass="border-e border-zinc-200/80 bg-gradient-to-b from-white via-white to-zinc[m
+     <flux:spacer />[m
+ [m
+     <flux:sidebar.nav>[m
+[31m-        <flux:sidebar.item [m
+[31m-            icon="plus" [m
+[31m-            :href="route('organizations.create')"[m
+[31m-            :current="request()->routeIs('organizations.create')" [m
+[31m-            wire:navigate>[m
+[32m+[m[32m        <flux:sidebar.item icon="plus" :href="route('organizations.create')" :current="request()->routeIs('organizations.create')" wire:navigate>[m
+             {{ __('New Organization') }}[m
+         </flux:sidebar.item>[m
+     </flux:sidebar.nav>[m
+ [m
+     <x-desktop-user-menu class="hidden lg:block" :name="auth()->user()->name" />[m
+[31m-</flux:sidebar>[m
+\ No newline at end of file[m
+[32m+[m[32m</flux:sidebar>[m
+[1mdiff --git a/resources/views/layouts/auth/simple.blade.php b/resources/views/layouts/auth/simple.blade.php[m
+[1mindex 6dfffcb..ff1d24c 100644[m
+[1m--- a/resources/views/layouts/auth/simple.blade.php[m
+[1m+++ b/resources/views/layouts/auth/simple.blade.php[m
+[36m@@ -5,14 +5,18 @@[m
+     </head>[m
+     <body class="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.16),_transparent_35%),linear-gradient(180deg,_#f8fafc_0%,_#f3f4f6_100%)] antialiased dark:bg-[radial-gradient(circle_at_top_left,_rgba(139,92,246,0.16),_transparent_35%),linear-gradient(180deg,_#09090b_0%,_#111827_100%)]">[m
+         <div class="flex min-h-svh flex-col items-center justify-center gap-6 p-4 sm:p-6 md:p-10">[m
+[31m-            <div class="flex w-full max-w-md flex-col gap-4 rounded-3xl border border-zinc-200 bg-white/80 p-6 shadow-xl shadow-zinc-950/5 backdrop-blur sm:p-8 dark:border-white/10 dark:bg-zinc-900/70">[m
+[31m-                <a href="{{ route('home') }}" class="flex flex-col items-center gap-2 font-semibold text-zinc-950 dark:text-white" wire:navigate>[m
+[31m-                    <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-950 text-white dark:bg-white dark:text-black">[m
+[31m-                        <x-app-logo-icon class="size-6 fill-current" />[m
+[31m-                    </span>[m
+[31m-                    <span class="text-2xl">{{ config('app.name', 'TaskForge') }}</span>[m
+[32m+[m[32m            <div class="flex w-full max-w-md flex-col gap-6 rounded-3xl border border-zinc-200 bg-white/80 p-6 shadow-xl shadow-zinc-950/5 backdrop-blur sm:p-8 dark:border-white/10 dark:bg-zinc-900/70">[m
+[32m+[m[32m                {{-- App Icon --}}[m
+[32m+[m[32m                <a href="{{ route('home') }}" class="flex flex-col items-center gap-3" wire:navigate>[m
+[32m+[m[32m                    <img src="/apple-touch-icon.png" alt="{{ config('app.name', 'TaskForge') }}" class="size-16 rounded-2xl shadow-lg" />[m
+[32m+[m[32m                    <span class="text-xl font-semibold text-zinc-950 dark:text-white">{{ config('app.name', 'TaskForge') }}</span>[m
+[32m+[m[32m                    <p class="text-sm text-zinc-500 dark:text-zinc-400">Organize teams, tasks, and projects with clarity.</p>[m
+                 </a>[m
+[31m-                <p class="text-center text-sm text-zinc-500 dark:text-zinc-400">Organize teams, tasks, and projects with clarity.</p>[m
+[32m+[m
+[32m+[m[32m                {{-- Divider --}}[m
+[32m+[m[32m                <div class="h-px w-full bg-zinc-200 dark:bg-white/10"></div>[m
+[32m+[m
+[32m+[m[32m                {{-- Content --}}[m
+                 <div class="flex flex-col gap-6">[m
+                     {{ $slot }}[m
+                 </div>[m
+[1mdiff --git a/resources/views/livewire/billing/show-billing.blade.php b/resources/views/livewire/billing/show-billing.blade.php[m
+[1mdeleted file mode 100644[m
+[1mindex 3bae42e..0000000[m
+[1m--- a/resources/views/livewire/billing/show-billing.blade.php[m
+[1m+++ /dev/null[m
+[36m@@ -1,495 +0,0 @@[m
+[31m-<?php[m
+[31m-[m
+[31m-use App\Models\Organization;[m
+[31m-use App\Models\SubscriptionPlan;[m
+[31m-use Livewire\Component;[m
+[31m-use Flux\Flux;[m
+[31m-use Livewire\Attributes\Computed;[m
+[31m-use App\Domain\Billing\DataTransferObjects\CheckoutData;[m
+[31m-use App\Domain\Billing\Enum\PaymentProvider;[m
+[31m-use App\Domain\Billing\Services\CreateCheckoutService;[m
+[31m-use App\Domain\Billing\Services\StartTrialService;[m
+[31m-use App\Exceptions\Billing\TrialUnavailableException;[m
+[31m-use Illuminate\Support\Facades\Gate;[m
+[31m-[m
+[31m-new class extends Component {[m
+[31m-    public ?SubscriptionPlan $selectedPlan = null;[m
+[31m-[m
+[31m-    public Organization $organization;[m
+[31m-[m
+[31m-    public function mount(Organization $organization): void[m
+[31m-    {[m
+[31m-        $this->organization = $organization->load(['subscription.plan']);[m
+[31m-    }[m
+[31m-[m
+[31m-    #[Computed][m
+[31m-    public function plans()[m
+[31m-    {[m
+[31m-        return SubscriptionPlan::query()->purchasable()->orderBy('price')->get();[m
+[31m-    }[m
+[31m-[m
+[31m-    public function selectPlan(SubscriptionPlan $plan): void[m
+[31m-    {[m
+[31m-        Gate::authorize('update', $this->organization);[m
+[31m-[m
+[31m-        abort_unless($plan->isPurchasable(), 404);[m
+[31m-[m
+[31m-        $this->selectedPlan = $plan;[m
+[31m-[m
+[31m-        Flux::modal('confirm-subscription')->show();[m
+[31m-    }[m
+[31m-[m
+[31m-    public function resetSelectedPlan(): void[m
+[31m-    {[m
+[31m-        $this->selectedPlan = null;[m
+[31m-[m
+[31m-        Flux::modal('confirm-subscription')->close();[m
+[31m-    }[m
+[31m-[m
+[31m-    public function confirmPlanChange(): mixed[m
+[31m-    {[m
+[31m-        Gate::authorize('update', $this->organization);[m
+[31m-[m
+[31m-        if (!$this->selectedPlan) {[m
+[31m-            return null;[m
+[31m-        }[m
+[31m-[m
+[31m-        $plan = SubscriptionPlan::query()->purchasable()->findOrFail($this->selectedPlan->id);[m
+[31m-[m
+[31m-        $response = app(CreateCheckoutService::class)->handle(new CheckoutData(organization: $this->organization, plan: $plan, provider: PaymentProvider::STRIPE));[m
+[31m-[m
+[31m-        return redirect()->away($response->url);[m
+[31m-    }[m
+[31m-[m
+[31m-    public function startTrial(StartTrialService $service)[m
+[31m-    {[m
+[31m-        Gate::authorize('update', $this->organization);[m
+[31m-        try {[m
+[31m-            $service->handle($this->organization->subscription);[m
+[31m-[m
+[31m-            $this->organization->refresh();[m
+[31m-[m
+[31m-            $this->dispatch('notify', type: 'success', message: 'Your free trial has started.');[m
+[31m-        } catch (TrialUnavailableException) {[m
+[31m-            $this->dispatch('notify', type: 'error', message: 'Free trial is no longer available.');[m
+[31m-        }[m
+[31m-    }[m
+[31m-[m
+[31m-    public function render()[m
+[31m-    {[m
+[31m-        return view('livewire.billing.show-billing');[m
+[31m-    }[m
+[31m-};[m
+[31m-[m
+[31m-?>[m
+[31m-[m
+[31m-<div class="space-y-8">[m
+[31m-    @php[m
+[31m-        $subscription = $organization->subscription;[m
+[31m-        $currentAccessLabel = $subscription->isTrial() ? 'Pro Trial' : $subscription?->plan?->name ?? 'No Active Plan';[m
+[31m-        $currentAccessDescription = $subscription->isTrial()[m
+[31m-            ? '14-day trial active'[m
+[31m-            : $subscription?->plan?->billingIntervalLabel() ?? 'Free';[m
+[31m-        $currentAccessBadge = $subscription->isTrial() ? 'Trial' : 'Active';[m
+[31m-    @endphp[m
+[31m-[m
+[31m-    <div[m
+[31m-        class="overflow-hidden rounded-3xl border border-zinc-200 bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-500 p-8 text-white shadow-2xl shadow-indigo-950/10">[m
+[31m-        <div class="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">[m
+[31m-            <div class="max-w-2xl">[m
+[31m-                <div[m
+[31m-                    class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-white/90">[m
+[31m-                    <span class="h-2 w-2 rounded-full bg-emerald-300"></span>[m
+[31m-                    Billing & plans[m
+[31m-                </div>[m
+[31m-[m
+[31m-                <h1 class="mt-5 text-3xl font-semibold tracking-tight sm:text-4xl">[m
+[31m-                    Scale your organization with confidence.[m
+[31m-                </h1>[m
+[31m-[m
+[31m-                <p class="mt-3 max-w-xl text-sm leading-6 text-indigo-50 sm:text-base">[m
+[31m-                    Unlock more workspaces, projects, and collaboration power as your team grows. Start a free trial in[m
+[31m-                    one click or switch to a plan that fits your momentum.[m
+[31m-                </p>[m
+[31m-            </div>[m
+[31m-[m
+[31m-            <div class="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-sm">[m
+[31m-                <p class="text-sm font-medium text-white/70">[m
+[31m-                    Current access[m
+[31m-                </p>[m
+[31m-                <p class="mt-2 text-xl font-semibold">[m
+[31m-                    {{ $currentAccessLabel }}[m
+[31m-                </p>[m
+[31m-                <p class="mt-1 text-sm text-white/80">[m
+[31m-                    {{ $currentAccessDescription }}[m
+[31m-                </p>[m
+[31m-            </div>[m
+[31m-        </div>[m
+[31m-    </div>[m
+[31m-[m
+[31m-    @if ($organization->subscription->isTrial())[m
+[31m-        <x-ui.card class="border-amber-200 bg-amber-50/80 shadow-sm dark:border-amber-500/20 dark:bg-amber-500/10">[m
+[31m-            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">[m
+[31m-                <div>[m
+[31m-                    <p class="text-sm font-semibold text-amber-900 dark:text-amber-300">[m
+[31m-                        Pro Trial Active[m
+[31m-                    </p>[m
+[31m-                    <p class="mt-1 text-sm text-amber-800 dark:text-amber-200">[m
+[31m-                        {{ $organization->subscription->trialDaysRemaining() }} days remaining on your trial.[m
+[31m-                    </p>[m
+[31m-                </div>[m
+[31m-[m
+[31m-                <span[m
+[31m-                    class="inline-flex w-fit items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">[m
+[31m-                    Trial[m
+[31m-                </span>[m
+[31m-            </div>[m
+[31m-        </x-ui.card>[m
+[31m-    @endif[m
+[31m-[m
+[31m-    <div class="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">[m
+[31m-        <x-ui.card class="border-zinc-200/80 bg-white/80 shadow-sm backdrop-blur">[m
+[31m-            <div class="flex flex-wrap items-start justify-between gap-4">[m
+[31m-                <div>[m
+[31m-                    <p class="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-500">[m
+[31m-                        Current Access[m
+[31m-                    </p>[m
+[31m-                    <h2 class="mt-2 text-2xl font-semibold text-zinc-950 dark:text-white">[m
+[31m-                        {{ $currentAccessLabel }}[m
+[31m-                    </h2>[m
+[31m-                    <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-300">[m
+[31m-                        {{ $subscription->isTrial() ? 'Trial is active right now.' : $subscription?->status?->value ?? '-' }}[m
+[31m-                    </p>[m
+[31m-                </div>[m
+[31m-[m
+[31m-                <span[m
+[31m-                    class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">[m
+[31m-                    {{ $currentAccessBadge }}[m
+[31m-                </span>[m
+[31m-            </div>[m
+[31m-[m
+[31m-            <div class="mt-8 grid gap-6 sm:grid-cols-3">[m
+[31m-                <div>[m
+[31m-                    <p class="text-sm font-medium text-zinc-500">Price</p>[m
+[31m-                    <p class="mt-2 text-lg font-semibold text-zinc-950 dark:text-white">[m
+[31m-                        @if ($subscription->isTrial())[m
+[31m-                            Included with trial[m
+[31m-                        @else[m
+[31m-                            {{ $subscription?->plan?->formattedPrice() ?? 'Free' }}[m
+[31m-[m
+[31m-                            @if ($subscription?->plan?->isFree())[m
+[31m-                                <span class="text-sm font-normal text-zinc-500">[m
+[31m-                                    / {{ $subscription?->plan?->billingLabel() }}[m
+[31m-                                </span>[m
+[31m-                            @endif[m
+[31m-                        @endif[m
+[31m-                    </p>[m
+[31m-                </div>[m
+[31m-[m
+[31m-                <div>[m
+[31m-                    <p class="text-sm font-medium text-zinc-500">Billing</p>[m
+[31m-                    <p class="mt-2 text-lg font-semibold text-zinc-950 dark:text-white">[m
+[31m-                        {{ $subscription->isTrial() ? 'Trial' : $subscription?->plan?->billingIntervalLabel() ?? 'Free' }}[m
+[31m-                    </p>[m
+[31m-                </div>[m
+[31m-[m
+[31m-                <div>[m
+[31m-                    <p class="text-sm font-medium text-zinc-500">Next Billing Date</p>[m
+[31m-                    <p class="mt-2 text-lg font-semibold text-zinc-950 dark:text-white">[m
+[31m-                        {{ $subscription->isTrial() ? 'Ends after 14 days' : $subscription->ends_at?->format('M d, Y') ?? 'No active renewal' }}[m
+[31m-                    </p>[m
+[31m-                </div>[m
+[31m-            </div>[m
+[31m-        </x-ui.card>[m
+[31m-[m
+[31m-        <x-ui.card class="border-zinc-200/80 bg-zinc-950 text-white shadow-sm">[m
+[31m-            <p class="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-400">[m
+[31m-                Why teams upgrade[m
+[31m-            </p>[m
+[31m-            <ul class="mt-5 space-y-3 text-sm text-zinc-300">[m
+[31m-                <li class="flex items-start gap-2">[m
+[31m-                    <span class="mt-1 h-2.5 w-2.5 rounded-full bg-indigo-400"></span>[m
+[31m-                    Add more workspaces and projects without limits.[m
+[31m-                </li>[m
+[31m-                <li class="flex items-start gap-2">[m
+[31m-                    <span class="mt-1 h-2.5 w-2.5 rounded-full bg-indigo-400"></span>[m
+[31m-                    Give every collaborator the visibility they need.[m
+[31m-                </li>[m
+[31m-                <li class="flex items-start gap-2">[m
+[31m-                    <span class="mt-1 h-2.5 w-2.5 rounded-full bg-indigo-400"></span>[m
+[31m-                    Keep finance and operations aligned with predictable billing.[m
+[31m-                </li>[m
+[31m-            </ul>[m
+[31m-        </x-ui.card>[m
+[31m-    </div>[m
+[31m-[m
+[31m-    @if ($organization->subscription->hasPendingPlan())[m
+[31m-        <x-ui.card class="border-blue-200 bg-blue-50/80 shadow-sm dark:border-blue-500/20 dark:bg-blue-500/10">[m
+[31m-            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">[m
+[31m-                <div>[m
+[31m-                    <p class="text-sm font-semibold uppercase tracking-[0.2em] text-blue-700">[m
+[31m-                        Upcoming Subscription[m
+[31m-                    </p>[m
+[31m-                    <h3 class="mt-2 text-xl font-semibold text-zinc-950 dark:text-white">[m
+[31m-                        {{ $organization->subscription->pendingPlan->name }}[m
+[31m-                    </h3>[m
+[31m-                    <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-300">[m
+[31m-                        Scheduled for {{ $organization->subscription->pending_effective_at->format('M d, Y') }}.[m
+[31m-                    </p>[m
+[31m-                </div>[m
+[31m-[m
+[31m-                <span[m
+[31m-                    class="inline-flex w-fit items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-blue-700">[m
+[31m-                    Scheduled[m
+[31m-                </span>[m
+[31m-            </div>[m
+[31m-        </x-ui.card>[m
+[31m-    @endif[m
+[31m-[m
+[31m-    @if ($organization->subscription->canStartTrial())[m
+[31m-        <x-ui.card[m
+[31m-            class="border-indigo-200 bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-xl shadow-indigo-950/10">[m
+[31m-            <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">[m
+[31m-                <div class="max-w-2xl">[m
+[31m-                    <p class="text-sm font-semibold uppercase tracking-[0.25em] text-indigo-100">[m
+[31m-                        Free Trial[m
+[31m-                    </p>[m
+[31m-                    <h3 class="mt-2 text-2xl font-semibold">[m
+[31m-                        Start your 14-day Pro trial[m
+[31m-                    </h3>[m
+[31m-                    <p class="mt-3 text-sm leading-6 text-indigo-50 sm:text-base">[m
+[31m-                        Get full access to premium collaboration features, higher limits, and a polished workspace[m
+[31m-                        experience without entering a credit card.[m
+[31m-                    </p>[m
+[31m-                </div>[m
+[31m-[m
+[31m-                <button wire:click="startTrial" wire:loading.attr="disabled" wire:target="startTrial"[m
+[31m-                    class="inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-50">[m
+[31m-                    <span wire:loading.remove wire:target="startTrial">[m
+[31m-                        Start Free Trial[m
+[31m-                    </span>[m
+[31m-                    <span wire:loading.flex wire:target="startTrial" class="items-center justify-center gap-2">[m
+[31m-                        <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">[m
+[31m-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"[m
+[31m-                                stroke-width="4"></circle>[m
+[31m-                            <path class="opacity-75" fill="currentColor"[m
+[31m-                                d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z">[m
+[31m-                            </path>[m
+[31m-                        </svg>[m
+[31m-                        <span>Starting...</span>[m
+[31m-                    </span>[m
+[31m-                </button>[m
+[31m-            </div>[m
+[31m-        </x-ui.card>[m
+[31m-    @endif[m
+[31m-[m
+[31m-    <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">[m
+[31m-        @foreach ($this->plans as $plan)[m
+[31m-            @php[m
+[31m-                $current = $organization->subscription?->accessPlan()?->is($plan) ?? false;[m
+[31m-                $scheduled = $organization->subscription?->pending_subscription_plan_id === $plan->id;[m
+[31m-            @endphp[m
+[31m-[m
+[31m-            <x-ui.card[m
+[31m-                class="flex h-full flex-col border-zinc-200/80 bg-white/90 shadow-sm {{ $current ? 'ring-2 ring-indigo-500/20' : '' }}">[m
+[31m-                <div class="flex items-start justify-between gap-4">[m
+[31m-                    <div>[m
+[31m-                        <h3 class="text-xl font-semibold text-zinc-950 dark:text-white">[m
+[31m-                            {{ $plan->name }}[m
+[31m-                        </h3>[m
+[31m-                        <p class="mt-1 text-sm text-zinc-500">[m
+[31m-                            {{ $plan->billingIntervalLabel() }}[m
+[31m-                        </p>[m
+[31m-                    </div>[m
+[31m-[m
+[31m-                    @if ($current)[m
+[31m-                        <span[m
+[31m-                            class="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300">[m
+[31m-                            Current[m
+[31m-                        </span>[m
+[31m-                    @endif[m
+[31m-                </div>[m
+[31m-[m
+[31m-                <div class="mt-6">[m
+[31m-                    <p class="text-4xl font-semibold text-zinc-950 dark:text-white">[m
+[31m-                        {{ $plan->formattedPrice() }}[m
+[31m-[m
+[31m-                        @if ($plan->price > 0)[m
+[31m-                            <span class="text-base font-normal text-zinc-500">[m
+[31m-                                / {{ $plan->billingLabel() }}[m
+[31m-                            </span>[m
+[31m-                        @endif[m
+[31m-                    </p>[m
+[31m-                </div>[m
+[31m-[m
+[31m-                <div class="mt-6 rounded-2xl border border-zinc-200 bg-slate-50 p-4 shadow-inner">[m
+[31m-                    <div class="mb-3 flex items-center justify-between">[m
+[31m-                        <p class="text-[11px] font-semibold uppercase tracking-[0.25em] text-zinc-500">[m
+[31m-                            Plan details[m
+[31m-                        </p>[m
+[31m-                        <span[m
+[31m-                            class="rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-zinc-600">[m
+[31m-                            Included[m
+[31m-                        </span>[m
+[31m-                    </div>[m
+[31m-                    <ul class="space-y-3 text-sm text-zinc-700 dark:text-zinc-300">[m
+[31m-                        @foreach ($plan->featureHighlights() as $feature)[m
+[31m-                            <li[m
+[31m-                                class="flex items-center justify-between rounded-lg border border-zinc-200/80 bg-white/70 px-3 py-2">[m
+[31m-                                <span>{{ $feature['label'] }}</span>[m
+[31m-                                <span class="font-semibold text-zinc-950">{{ $feature['value'] }}</span>[m
+[31m-                            </li>[m
+[31m-                        @endforeach[m
+[31m-                    </ul>[m
+[31m-                </div>[m
+[31m-[m
+[31m-                <div class="mt-auto pt-8">[m
+[31m-                    @if ($current && $organization->subscription->isTrial())[m
+[31m-                        <span[m
+[31m-                            class="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">[m
+[31m-                            Trial Active[m
+[31m-                        </span>[m
+[31m-                    @elseif ($current)[m
+[31m-                        <button disabled[m
+[31m-                            class="w-full cursor-not-allowed rounded-full border border-zinc-200 bg-zinc-100 px-4 py-3 text-sm font-semibold text-zinc-500">[m
+[31m-                            Current Plan[m
+[31m-                        </button>[m
+[31m-                    @elseif ($scheduled)[m
+[31m-                        <button disabled[m
+[31m-                            class="w-full cursor-not-allowed rounded-full border border-zinc-200 bg-zinc-100 px-4 py-3 text-sm font-semibold text-zinc-500">[m
+[31m-                            Scheduled Plan[m
+[31m-                        </button>[m
+[31m-                    @else[m
+[31m-                        <button wire:click="selectPlan({{ $plan->id }})" wire:loading.attr="disabled"[m
+[31m-                            wire:target="selectPlan({{ $plan->id }})"[m
+[31m-                            class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-zinc-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800">[m
+[31m-                            <span wire:loading.remove wire:target="selectPlan({{ $plan->id }})">Choose Plan</span>[m
+[31m-                            <span wire:loading.flex wire:target="selectPlan({{ $plan->id }})"[m
+[31m-                                class="items-center justify-center gap-2">[m
+[31m-                                <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"[m
+[31m-                                    aria-hidden="true">[m
+[31m-                                    <circle class="opacity-25" cx="12" cy="12" r="10"[m
+[31m-                                        stroke="currentColor" stroke-width="4"></circle>[m
+[31m-                                    <path class="opacity-75" fill="currentColor"[m
+[31m-                                        d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2.93 7.07A8 8 0 0 0 20 12h4a12 12 0 0 1-10.93 12Z">[m
+[31m-                                    </path>[m
+[31m-                                </svg>[m
+[31m-                                <span>Choosing...</span>[m
+[31m-                            </span>[m
+[31m-                        </button>[m
+[31m-                    @endif[m
+[31m-                </div>[m
+[31m-            </x-ui.card>[m
+[31m-        @endforeach[m
+[31m-    </div>[m
+[31m-[m
+[31m-    <flux:modal name="confirm-subscription" x-on:close="$wire.resetSelectedPlan()">[m
+[31m-        @if ($selectedPlan)[m
+[31m-            <div class="space-y-8">[m
+[31m-                <div>[m
+[31m-                    <h2 class="text-xl font-semibold text-zinc-950 dark:text-white">[m
+[31m-                        Confirm Subscription Change[m
+[31m-                    </h2>[m
+[31m-                    <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-300">[m
+[31m-                        Review your new subscription before continuing to our secure payment provider.[m
+[31m-                    </p>[m
+[31m-                </div>[m
+[31m-[m
+[31m-                <div class="grid gap-4 md:grid-cols-2">[m
+[31m-                    <div class="rounded-2xl border border-zinc-200 p-5 dark:border-white/10">[m
+[31m-                        <p class="text-xs font-semibold uppercase tracking-[0.25em] text-zinc-500">[m
+[31m-                            Current Plan[m
+[31m-                        </p>[m
+[31m-                        <h3 class="mt-2 text-xl font-semibold">[m
+[31m-                            {{ $organization->subscription?->plan?->name ?? 'None' }}[m
+[31m-                        </h3>[m
+[31m-                        <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-300">[m
+[31m-                            {{ $organization->subscription?->plan?->formattedPrice() ?? 'Free' }}[m
+[31m-                        </p>[m
+[31m-[m
+[31m-                        <div class="mt-6 space-y-2 text-sm">[m
+[31m-                            <div class="flex justify-between">[m
+[31m-                                <span>Workspaces</span>[m
+[31m-                                <span>{{ $organization->subscription?->plan?->workspaceLimitLabel() ?? '-' }}</span>[m
+[31m-                            </div>[m
+[31m-                            <div class="flex justify-between">[m
+[31m-                                <span>Projects</span>[m
+[31m-                                <span>{{ $organization->subscription?->plan?->projectLimitLabel() ?? '-' }}</span>[m
+[31m-                            </div>[m
+[31m-                            <div class="flex justify-between">[m
+[31m-                                <span>Members</span>[m
+[31m-                                <span>{{ $organization->subscription?->plan?->memberLimitLabel() ?? '-' }}</span>[m
+[31m-                            </div>[m
+[31m-                        </div>[m
+[31m-                    </div>[m
+[31m-[m
+[31m-                    <div[m
+[31m-                        class="rounded-2xl border-2 border-indigo-500 bg-indigo-50/60 p-5 dark:border-indigo-400 dark:bg-indigo-500/10">[m
+[31m-                        <p[m
+[31m-                            class="text-xs font-semibold uppercase tracking-[0.25em] text-indigo-600 dark:text-indigo-300">[m
+[31m-                            New Plan[m
+[31m-                        </p>[m
+[31m-                        <h3 class="mt-2 text-xl font-semibold">[m
+[31m-                            {{ $selectedPlan->name }}[m
+[31m-                        </h3>[m
+[31m-                        <p class="mt-1 font-medium text-indigo-600 dark:text-indigo-300">[m
+[31m-                            {{ $selectedPlan->formattedPrice() }}[m
+[31m-                            @unless ($selectedPlan->isFree())[m
+[31m-                                / {{ $selectedPlan->billingLabel() }}[m
+[31m-                            @endunless[m
+[31m-                        </p>[m
+[31m-[m
+[31m-                        <div class="mt-6 space-y-2 text-sm">[m
+[31m-                            <div class="flex justify-between">[m
+[31m-                                <span>Workspaces</span>[m
+[31m-                                <span>{{ $selectedPlan->workspaceLimitLabel() }}</span>[m
+[31m-                            </div>[m
+[31m-                            <div class="flex justify-between">[m
+[31m-                                <span>Projects</span>[m
+[31m-                                <span>{{ $selectedPlan->projectLimitLabel() }}</span>[m
+[31m-                            </div>[m
+[31m-                            <div class="flex justify-between">[m
+[31m-                                <span>Members</span>[m
+[31m-                                <span>{{ $selectedPlan->memberLimitLabel() }}</span>[m
+[31m-                            </div>[m
+[31m-                        </div>[m
+[31m-                    </div>[m
+[31m-                </div>[m
+[31m-[m
+[31m-                <div[m
+[31m-                    class="rounded-2xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-900 dark:bg-amber-950/20">[m
+[31m-                    <h4 class="font-medium text-amber-900 dark:text-amber-300">[m
+[31m-                        Before you continue[m
+[31m-

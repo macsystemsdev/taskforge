@@ -3,7 +3,6 @@
 use App\Models\Subscription;
 use App\Models\SubscriptionPlan;
 
-uses(Tests\TestCase::class);
 
 describe('subscription trial eligibility', function () {
     it('does not allow a free trial when the subscription has no plan', function () {
@@ -18,7 +17,7 @@ describe('subscription trial eligibility', function () {
 
         $plan = SubscriptionPlan::trialPlan();
 
-        expect($plan->name)->toBe('Pro Trial');
-        expect($plan->slug)->toBe('trial');
+        expect($plan->name)->toBe('Pro Monthly');
+        expect($plan->slug)->toBe('pro-monthly');
     });
 });

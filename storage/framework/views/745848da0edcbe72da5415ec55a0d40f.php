@@ -208,49 +208,45 @@
 <?php unset($__componentOriginalfe86969babb72517ecf97426e7c9330d); ?>
 <?php endif; ?>
 
-            
             <?php if (isset($component)) { $__componentOriginalfe86969babb72517ecf97426e7c9330d = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalfe86969babb72517ecf97426e7c9330d = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::sidebar.item','data' => ['icon' => 'bell','href' => route('notifications.index'),'current' => request()->routeIs('notifications.*'),'wire:navigate' => true]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::sidebar.item','data' => ['icon' => 'credit-card','href' => route('billing.index'),'current' => request()->routeIs('billing.*'),'wire:navigate' => true]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('flux::sidebar.item'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['icon' => 'bell','href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('notifications.index')),'current' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(request()->routeIs('notifications.*')),'wire:navigate' => true]); ?>
+<?php $component->withAttributes(['icon' => 'credit-card','href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('billing.index')),'current' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(request()->routeIs('billing.*')),'wire:navigate' => true]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-                <span class="flex items-center justify-between gap-2 w-full">
-                    <?php echo e(__('Notifications')); ?>
+                <?php echo e(__('Billing')); ?>
 
-                    <?php
-$__split = function ($name, $params = []) {
-    return [$name, $params];
-};
-[$__name, $__params] = $__split('notifications.unread-count', []);
+             <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalfe86969babb72517ecf97426e7c9330d)): ?>
+<?php $attributes = $__attributesOriginalfe86969babb72517ecf97426e7c9330d; ?>
+<?php unset($__attributesOriginalfe86969babb72517ecf97426e7c9330d); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalfe86969babb72517ecf97426e7c9330d)): ?>
+<?php $component = $__componentOriginalfe86969babb72517ecf97426e7c9330d; ?>
+<?php unset($__componentOriginalfe86969babb72517ecf97426e7c9330d); ?>
+<?php endif; ?>
 
-$__keyOuter = $__key ?? null;
+            <?php if (isset($component)) { $__componentOriginalfe86969babb72517ecf97426e7c9330d = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalfe86969babb72517ecf97426e7c9330d = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'e60dd9d2c3a62d619c9acb38f20d5aa5::sidebar.item','data' => ['icon' => 'chart-bar','href' => route('reports.index'),'current' => request()->routeIs('reports.*'),'wire:navigate' => true]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('flux::sidebar.item'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['icon' => 'chart-bar','href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('reports.index')),'current' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(request()->routeIs('reports.*')),'wire:navigate' => true]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-$__key = null;
-$__componentSlots = [];
+                <?php echo e(__('Reports')); ?>
 
-$__key ??= \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::generateKey('lw-3043395526-0', $__key);
-
-$__html = app('livewire')->mount($__name, $__params, $__key, $__componentSlots);
-
-echo $__html;
-
-unset($__html);
-unset($__key);
-$__key = $__keyOuter;
-unset($__keyOuter);
-unset($__name);
-unset($__params);
-unset($__componentSlots);
-unset($__split);
-?>
-                </span>
              <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginalfe86969babb72517ecf97426e7c9330d)): ?>
@@ -528,4 +524,5 @@ unset($__split);
 <?php if (isset($__componentOriginal17e56bc23bb0192e474b351c4358d446)): ?>
 <?php $component = $__componentOriginal17e56bc23bb0192e474b351c4358d446; ?>
 <?php unset($__componentOriginal17e56bc23bb0192e474b351c4358d446); ?>
-<?php endif; ?><?php /**PATH /var/www/html/resources/views/layouts/app/sidebar.blade.php ENDPATH**/ ?>
+<?php endif; ?>
+<?php /**PATH /var/www/html/resources/views/layouts/app/sidebar.blade.php ENDPATH**/ ?>
