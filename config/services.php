@@ -47,6 +47,7 @@ return [
 
     'filament' => [
         'admin_email' => env('FILAMENT_ADMIN_EMAIL'),
+        'admin_path' => env('FILAMENT_ADMIN_PATH', 'admin'),
     ],
 
 
