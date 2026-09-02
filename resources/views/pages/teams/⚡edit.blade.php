@@ -108,8 +108,8 @@ new class extends Component {
                     'name' => $member->name,
                     'email' => $member->email,
                     'avatar' => $member->avatar ?? null,
-                    'role' => $member->pivot->role->value,
-                    'role_label' => $member->pivot->role?->label(),
+                    'role' => $member->pivot->role,
+                    'role_label' => ucfirst($member->pivot->role),
                 ],
             )
             ->toArray();
@@ -136,11 +136,11 @@ new class extends Component {
 }; ?>
 
 <section class="w-full">
-    @include('partials.settings-heading')
+    
 
     <flux:heading class="sr-only">{{ __('Teams') }}</flux:heading>
 
-    <x-pages::settings.layout :heading="__('Teams')" :subheading="__('Manage your team settings')">
+    <div class="space-y-6">
         <div class="space-y-10">
             <div class="space-y-6">
                 @if ($this->permissions->canUpdateTeam)
@@ -260,7 +260,7 @@ new class extends Component {
                 </div>
             @endif
         </div>
-    </x-pages::settings.layout>
+    </div>
 
     @if ($this->permissions->canAddMember)
         <livewire:pages::teams.add-member-modal :team="$teamModel" />

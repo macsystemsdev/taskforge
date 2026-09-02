@@ -26,7 +26,7 @@ class FileStorageService
         return $file->storeAs(
             $directory,
             $filename,
-            'public',
+            'private',
         );
     }
 
@@ -39,7 +39,7 @@ class FileStorageService
         string $path,
     ): bool {
 
-        return Storage::disk('public')
+        return Storage::disk('private')
             ->delete($path);
     }
 
@@ -50,7 +50,7 @@ class FileStorageService
         string $path,
     ): bool {
 
-        return Storage::disk('public')
+        return Storage::disk('private')
             ->exists($path);
     }
 
@@ -62,7 +62,7 @@ class FileStorageService
         string $filename,
     ): StreamedResponse {
 
-        return Storage::disk('public')
+        return Storage::disk('private')
             ->download(
                 $path,
                 $filename,
@@ -76,7 +76,7 @@ class FileStorageService
         string $path,
     ): string {
 
-        return Storage::disk('public')
+        return Storage::disk('private')
             ->url($path);
     }
 
@@ -88,7 +88,7 @@ class FileStorageService
         CarbonInterface $expiresAt,
     ): string {
 
-        return Storage::disk('public')
+        return Storage::disk('private')
             ->temporaryUrl(
                 $path,
                 $expiresAt,
@@ -103,7 +103,7 @@ class FileStorageService
         string $to,
     ): bool {
 
-        return Storage::disk('public')
+        return Storage::disk('private')
             ->move($from, $to);
     }
 
@@ -115,7 +115,7 @@ class FileStorageService
         string $to,
     ): bool {
 
-        return Storage::disk('public')
+        return Storage::disk('private')
             ->copy($from, $to);
     }
 
@@ -126,7 +126,7 @@ class FileStorageService
         string $path,
     ): int {
 
-        return Storage::disk('public')
+        return Storage::disk('private')
             ->size($path);
     }
 
@@ -137,7 +137,54 @@ class FileStorageService
         string $path,
     ): string {
 
-        return Storage::disk('public')
+        return Storage::disk('private')
             ->mimeType($path);
+    }
+
+    /**
+     * Preview ZIP archive contents without extracting.
+     *
+     * Returns file names and metadata only.
+     * Never extracts file content.
+     */
+    public function previewZip(
+        string $path,
+        int $maxFiles = 100,
+    ): array {
+
+        $zip = new \ZipArchive();
+        $result = $zip->open(
+            Storage::disk('private')->path($path)
+        );
+
+        if ($result !== true) {
+            return [];
+        }
+
+        $files = [];
+        $totalFiles = $zip->numFiles;
+
+        for ($i = 0; $i < min($totalFiles, $maxFiles); $i++) {
+            $stat = $zip->statIndex($i);
+
+            if ($stat === false) {
+                continue;
+            }
+
+            $files[] = [
+                'name' => basename($stat['name']),
+                'size' => $stat['size'] ?? 0,
+                'compressed_size' => $stat['comp_size'] ?? 0,
+                'is_directory' => substr($stat['name'], -1) === '/',
+            ];
+        }
+
+        $zip->close();
+
+        return [
+            'files' => $files,
+            'total_files' => $totalFiles,
+            'truncated' => $totalFiles > $maxFiles,
+        ];
     }
 }

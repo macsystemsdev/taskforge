@@ -18,8 +18,12 @@ abstract class TestCase extends BaseTestCase
         
         View::share('errors', session('errors', new ViewErrorBag()));
         
-        // Disable ALL middleware for tests
-        $this->withoutMiddleware(AppHttpMiddlewareVerifyCsrfToken::class);
+        // Disable CSRF ONLY for POST requests
+        $this->withoutMiddleware(IlluminateFoundationHttpMiddlewareValidateCsrfToken::class);
+        $this->app->instance('middleware.disable', [
+            \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
+            \Illuminate\Session\Middleware\AuthenticateSession::class,
+        ]);
     }
     
     protected function skipUnlessFortifyHas($feature): void

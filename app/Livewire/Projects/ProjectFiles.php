@@ -83,10 +83,18 @@ class ProjectFiles extends Component
             $map = function ($attachment) use ($storage) {
                 $file = $attachment->storedFile;
 
+                // Set preview URL for safe inline types
                 if ($file && (str_starts_with($file->mime_type, 'image/') || $file->mime_type === 'application/pdf')) {
                     $attachment->preview_url = $storage->url($file->path);
                 } else {
                     $attachment->preview_url = null;
+                }
+
+                // Add ZIP preview data
+                if ($file && str_contains($file->mime_type, 'zip')) {
+                    $attachment->zip_preview = $storage->previewZip($file->path);
+                } else {
+                    $attachment->zip_preview = null;
                 }
 
                 return $attachment;

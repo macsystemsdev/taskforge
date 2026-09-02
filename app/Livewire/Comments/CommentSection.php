@@ -15,6 +15,7 @@ use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\Attributes\On;
+use Illuminate\Support\Facades\RateLimiter;
 
 class CommentSection extends Component
 {
@@ -141,6 +142,20 @@ class CommentSection extends Component
             return;
         }
 
+        // Rate limit uploads: 10 uploads per minute per user
+        $rateLimitKey = 'upload:' . Auth::id();
+        
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 10)) {
+            $seconds = RateLimiter::availableIn($rateLimitKey);
+            $this->addError(
+                'uploads',
+                __('Too many upload attempts. Please wait :seconds seconds.', ['seconds' => $seconds])
+            );
+            return;
+        }
+
+        RateLimiter::hit($rateLimitKey, 60); // Lock for 60 seconds
+
         try {
             $uploaded = count($this->uploads);
 
@@ -159,30 +174,45 @@ class CommentSection extends Component
             $this->dispatch('attachmentsUploaded', [
                 'count' => $uploaded,
             ]);
+        } catch (\App\Exceptions\StorageQuotaExceededException $exception) {
+            // Add error for storage quota exceeded
+            $this->addError('uploads', $exception->getMessage());
+            return;
         } catch (ValidationException $exception) {
-            // Dispatch a browser event so the UI can show an error toast
-            $message = null;
-
-            try {
-                $errors = $exception->errors();
-                $message = is_array($errors) ? array_values(array_map(function ($v) {
-                    return is_array($v) ? implode(' ', $v) : $v;
-                }, $errors))[0] ?? $exception->getMessage() : $exception->getMessage();
-            } catch (\Throwable $e) {
-                $message = $exception->getMessage();
+            // Add error to uploads so Livewire tests can assert on it
+            $errors = $exception->errors();
+            
+            if (isset($errors['file'])) {
+                $this->addError('uploads', $errors['file'][0]);
+            } else {
+                $this->addError('uploads', $exception->getMessage());
             }
 
             $this->dispatch('attachmentsUploadFailed', [
-                'message' => $message,
-                'errors' => $exception->errors(),
+                'message' => $exception->getMessage(),
+                'errors' => $errors,
             ]);
 
-            throw $exception;
+            return;
         }
     }
 
     public function deleteAttachment(int $attachmentId, DeleteFileAttachmentAction $action): void
     {
+        // Rate limit deletions: 20 per minute per user
+        $rateLimitKey = 'delete-attachment:' . Auth::id();
+        
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 20)) {
+            $seconds = RateLimiter::availableIn($rateLimitKey);
+            $this->addError(
+                'uploads',
+                __('Too many delete attempts. Please wait :seconds seconds.', ['seconds' => $seconds])
+            );
+            return;
+        }
+
+        RateLimiter::hit($rateLimitKey, 60);
+
         $attachment = $this->commentable
             ->fileAttachments()
             ->where('id', $attachmentId)

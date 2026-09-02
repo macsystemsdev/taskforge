@@ -49,13 +49,13 @@ new class extends Component {
 
 <div class="space-y-6">
     {{-- Header --}}
-    <div class="overflow-hidden rounded-3xl border border-zinc-200 bg-white/80 p-5 shadow-sm backdrop-blur sm:p-6 dark:border-white/10 dark:bg-zinc-900/70">
+    <div class="overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500/90 via-indigo-500/85 to-blue-600/90 p-5 text-white shadow-[0_8px_32px_rgba(37,99,235,0.15)] sm:p-6 backdrop-blur">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-                <h1 class="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+                <h1 class="text-2xl font-semibold tracking-tight text-white">
                     {{ __('Tasks') }}
                 </h1>
-                <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                <p class="mt-2 text-sm text-blue-50">
                     {{ __('Monitor task ownership, status, deadlines, and execution progress.') }}
                 </p>
             </div>

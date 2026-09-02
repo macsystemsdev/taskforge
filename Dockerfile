@@ -28,12 +28,16 @@ RUN apt-get update \
 
 RUN docker-php-ext-install \
     bcmath \
+    exif \
+    gd \
     intl \
     mbstring \
     pcntl \
     pdo_mysql \
     xml \
     zip
+
+# GD is required for EXIF stripping (image re-save without metadata)
 
 
 # Redis PHP extension

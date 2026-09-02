@@ -34,7 +34,7 @@
     </div>
 
     {{-- CHAT DISCUSSION --}}
-    <x-ui.card class="flex min-h-[600px] flex-col overflow-hidden rounded-3xl border border-zinc-200/80 bg-gradient-to-b from-zinc-50/50 to-white shadow-xl shadow-zinc-200/50 backdrop-blur transition-all duration-300 hover:shadow-2xl dark:border-white/10 dark:from-zinc-900/50 dark:to-zinc-950 dark:shadow-black/20">
+    <x-ui.card class="flex min-h-[600px] flex-col rounded-3xl border border-zinc-200/80 bg-gradient-to-b from-zinc-50/50 to-white shadow-xl shadow-zinc-200/50 backdrop-blur  dark:border-white/10 dark:from-zinc-900/50 dark:to-zinc-950 dark:shadow-black/20">
         {{-- Discussion Header --}}
         <div class="relative border-b border-zinc-200/80 bg-white/50 px-6 py-5 backdrop-blur dark:border-white/10 dark:bg-zinc-900/50">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -72,9 +72,9 @@
         </div>
 
         {{-- Comments List --}}
-        <div class="flex-1 overflow-hidden bg-gradient-to-b from-transparent to-zinc-50/30 dark:to-zinc-900/20">
+        <div class="overflow-hidden bg-gradient-to-b from-transparent to-zinc-50/30 dark:to-zinc-900/20">
             <div id="comments-list-{{ $commentable->id }}"
-                class="flex h-full max-h-[480px] min-h-[320px] flex-col gap-5 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-zinc-300 scrollbar-track-transparent dark:scrollbar-thumb-zinc-700"
+                class="flex h-full max-h-[480px] min-h-[320px] flex-col gap-5 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-zinc-300 scrollbar-track-transparent dark:scrollbar-thumb-zinc-700 scroll-smooth"
                 aria-label="Recent comments">
                 
                 @if ($commentsTotal > $comments->count())
@@ -102,7 +102,7 @@
                                     <span>{{ $comment->created_at->diffForHumans() }}</span>
                                 </div>
                                 <div class="relative">
-                                    <div class="inline-block rounded-2xl rounded-tr-sm bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/20 chat-bubble transition-all duration-200 group-hover:shadow-xl group-hover:shadow-blue-500/30">
+                                    <div class="inline-block rounded-2xl rounded-tr-sm bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/20 chat-bubble  group-hover:shadow-xl group-hover:shadow-blue-500/30">
                                         <p class="whitespace-pre-line text-sm leading-7">{{ $comment->content }}</p>
                                     </div>
                                 </div>
@@ -120,7 +120,7 @@
                                     <span class="text-xs text-zinc-400">·</span>
                                     <p class="text-xs text-zinc-500">{{ $comment->created_at->diffForHumans() }}</p>
                                 </div>
-                                <div class="inline-block rounded-2xl rounded-tl-sm border border-zinc-200/80 bg-white shadow-sm chat-bubble transition-all duration-200 group-hover:shadow-md dark:border-white/10 dark:bg-zinc-900/80 dark:shadow-black/10">
+                                <div class="inline-block rounded-2xl rounded-tl-sm border border-zinc-200/80 bg-white shadow-sm chat-bubble  group-hover:shadow-md dark:border-white/10 dark:bg-zinc-900/80 dark:shadow-black/10">
                                     <p class="whitespace-pre-line text-sm leading-7 text-zinc-700 dark:text-zinc-300">{{ $comment->content }}</p>
                                 </div>
                             </div>
@@ -147,19 +147,19 @@
                 {{-- Comment Input --}}
         <div class="border-t border-zinc-200/80 bg-white/80 px-6 py-5 backdrop-blur dark:border-white/10 dark:bg-zinc-900/80">
             <form wire:submit.prevent="createComment" class="space-y-4">
-                <div class="grid gap-3 md:grid-cols-[auto_1fr_auto] md:items-end">
+                <div class="flex items-end gap-2 relative z-10">
                     {{-- Attachment Button --}}
-                    <label for="uploads-{{ $commentable->id }}"
-                        class="group flex h-12 w-12 cursor-pointer items-center justify-center rounded-xl border border-zinc-200 bg-zinc-50 text-zinc-500 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 dark:border-white/10 dark:bg-zinc-950/60 dark:text-zinc-300 dark:hover:bg-blue-950/40">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <label for="uploads-{{ $commentable->id }}" class="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:hover:bg-blue-950/60" style="display: flex !important; visibility: visible !important; opacity: 1 !important; position: relative; z-index: 50; min-width: 44px; min-height: 44px;"
+                        class="group flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-zinc-200 bg-zinc-50 text-zinc-500 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 dark:border-white/10 dark:bg-zinc-950/60 dark:text-zinc-300 dark:hover:bg-blue-950/40 sm:h-12 sm:w-12" style="display: flex !important; visibility: visible !important; opacity: 1 !important;">
+                        <svg class="h-5 w-5" style="display: block !important;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
                         </svg>
-                        <input id="uploads-{{ $commentable->id }}" wire:model="uploads" type="file" multiple class="sr-only" />
+                        <input id="uploads-{{ $commentable->id }}" wire:model="uploads" type="file" multiple class="hidden" />
                     </label>
 
                     {{-- Textarea --}}
                     <div class="relative">
-                        <textarea wire:model="content" x-data="{ lastTypingEvent: 0 }"
+                        <textarea class="flex-1 min-w-0" wire:model="content" x-data="{ lastTypingEvent: 0 }"
                             @input="
                                     const now = Date.now();
                                     if (now - lastTypingEvent > 1000) {
@@ -169,7 +169,7 @@
                             "
                             placeholder="{{ __('Type a message...') }}" rows="3"
                             class="w-full resize-none rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 pr-24 text-sm leading-6 text-zinc-900 shadow-sm transition focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:border-white/10 dark:bg-zinc-950/80 dark:text-white"></textarea>
-                        <button type="submit"
+                        <button type="submit" class="shrink-0"
                             class="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300">
                             Send
                         </button>
@@ -177,7 +177,7 @@
 
                     {{-- Upload Button - This was missing! --}}
                     <button type="button" wire:click="uploadAttachments" wire:loading.attr="disabled"
-                        class="tf-button-secondary hidden h-12 px-4 py-0 text-sm md:inline-flex">
+                        class="tf-button-secondary inline-flex h-12 shrink-0 px-4 py-0 text-sm" style="display: inline-flex !important; visibility: visible !important; opacity: 1 !important;">
                         Upload
                     </button>
                 </div>
@@ -262,7 +262,7 @@
     </x-ui.card>
 
     {{-- ATTACHMENT LIST --}}
-    <x-ui.card class="space-y-6 overflow-hidden rounded-3xl border border-zinc-200/80 bg-white/50 backdrop-blur transition-all duration-300 hover:shadow-xl dark:border-white/10 dark:bg-zinc-900/50">
+    <x-ui.card class="space-y-6 overflow-hidden rounded-3xl border border-zinc-200/80 bg-white/50 backdrop-blur  hover:shadow-xl dark:border-white/10 dark:bg-zinc-900/50">
         <div class="flex items-center justify-between gap-4 border-b border-zinc-200/80 px-6 py-5 dark:border-white/10">
             <div class="flex items-center gap-3">
                 <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 dark:bg-indigo-950/50">
@@ -301,7 +301,7 @@
             <div class="max-h-[460px] space-y-3 overflow-y-auto px-6 pb-6 scrollbar-thin scrollbar-thumb-zinc-300 scrollbar-track-transparent dark:scrollbar-thumb-zinc-700">
                 @foreach ($attachments as $attachment)
                     @php $file = $attachment->storedFile; @endphp
-                    <div class="group rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm transition-all duration-200 hover:shadow-lg hover:border-blue-200 dark:border-white/10 dark:bg-zinc-950/80 dark:hover:border-blue-900">
+                    <div class="group rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm  hover:shadow-lg hover:border-blue-200 dark:border-white/10 dark:bg-zinc-950/80 dark:hover:border-blue-900">
                         <div class="flex items-start gap-4">
                             <div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-zinc-100 to-zinc-50 text-3xl shadow-inner transition-transform group-hover:scale-105 dark:from-zinc-800 dark:to-zinc-900">
                                 {{ $this->attachmentIcon($file->mime_type) }}

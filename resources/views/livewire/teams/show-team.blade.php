@@ -34,11 +34,11 @@ new class extends Component {
 
 <div class="space-y-6">
     {{-- Header --}}
-    <div class="overflow-hidden rounded-3xl border border-zinc-200 bg-white/80 p-5 shadow-sm backdrop-blur sm:p-6 dark:border-white/10 dark:bg-zinc-900/70">
+    <div class="overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500/90 via-indigo-500/85 to-blue-600/90 p-5 text-white shadow-[0_8px_32px_rgba(37,99,235,0.15)] sm:p-6 backdrop-blur">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div class="min-w-0">
                 <a href="{{ route('workspaces.show', $workspace) }}"
-                    class="text-xs font-medium uppercase tracking-[0.15em] text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300"
+                    class="text-xs font-medium uppercase tracking-[0.15em] text-blue-100 hover:text-white"
                     wire:navigate>
                     {{ $workspace->organization->name }} / {{ $workspace->name }}
                 </a>
@@ -48,7 +48,7 @@ new class extends Component {
                 </h1>
 
                 @if ($team->description)
-                    <p class="mt-2 max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">
+                    <p class="mt-2 max-w-2xl text-sm text-blue-50">
                         {{ $team->description }}
                     </p>
                 @endif
@@ -87,7 +87,7 @@ new class extends Component {
             @foreach ($team->members as $member)
                 <div wire:key="member-{{ $member->id }}" class="flex items-center justify-between gap-3 px-4 py-3">
                     <div class="flex min-w-0 items-center gap-3">
-                        <x-ui.avatar :name="$member->name" />
+                        <x-ui.avatar :name="$member->name" :user="$member" />
                         <div class="min-w-0">
                             <p class="truncate text-sm font-medium text-zinc-950 dark:text-white">{{ $member->name }}</p>
                             <p class="truncate text-xs text-zinc-500">{{ $member->email }}</p>
@@ -95,7 +95,7 @@ new class extends Component {
                     </div>
 
                     <span class="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-600 dark:bg-white/10 dark:text-zinc-300">
-                        {{ ucfirst($member->pivot->role->value) }}
+                        {{ ucfirst($member->pivot->role) }}
                     </span>
                 </div>
             @endforeach

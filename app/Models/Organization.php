@@ -22,6 +22,7 @@ use Override;
 #[Fillable(['name', 'slug', 'subscription_plan', 'subscription_status', 'owner_id', 'stripe_customer_id', 'stripe_payment_method_id'])]
 class Organization extends Model
 {
+    use HasFactory;
 
     public function owner(): BelongsTo
     {

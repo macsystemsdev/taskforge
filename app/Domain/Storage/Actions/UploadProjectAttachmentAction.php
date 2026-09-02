@@ -42,11 +42,31 @@ class UploadProjectAttachmentAction
                 $user->id,
             );
 
-            $attachment = $project->fileAttachments()->create([
-                'stored_file_id' => $stored->id,
-                'comment_id' => null,
-                'created_by' => $user->id,
-            ]);
+            // Check for duplicate attachment on this project
+            $existingAttachment = $project->fileAttachments()
+                ->where('stored_file_id', $stored->id)
+                ->first();
+
+            if ($existingAttachment) {
+                return $existingAttachment;
+            }
+
+            
+
+            try {
+                $attachment = $project->fileAttachments()->create([
+                    'stored_file_id' => $stored->id,
+                    'comment_id' => null,
+                    'created_by' => $user->id,
+                ]);
+            } catch (\Throwable $e) {
+                // Clean up orphaned file if attachment creation fails
+                if (! $existingAttachment) {
+                    $this->upload->storage->delete($stored->path);
+                    $stored->delete();
+                }
+                throw $e;
+            }
 
             $this->activity->handle(
 

@@ -1,4 +1,4 @@
-Week 7 — Reporting & Platform Intelligence
+Week 2 — Reporting & Platform Intelligence
 Overview
 
 This week established the reporting subsystem for TaskForge. Reporting was separated from metrics, introducing dedicated reporting services, cache services, widgets, and a reporting page. The week also included several subscription lifecycle refinements discovered during implementation.
@@ -98,6 +98,6 @@ Visible Result
 
 Reporting infrastructure is consistent and prepared for future expansion.
 
-Week 7 Reflection
+Week 2 Reflection
 
-Week 7 completed the reporting foundation for TaskForge. The platform now includes Project, Team, and Organization reporting, reusable cache infrastructure, reporting widgets, and a dedicated reporting page. The reporting layer is ready for future features such as exports, scheduled reports, historical trends, and platform analytics.
+Week 2 completed the reporting foundation for TaskForge. The platform now includes Project, Team, and Organization reporting, reusable cache infrastructure, reporting widgets, and a dedicated reporting page. The reporting layer is ready for future features such as exports, scheduled reports, historical trends, and platform analytics.

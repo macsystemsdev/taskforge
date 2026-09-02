@@ -2,8 +2,13 @@
 
 namespace Database\Factories;
 
+use App\Domain\Billing\BillingInterval;
+use App\Domain\Billing\SubscriptionPlanStatus;
+use App\Domain\Organizations\Enums\OrganizationRole;
 use App\Domain\Teams\Enums\TeamRole;
 use App\Models\Organization;
+use App\Models\Subscription;
+use App\Models\SubscriptionPlan;
 use App\Models\Team;
 use App\Models\User;
 use App\Models\Workspace;
@@ -35,36 +40,66 @@ class UserFactory extends Factory
     public function configure(): static
     {
         return $this->afterCreating(function (User $user) {
+            // Create free plan if not exists
+            $freePlan = SubscriptionPlan::firstOrCreate(
+                ['slug' => 'free'],
+                [
+                    'name' => 'Free',
+                    'price' => 0,
+                    'currency' => 'USD',
+                    'billing_interval' => BillingInterval::NONE,
+                    'status' => SubscriptionPlanStatus::ACTIVE,
+                    'max_workspaces' => 1,
+                    'max_projects' => 5,
+                    'max_members' => 5,
+                ]
+            );
+
             // Create organization
             $organization = Organization::create([
                 'owner_id' => $user->id,
                 'name' => "{$user->name}'s Org",
-                'slug' => Str::slug("{$user->name}-org-" . $user->id),
+                'slug' => Str::slug($user->name . '-' . $user->id),
                 'subscription_plan' => 'free',
                 'subscription_status' => 'active',
             ]);
-            
-            // Create workspace
+
+            // Attach owner as member
+            $organization->members()->attach($user->id, [
+                'role' => OrganizationRole::OWNER->value,
+            ]);
+
+            // Create subscription
+            Subscription::create([
+                'organization_id' => $organization->id,
+                'subscription_plan_id' => $freePlan->id,
+                'status' => 'active',
+                'starts_at' => now(),
+            ]);
+
+            // Create default workspace
             $workspace = Workspace::create([
                 'organization_id' => $organization->id,
-                'name' => 'Personal Workspace',
-                'slug' => Str::slug("personal-workspace-" . $user->id),
-                'description' => 'Personal workspace',
+                'name' => 'Default Workspace',
+                'slug' => Str::slug('default-workspace-' . $user->id),
+                'description' => 'Default workspace',
                 'is_default' => true,
             ]);
-            
+
             // Create personal team
             $team = Team::create([
                 'workspace_id' => $workspace->id,
                 'name' => "{$user->name}'s Team",
-                'slug' => Str::slug("{$user->name}-team-" . $user->id),
+                'slug' => Str::slug($user->name . '-team-' . $user->id),
                 'is_personal' => true,
             ]);
 
-            $team->members()->attach($user, [
+            // Attach user as team leader
+            $team->members()->attach($user->id, [
                 'role' => TeamRole::LEADER->value,
             ]);
 
+            // Set current team
             $user->update(['current_team_id' => $team->id]);
         });
     }

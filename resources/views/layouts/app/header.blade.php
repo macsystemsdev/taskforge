@@ -1,6 +1,5 @@
-<flux:header container class="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
+<flux:header container class="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
     @php
-        // Only show Billing link when we have explicit organization context
         $routeOrganization = request()->route('organization');
         $billingRoute = $routeOrganization
             ? route('organizations.billing', ['organization' => $routeOrganization])
@@ -44,7 +43,7 @@
     {{-- Notification Bell --}}
     <flux:dropdown position="bottom" align="end" class="max-w-sm">
         <button type="button"
-            class="relative flex size-9 items-center justify-center rounded-lg text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-white">
+            class="relative flex size-9 items-center justify-center rounded-lg text-zinc-500 transition hover:bg-blue-50 hover:text-blue-600 dark:text-zinc-400 dark:hover:bg-blue-950/30 dark:hover:text-blue-400">
             <flux:icon.bell class="size-5" />
             <livewire:notifications.unread-count />
         </button>
@@ -53,7 +52,7 @@
             <div class="flex items-center justify-between border-b border-zinc-200 bg-zinc-50/50 px-4 py-3 dark:border-white/10 dark:bg-white/[0.03]">
                 <p class="text-sm font-semibold text-zinc-950 dark:text-white">Notifications</p>
                 <a href="{{ route('notifications.index') }}" wire:navigate
-                    class="text-xs font-medium text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">
+                    class="text-xs font-medium text-zinc-500 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400">
                     View all
                 </a>
             </div>
@@ -68,7 +67,7 @@
                         class="group flex items-start gap-3 border-b border-zinc-100 px-4 py-3 transition hover:bg-zinc-50 dark:border-white/5 dark:hover:bg-white/[0.02]">
                         <div class="mt-1">
                             @if (!$notification->read_at)
-                                <span class="block size-2 rounded-full bg-rose-500"></span>
+                                <span class="block size-2 rounded-full bg-blue-500"></span>
                             @else
                                 <span class="block size-2 rounded-full bg-zinc-300 dark:bg-zinc-700"></span>
                             @endif

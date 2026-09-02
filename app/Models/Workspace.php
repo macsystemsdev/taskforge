@@ -33,6 +33,11 @@ class Workspace extends Model
         return $this->hasMany(Project::class);
     }
 
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
+
     public function activityLogs(): MorphMany
     {
         return $this->morphMany(ActivityLog::class, 'subject');

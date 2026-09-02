@@ -205,6 +205,8 @@ new class extends Component {
                         <div class="space-y-1.5">
                             <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Due Date</label>
                             <input type="date" wire:model="dueDate"
+                min="{{ now()->format('Y-m-d') }}"
+                @if ($project->due_date) max="{{ $project->due_date->format('Y-m-d') }}" @endif
                                 class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:border-zinc-700 dark:bg-zinc-950/70 dark:text-white" />
                             @error('dueDate')
                                 <p class="text-sm font-medium text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -367,7 +369,7 @@ new class extends Component {
                                     <td class="px-6 py-3"><x-ui.status-badge :status="$task->status" /></td>
                                     <td class="px-6 py-3">
                                         <div class="flex items-center gap-2">
-                                            <x-ui.avatar :name="$task->assignee?->name ?? 'Unassigned'" size="sm" />
+                                            <x-ui.avatar :name="$task->assignee?->name ?? 'Unassigned'" size="sm" :user="$task->assignee" clickable />
                                             <span>{{ $task->assignee?->name ?? 'Unassigned' }}</span>
                                         </div>
                                     </td>

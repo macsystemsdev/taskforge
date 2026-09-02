@@ -1,4 +1,4 @@
-# Week 8 — Attachments & Storage
+# Week 3 — Attachments & Storage
 
 ## Overview
 
@@ -41,7 +41,7 @@ TaskForge now has a unified storage foundation capable of supporting every futur
 
 ---
 
-# Week 8 — Attachments & Storage
+# Week 3 — Attachments & Storage
 
 ---
 

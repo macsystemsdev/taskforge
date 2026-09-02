@@ -1,6 +1,9 @@
 <?php
 
 use App\Models\SubscriptionPlan;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+uses(RefreshDatabase::class);
 
 test('checkout uses correct minor unit amount', function () {
     $this->createBillingPlans();

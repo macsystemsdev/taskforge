@@ -88,6 +88,8 @@
                                                 📄
                                             @elseif(str_contains($file->mime_type, 'spreadsheet'))
                                                 📊
+                                            @elseif(str_contains($file->mime_type, 'zip'))
+                                                📦
                                             @else
                                                 📎
                                             @endif
@@ -111,6 +113,39 @@
                                         {{ $file ? number_format($file->size / 1024, 1) . ' KB' : '' }}</span>
                                 </div>
                             </div>
+
+                            {{-- ZIP Preview --}}
+                            @if ($file && str_contains($file->mime_type, 'zip') && isset($attachment->zip_preview) && $attachment->zip_preview['total_files'] > 0)
+                                <div class="mt-2 w-full rounded-lg border border-zinc-100 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900/40">
+                                    <details>
+                                        <summary class="cursor-pointer text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                                            📦 View contents ({{ $attachment->zip_preview['total_files'] }} files)
+                                        </summary>
+                                        <div class="mt-2 max-h-40 overflow-y-auto rounded-md bg-white p-2 dark:bg-zinc-950/60">
+                                            @foreach ($attachment->zip_preview['files'] as $zipFile)
+                                                <div class="flex items-center justify-between py-1 text-xs">
+                                                    <span class="truncate {{ $zipFile['is_directory'] ? 'font-medium text-zinc-700 dark:text-zinc-300' : 'text-zinc-600 dark:text-zinc-400' }}">
+                                                        {{ $zipFile['is_directory'] ? '📁' : '📄' }} {{ $zipFile['name'] }}
+                                                    </span>
+                                                    @if (! $zipFile['is_directory'])
+                                                        <span class="ml-2 shrink-0 text-zinc-400">
+                                                            {{ number_format($zipFile['size'] / 1024, 1) }} KB
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            @endforeach
+                                            @if ($attachment->zip_preview['truncated'])
+                                                <div class="mt-1 border-t border-zinc-100 pt-1 text-xs text-zinc-400 dark:border-zinc-800">
+                                                    ... and {{ $attachment->zip_preview['total_files'] - count($attachment->zip_preview['files']) }} more files
+                                                </div>
+                                            @endif
+                                        </div>
+                                        <p class="mt-2 text-xs text-zinc-400">
+                                            Download the ZIP to access file contents.
+                                        </p>
+                                    </details>
+                                </div>
+                            @endif
 
                             {{-- Actions --}}
                             <div class="flex shrink-0 items-center gap-2">

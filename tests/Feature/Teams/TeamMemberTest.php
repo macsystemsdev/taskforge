@@ -24,7 +24,7 @@ test('team member role can be updated by leader', function () {
         ->call('updateMember', $member->id, TeamRole::LEADER->value)
         ->assertHasNoErrors();
 
-    expect($team->members()->where('user_id', $member->id)->first()->pivot->role->value)->toEqual(TeamRole::LEADER->value);
+    expect($team->members()->where('user_id', $member->id)->first()->pivot->role)->toEqual(TeamRole::LEADER->value);
 });
 
 test('adding an organization member to a team sends a database notification', function () {
@@ -114,7 +114,7 @@ test('team member can be removed by owner', function () {
         ->call('removeMember')
         ->assertHasNoErrors();
 
-    expect($member->fresh()->belongsToTeam($team))->toBeFalse();
+    expect($team->members()->where('user_id', $member->id)->exists())->toBeFalse();
 });
 
 test('team member cannot be removed by non owners', function () {

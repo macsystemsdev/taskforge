@@ -1,14 +1,14 @@
-# Week 6 Engineering Journal
+# Week 1 Engineering Journal
 
 **Project:** TaskForge
-**Week:** 6
+**Week:** 1
 **Focus:** Owner Dashboard Foundation & Billing Domain Evolution
 
 ---
 
 # Overview
 
-Week 6 marked one of the largest architectural milestones of TaskForge.
+Week 1 marked one of the largest architectural milestones of TaskForge.
 
 Although the roadmap originally focused on building the Owner Dashboard, the work naturally evolved into a redesign of the entire billing domain after identifying a fundamental flaw in traditional CRUD-based subscription plan management.
 
@@ -625,7 +625,7 @@ Pages contain almost no business logic.
 
 # SaaS Principles Reinforced
 
-Week 6 reinforced several permanent engineering principles.
+Week 1 reinforced several permanent engineering principles.
 
 Business-first implementation.
 
@@ -653,7 +653,7 @@ Metadata remains flexible.
 
 # Week Outcome
 
-Week 6 delivered substantially more than originally planned.
+Week 1 delivered substantially more than originally planned.
 
 The Owner Dashboard became production ready.
 

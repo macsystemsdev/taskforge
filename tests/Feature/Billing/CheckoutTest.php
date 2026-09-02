@@ -52,7 +52,7 @@ test('checkout creates payment transaction with correct data', function () {
     expect($transaction)->not->toBeNull()
         ->and($transaction->subscription_plan_id)->toBe($plan->id)
         ->and($transaction->provider)->toBe(PaymentProvider::STRIPE)
-        ->and($transaction->amount)->toBe($plan->price)
+        ->and((float) $transaction->amount)->toBe((float) $plan->price)
         ->and($transaction->currency)->toBe($plan->currency)
         ->and($transaction->status)->toBe(PaymentStatus::PROCESSING);
 });

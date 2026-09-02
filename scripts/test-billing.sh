@@ -1,59 +1,13 @@
 #!/bin/bash
 
-echo "🧪 Running Billing Tests"
-echo "========================"
+echo "🧪 Running Billing Tests (SQLite - Safe)"
+echo "========================================"
 
-docker compose exec app php artisan optimize:clear
+# Use SQLite in-memory to prevent MySQL data loss
+docker compose exec -e APP_ENV=testing -e DB_CONNECTION=sqlite -e DB_DATABASE=:memory: app php artisan test \
+    tests/Feature/Billing/ \
+    tests/Unit/Billing/ \
+    --compact
 
-echo "🔐 Authorization Tests:"
-docker compose exec app php artisan test tests/Feature/Billing/BillingAuthorizationTest.php --compact
-
-echo "🏢 Organization Isolation Tests:"
-docker compose exec app php artisan test tests/Feature/Billing/OrganizationIsolationTest.php --compact
-
-echo "📦 Plan Tests:"
-docker compose exec app php artisan test tests/Feature/Billing/PlanTest.php --compact
-
-echo "🎯 Trial Tests:"
-docker compose exec app php artisan test tests/Feature/Billing/TrialTest.php --compact
-
-echo "💳 Payment Tests:"
-docker compose exec app php artisan test tests/Feature/Billing/CompletePaymentTest.php --compact
-
-echo "🔀 Payment State Machine Tests:"
-docker compose exec app php artisan test tests/Feature/Billing/PaymentStateMachineTest.php --compact
-
-echo "💰 Amount Tests:"
-docker compose exec app php artisan test tests/Unit/Billing/PaymentAmountTest.php --compact
-
-echo "❌ Checkout Failure Tests:"
-docker compose exec app php artisan test tests/Feature/Billing/CheckoutFailureTest.php --compact
-
-echo "🔒 Checkout Failure Recovery Tests:"
-docker compose exec app php artisan test tests/Feature/Billing/CheckoutFailureRecoveryTest.php --compact
-
-echo "🔄 Webhook Tests:"
-docker compose exec app php artisan test tests/Feature/Billing/WebhookTest.php --compact
-
-echo "✍️ Webhook Signature Tests:"
-docker compose exec app php artisan test tests/Feature/Billing/WebhookSignatureTest.php --compact
-
-echo "👤 Stripe Customer Tests:"
-docker compose exec app php artisan test tests/Feature/Billing/StripeCustomerTest.php --compact
-
-echo "🔒 Stripe Customer Isolation Tests:"
-docker compose exec app php artisan test tests/Feature/Billing/StripeCustomerIsolationTest.php --compact
-
-echo "🎮 Livewire Authorization Tests:"
-docker compose exec app php artisan test tests/Feature/Billing/LivewireAuthorizationTest.php --compact
-
-echo "📄 Success/Cancel Page Tests:"
-docker compose exec app php artisan test tests/Feature/Billing/SuccessCancelPageTest.php --compact
-
-echo "📅 Subscription Lifecycle Tests:"
-docker compose exec app php artisan test tests/Feature/Billing/SubscriptionLifecycleTest.php --compact
-
-echo "🚫 Feature Limit Tests:"
-docker compose exec app php artisan test tests/Feature/Billing/FeatureLimitTest.php --compact
-
-echo "✅ Complete"
+echo ""
+echo "✅ Billing tests complete"

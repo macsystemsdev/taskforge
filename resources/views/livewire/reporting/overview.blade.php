@@ -8,7 +8,7 @@ use Livewire\Attributes\Computed;
 use Livewire\Component;
 
 new class extends Component {
-    public string $period = 'last_30_days';
+    public \App\Domain\Reporting\ReportingPeriod $period = \App\Domain\Reporting\ReportingPeriod::LAST_30_DAYS;
 
     #[Computed]
     public function organizations()
@@ -31,7 +31,7 @@ new class extends Component {
     #[Computed]
     public function dateRange()
     {
-        return match (ReportingPeriod::from($this->period)) {
+        return match ($this->period) {
             ReportingPeriod::TODAY => [now()->startOfDay(), now()->endOfDay()],
             ReportingPeriod::LAST_7_DAYS => [now()->subDays(7), now()],
             ReportingPeriod::LAST_30_DAYS => [now()->subDays(30), now()],
@@ -96,13 +96,13 @@ new class extends Component {
 
 <div class="space-y-6">
     {{-- Header --}}
-    <div class="overflow-hidden rounded-3xl border border-zinc-200 bg-white/80 p-5 shadow-sm backdrop-blur sm:p-6 dark:border-white/10 dark:bg-zinc-900/70">
+    <div class="overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500/90 via-indigo-500/85 to-blue-600/90 p-5 text-white shadow-[0_8px_32px_rgba(37,99,235,0.15)] sm:p-6 backdrop-blur">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-                <h1 class="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+                <h1 class="text-2xl font-semibold tracking-tight text-white">
                     {{ __('Reports') }}
                 </h1>
-                <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                <p class="mt-2 text-sm text-blue-50">
                     {{ __('Track progress, identify bottlenecks, and make data-driven decisions.') }}
                 </p>
             </div>
@@ -131,7 +131,7 @@ new class extends Component {
             </x-ui.card>
 
             <x-ui.card class="space-y-2">
-                <p class="text-sm text-zinc-500">Tasks Created</p>
+                <p class="text-sm text-zinc-500">Tasks Created ({{ $period->label() }})</p>
                 <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">{{ $this->stats['tasks_created'] }}</p>
             </x-ui.card>
 
@@ -146,7 +146,7 @@ new class extends Component {
             </x-ui.card>
 
             <x-ui.card class="space-y-2">
-                <p class="text-sm text-zinc-500">Due Soon</p>
+                <p class="text-sm text-zinc-500">Tasks Due Soon</p>
                 <p class="text-3xl font-semibold tracking-tight text-amber-600 dark:text-amber-400">{{ $this->stats['due_soon_tasks'] }}</p>
             </x-ui.card>
 

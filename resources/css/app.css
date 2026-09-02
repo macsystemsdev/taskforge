@@ -446,3 +446,126 @@ flux-sidebar {
         width: 100% !important;
     }
 }
+/* Blue active state for sidebar items */
+flux-sidebar [data-flux-sidebar-item][data-current="true"] {
+    background-color: rgba(59, 130, 246, 0.08) !important;
+    color: #2563eb !important;
+}
+
+.dark flux-sidebar [data-flux-sidebar-item][data-current="true"] {
+    background-color: rgba(59, 130, 246, 0.15) !important;
+    color: #60a5fa !important;
+}
+
+/* Blue tint for sidebar background */
+flux-sidebar {
+    background: linear-gradient(180deg, #ffffff 0%, #eff6ff 50%, #dbeafe 100%) !important;
+}
+
+.dark flux-sidebar {
+    background: linear-gradient(180deg, #09090b 0%, #0c1a2b 50%, #0f2038 100%) !important;
+}
+
+/* Stronger blue for sidebar */
+flux-sidebar {
+    background: linear-gradient(180deg, #ffffff 0%, #dbeafe 50%, #bfdbfe 100%) !important;
+}
+
+.dark flux-sidebar {
+    background: linear-gradient(180deg, #09090b 0%, #172554 50%, #1e3a5f 100%) !important;
+}
+
+/* Active item - strong blue */
+flux-sidebar [data-flux-sidebar-item][data-current="true"] {
+    background-color: #2563eb !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+}
+
+.dark flux-sidebar [data-flux-sidebar-item][data-current="true"] {
+    background-color: #3b82f6 !important;
+    color: #ffffff !important;
+}
+
+/* Softer shadows and depth for cards */
+.tf-panel,
+[data-flux-card],
+.x-ui-card {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+    transition: box-shadow 0.2s ease !important;
+}
+
+.tf-panel:hover,
+[data-flux-card]:hover,
+.x-ui-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Softer sidebar */
+flux-sidebar {
+    box-shadow: 1px 0 8px rgba(0, 0, 0, 0.03) !important;
+}
+
+/* Softer header */
+flux-header {
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03) !important;
+}
+
+/* Softer welcome banner on dashboard */
+.text-white.bg-gradient-to-r,
+[class*="bg-gradient-to-r"][class*="from-blue-600"] {
+    box-shadow: 0 4px 20px rgba(37, 99, 235, 0.12), 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Ensure chat attachment button is always visible */
+label[for^="uploads-"] {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+}
+
+/* Chat area - fixed height to prevent reshaping */
+.comments-list {
+    height: 480px !important;
+    max-height: 480px !important;
+    min-height: 480px !important;
+    resize: none !important;
+}
+
+/* Chat input - always visible on mobile */
+.comment-input-container {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-end !important;
+    gap: 8px !important;
+}
+
+.comment-input-container > * {
+    flex-shrink: 0;
+}
+
+.comment-input-container textarea {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+}
+
+/* Remove chat message animation delay */
+.comments-list [wire\:id] {
+    animation: none !important;
+    transition: none !important;
+}
+
+/* Ensure paperclip is always visible on mobile */
+@media (max-width: 640px) {
+    label[for^="uploads-"] {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        min-width: 44px !important;
+        min-height: 44px !important;
+        position: relative !important;
+        z-index: 9999 !important;
+    }
+}

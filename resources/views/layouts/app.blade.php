@@ -34,6 +34,8 @@
         </flux:toast.group>
     @endpersist
 
+    @livewire('ui.avatar-modal')
+
     @fluxScripts
 
 </body>

@@ -124,30 +124,29 @@ new class extends Component {
     @endphp
 
     {{-- Header --}}
-    <div class="overflow-hidden rounded-3xl border border-zinc-200 bg-white/80 p-5 shadow-sm backdrop-blur sm:p-6 dark:border-white/10 dark:bg-zinc-900/70">
+    <div class="overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500/90 via-indigo-500/85 to-blue-600/90 p-5 text-white shadow-[0_8px_32px_rgba(37,99,235,0.15)] sm:p-6 backdrop-blur">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-                <h1 class="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+            <div class="min-w-0">
+                <a href="{{ route('organizations.show', $organization) }}"
+                    class="text-xs font-medium uppercase tracking-[0.15em] text-blue-100 hover:text-white"
+                    wire:navigate>
+                    {{ $organization->name }}
+                </a>
+
+                <h1 class="mt-2 text-2xl font-semibold tracking-tight text-white">
                     {{ $workspace->name }}
                 </h1>
 
                 @if ($workspace->description)
-                    <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                    <p class="mt-2 max-w-2xl text-sm text-blue-50">
                         {{ $workspace->description }}
                     </p>
                 @endif
-
-                <a href="{{ route('organizations.show', $organization) }}"
-                    class="mt-3 inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300"
-                    wire:navigate>
-                    <span>{{ $organization->name }}</span>
-                    <span>→</span>
-                </a>
             </div>
 
             <div class="flex gap-2">
                 @if (auth()->user()->can('update', $workspace))
-                    <flux:button size="sm" wire:click="openEditWorkspaceModal">Edit</flux:button>
+                    <flux:button size="sm" class="!bg-white/20 !text-white hover:!bg-white/30" wire:click="openEditWorkspaceModal">Edit</flux:button>
                 @endif
 
                 @if (auth()->user()->can('delete', $workspace))
@@ -158,16 +157,16 @@ new class extends Component {
 
         {{-- Quick Stats --}}
         <div class="mt-6 grid grid-cols-2 gap-3">
-            <div class="rounded-xl bg-zinc-50 p-3 text-center dark:bg-white/[0.03]">
-                <p class="text-xs text-zinc-500">Teams</p>
-                <p class="mt-1 text-lg font-semibold text-zinc-950 dark:text-white">
+            <div class="rounded-xl bg-white/10 p-3 text-center">
+                <p class="text-xs text-blue-100">Teams</p>
+                <p class="mt-1 text-lg font-semibold text-white">
                     {{ $this->teamsUsage }} / {{ $teamLimit === null ? 'Unlimited' : $teamLimit }}
                 </p>
             </div>
 
-            <div class="rounded-xl bg-zinc-50 p-3 text-center dark:bg-white/[0.03]">
-                <p class="text-xs text-zinc-500">Projects</p>
-                <p class="mt-1 text-lg font-semibold text-zinc-950 dark:text-white">
+            <div class="rounded-xl bg-white/10 p-3 text-center">
+                <p class="text-xs text-blue-100">Projects</p>
+                <p class="mt-1 text-lg font-semibold text-white">
                     {{ $this->projectsUsage }} / {{ $projectLimit === null ? 'Unlimited' : $projectLimit }}
                 </p>
             </div>
@@ -183,10 +182,12 @@ new class extends Component {
             </div>
 
             @if (auth()->user()->can('createTeam', $workspace) && $organization->canCreateTeam())
-                <a href="{{ route('teams.create', $workspace) }}" class="tf-button-primary" wire:navigate>
-                    <flux:icon name="plus" class="size-4" />
-                    New Team
-                </a>
+                <flux:modal.trigger name="create-team-modal">
+                    <flux:button size="sm" variant="primary">
+                        <flux:icon name="plus" class="size-4" />
+                        New Team
+                    </flux:button>
+                </flux:modal.trigger>
             @endif
         </div>
 
@@ -212,7 +213,7 @@ new class extends Component {
                     @else
                         <a href="{{ route('teams.show', ['workspace' => $workspace, 'team' => $team]) }}"
                             wire:key="team-{{ $team->id }}"
-                            class="group flex items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-zinc-50/50 p-4 transition hover:border-zinc-300 hover:bg-white dark:border-white/10 dark:bg-white/[0.02] dark:hover:border-white/20 dark:hover:bg-white/[0.04]"
+                            class="group flex items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-zinc-50/50 p-4 transition hover:border-blue-300 hover:bg-white dark:border-white/10 dark:bg-white/[0.02] dark:hover:border-blue-500/30 dark:hover:bg-white/[0.04]"
                             wire:navigate>
                             <div class="min-w-0">
                                 <p class="truncate text-sm font-semibold text-zinc-950 dark:text-white">{{ $team->name }}</p>
@@ -220,7 +221,7 @@ new class extends Component {
                                     {{ $team->members_count }} members
                                 </p>
                             </div>
-                            <span class="text-zinc-400 transition group-hover:translate-x-1 group-hover:text-zinc-600 dark:text-zinc-500 dark:group-hover:text-zinc-300">→</span>
+                            <span class="text-zinc-400 transition group-hover:translate-x-1 group-hover:text-blue-500">→</span>
                         </a>
                     @endif
                 @endforeach
@@ -242,10 +243,12 @@ new class extends Component {
             </div>
 
             @if (auth()->user()->can('createProject', $workspace) && $organization->canCreateProject())
-                <a href="{{ route('projects.create', $workspace) }}" class="tf-button-primary" wire:navigate>
-                    <flux:icon name="plus" class="size-4" />
-                    New Project
-                </a>
+                <flux:modal.trigger name="create-project-modal">
+                    <flux:button size="sm" variant="primary">
+                        <flux:icon name="plus" class="size-4" />
+                        New Project
+                    </flux:button>
+                </flux:modal.trigger>
             @endif
         </div>
 
@@ -271,7 +274,7 @@ new class extends Component {
                     @else
                         <a href="{{ route('projects.show', $project) }}"
                             wire:key="project-{{ $project->id }}"
-                            class="group flex items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-zinc-50/50 p-4 transition hover:border-zinc-300 hover:bg-white dark:border-white/10 dark:bg-white/[0.02] dark:hover:border-white/20 dark:hover:bg-white/[0.04]"
+                            class="group flex items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-zinc-50/50 p-4 transition hover:border-blue-300 hover:bg-white dark:border-white/10 dark:bg-white/[0.02] dark:hover:border-blue-500/30 dark:hover:bg-white/[0.04]"
                             wire:navigate>
                             <div class="min-w-0">
                                 <p class="truncate text-sm font-semibold text-zinc-950 dark:text-white">{{ $project->name }}</p>
@@ -279,7 +282,7 @@ new class extends Component {
                                     {{ $project->tasks_count }} tasks
                                 </p>
                             </div>
-                            <span class="text-zinc-400 transition group-hover:translate-x-1 group-hover:text-zinc-600 dark:text-zinc-500 dark:group-hover:text-zinc-300">→</span>
+                            <span class="text-zinc-400 transition group-hover:translate-x-1 group-hover:text-blue-500">→</span>
                         </a>
                     @endif
                 @endforeach
@@ -292,7 +295,7 @@ new class extends Component {
         @endif
     </x-ui.card>
 
-    {{-- Modals --}}
+    {{-- Edit Workspace Modal --}}
     <flux:modal wire:model="showEditWorkspaceModal" class="max-w-lg">
         <div class="space-y-4">
             <flux:heading>Edit Workspace</flux:heading>
@@ -305,6 +308,7 @@ new class extends Component {
         </div>
     </flux:modal>
 
+    {{-- Delete Workspace Modal --}}
     <flux:modal wire:model="showDeleteWorkspaceModal" class="max-w-lg">
         <div class="space-y-4">
             <flux:heading>Delete Workspace</flux:heading>
@@ -314,5 +318,15 @@ new class extends Component {
                 <flux:button variant="danger" wire:click="deleteWorkspace">Delete</flux:button>
             </div>
         </div>
+    </flux:modal>
+
+    {{-- Create Team Modal --}}
+    <flux:modal name="create-team-modal" class="max-w-lg">
+        @livewire('teams.create-team', ['workspace' => $workspace])
+    </flux:modal>
+
+    {{-- Create Project Modal --}}
+    <flux:modal name="create-project-modal" class="max-w-lg">
+        @livewire('projects.create-project', ['workspace' => $workspace])
     </flux:modal>
 </div>

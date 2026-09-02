@@ -4,10 +4,18 @@ namespace App\Providers;
 
 use App\Contracts\Billing\PaymentGateway;
 use App\Infrastructure\Billing\StripePaymentGateway;
+use App\Models\Organization;
 use App\Models\Project;
+use App\Models\StoredFile;
 use App\Models\Task;
+use App\Models\Team;
+use App\Models\Workspace;
+use App\Policies\OrganizationPolicy;
 use App\Policies\ProjectPolicy;
+use App\Policies\StoredFilePolicy;
 use App\Policies\TaskPolicy;
+use App\Policies\TeamPolicy;
+use App\Policies\WorkspacePolicy;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Date;
@@ -45,8 +53,12 @@ class AppServiceProvider extends ServiceProvider
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
 
+        Gate::policy(Organization::class, OrganizationPolicy::class);
         Gate::policy(Project::class, ProjectPolicy::class);
         Gate::policy(Task::class, TaskPolicy::class);
+        Gate::policy(Team::class, TeamPolicy::class);
+        Gate::policy(Workspace::class, WorkspacePolicy::class);
+        Gate::policy(StoredFile::class, StoredFilePolicy::class);
     }
 
     protected function configureDefaults(): void

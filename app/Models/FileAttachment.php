@@ -15,6 +15,8 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
     'comment_id',
     'created_by',
     'is_pinned',
+    'attachable_type',
+    'attachable_id',
 ])]
 class FileAttachment extends Model
 {

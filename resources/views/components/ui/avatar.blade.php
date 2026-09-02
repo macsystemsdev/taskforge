@@ -2,6 +2,8 @@
     'name' => null,
     'initials' => null,
     'size' => 'md',
+    'user' => null,
+    'clickable' => false,
 ])
 
 @php
@@ -11,13 +13,31 @@
         ->map(fn ($part) => mb_substr($part, 0, 1))
         ->implode('');
 
+    $avatarPath = $user?->avatar_path ?? null;
+
     $sizes = [
         'sm' => 'size-8 text-xs',
-        'md' => 'size-9 text-sm',
-        'lg' => 'size-10 text-sm',
+        'md' => 'size-10 text-sm',
+        'lg' => 'size-12 text-sm',
     ];
 @endphp
 
-<span {{ $attributes->merge(['class' => ($sizes[$size] ?? $sizes['md']).' inline-flex shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-zinc-100 font-semibold text-zinc-700 dark:border-white/10 dark:bg-white/10 dark:text-zinc-200']) }}>
-    {{ strtoupper($displayInitials ?: '?') }}
-</span>
+@if ($avatarPath && $user && $user->id)
+    @if ($clickable)
+        <button type="button"
+            wire:click="$dispatch('open-avatar-modal', { avatarPath: '{{ $avatarPath }}', name: '{{ addslashes($name) }}', email: '{{ $user?->email }}', userId: '{{ $user->id }}' })"
+            class="cursor-pointer transition hover:opacity-80">
+            <img src="{{ route('users.avatar', ['user' => $user->id, 'v' => $user->updated_at?->timestamp ?? $user->id]) }}"
+                 alt="{{ $name }}"
+                 class="shrink-0 rounded-full {{ $sizes[$size] ?? $sizes['md'] }} aspect-square object-cover" />
+        </button>
+    @else
+        <img src="{{ route('users.avatar', ['user' => $user->id, 'v' => $user->updated_at?->timestamp ?? $user->id]) }}"
+             alt="{{ $name }}"
+             class="shrink-0 rounded-full {{ $sizes[$size] ?? $sizes['md'] }} aspect-square object-cover" />
+    @endif
+@else
+    <span class="shrink-0 rounded-full {{ $sizes[$size] ?? $sizes['md'] }} inline-flex items-center justify-center bg-gradient-to-br from-blue-500 to-indigo-600 font-semibold text-white">
+        {{ strtoupper($displayInitials ?: '?') }}
+    </span>
+@endif

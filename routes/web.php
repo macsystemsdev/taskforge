@@ -19,6 +19,8 @@ use Illuminate\Support\Facades\Broadcast;
 Broadcast::routes(['middleware' => ['auth', 'verified']]);
 
 
+Route::view('/about', 'about')->name('about');
+
 Route::view('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('home');
@@ -75,6 +77,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return view('pages.teams.show', compact('workspace', 'team'));
     })->name('teams.show');
 
+    Route::view('/workspaces', 'pages.workspaces.index')->name('workspaces.index');
+
+    Route::get('/teams', function () {
+        return view('pages.teams.index');
+    })->name('teams.index');
+
+    Route::get('/teams/{team:slug}', function (\App\Models\Team $team) {
+        return view('pages.teams.edit', compact('team'));
+    })->name('teams.edit');
+
     Route::view(
         '/projects',
         'pages.projects.index'
@@ -130,40 +142,93 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             Gate::authorize('view', $project);
 
-            return response()->file(
-                \Illuminate\Support\Facades\Storage::disk('public')->path($attachment->storedFile->path),
+            $storedFile = $attachment->storedFile;
+            $mimeType = $storedFile->mime_type;
+
+            // Only serve images and PDFs inline
+            // All other files force download to prevent XSS
+            $safeInlineMimes = [
+                'image/jpeg',
+                'image/png',
+                'image/gif',
+                'image/webp',
+                'application/pdf',
+            ];
+
+            if (in_array($mimeType, $safeInlineMimes, true)) {
+                return response()->file(
+                    \Illuminate\Support\Facades\Storage::disk('private')->path($storedFile->path),
+                    ['Content-Type' => $mimeType]
+                );
+            }
+
+            // Force download for potentially dangerous content (HTML, SVG, XML, etc.)
+            return response()->download(
+                \Illuminate\Support\Facades\Storage::disk('private')->path($storedFile->path),
+                $storedFile->original_filename,
+                ['Content-Type' => 'application/octet-stream']
             );
         }
     )->name('projects.attachments.view');
 
-    Route::get('/tasks/{task}/attachments/{attachment}/download', function ($taskId, $attachmentId) {
-        $task = App\Models\Task::findOrFail($taskId);
-        $attachment = $task->attachments()->findOrFail($attachmentId);
+    Route::get('/tasks/{task}/attachments/{attachment}/download', function (App\Models\Task $task, App\Models\FileAttachment $attachment) {
+        // Task attachments are project attachments referenced via TaskFileReference
+        abort_unless(
+            $attachment->attachable_type === App\Models\Project::class
+                && $attachment->attachable_id === $task->project_id
+                && $task->fileReferences()
+                    ->where('file_attachment_id', $attachment->id)
+                    ->exists(),
+            404,
+        );
+
+        Gate::authorize('view', $task->project);
 
         return response()->download(
-            storage_path('app/' . $attachment->storedFile->path),
+            \Illuminate\Support\Facades\Storage::disk('private')->path($attachment->storedFile->path),
             $attachment->storedFile->original_filename
         );
     })->name('tasks.attachments.download');
 
-    Route::get('/tasks/{task}/attachments/{attachment}/view', function ($taskId, $attachmentId) {
-        $task = App\Models\Task::findOrFail($taskId);
-        $attachment = $task->attachments()->findOrFail($attachmentId);
+    Route::get('/tasks/{task}/attachments/{attachment}/view', function (App\Models\Task $task, App\Models\FileAttachment $attachment) {
+        // Task attachments are project attachments referenced via TaskFileReference
+        abort_unless(
+            $attachment->attachable_type === App\Models\Project::class
+                && $attachment->attachable_id === $task->project_id
+                && $task->fileReferences()
+                    ->where('file_attachment_id', $attachment->id)
+                    ->exists(),
+            404,
+        );
 
-        return response()->file(
-            storage_path('app/' . $attachment->storedFile->path)
+        Gate::authorize('view', $task->project);
+
+        $storedFile = $attachment->storedFile;
+        $mimeType = $storedFile->mime_type;
+
+        // Only serve images and PDFs inline
+        $safeInlineMimes = [
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'image/webp',
+            'application/pdf',
+        ];
+
+        if (in_array($mimeType, $safeInlineMimes, true)) {
+            return response()->file(
+                \Illuminate\Support\Facades\Storage::disk('private')->path($storedFile->path),
+                ['Content-Type' => $mimeType]
+            );
+        }
+
+        return response()->download(
+            \Illuminate\Support\Facades\Storage::disk('private')->path($storedFile->path),
+            $storedFile->original_filename,
+            ['Content-Type' => 'application/octet-stream']
         );
     })->name('tasks.attachments.view');
 
-    Route::get(
-        '/projects/{project}/edit',
-        function (Project $project) {
-            return view(
-                'pages.projects.edit',
-                compact('project')
-            );
-        }
-    )->name('projects.edit');
 
     // create task
     Route::get(
@@ -201,6 +266,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         return back();
     })->name('notifications.read-all');
+
+    Route::get('/avatars/{user}', function (App\Models\User $user) {
+        abort_unless($user->avatar_path, 404);
+
+        // Avatars are semi-public (shown in comments, team lists)
+        // Any authenticated user can view avatars
+        // Unauthenticated users are blocked by the auth middleware
+
+        return response()->file(
+            \Illuminate\Support\Facades\Storage::disk('private')->path($user->avatar_path)
+        );
+    })->name('users.avatar');
 
     Route::get('/notifications/{id}', NotificationRedirectController::class)
         ->name('notifications.redirect');

@@ -27,12 +27,20 @@ class StorageQuotaService
 
             $limit = $limit ? $limit * 1024 * 1024 : null;
 
-        $currentUsage = $organization
+        // Use row lock to prevent concurrent quota bypass
+        $usage = $organization
             ->usage()
-            ->firstOrCreate()
-            ->storage_used_bytes;
+            ->firstOrCreate();
 
-        if (!$organization->canUpload($bytes)) {
+        // Lock the usage row for atomic read+check
+        $lockedUsage = $organization
+            ->usage()
+            ->lockForUpdate()
+            ->firstOrCreate();
+
+        $currentUsage = $lockedUsage->storage_used_bytes;
+
+        if (! $organization->canUpload($bytes)) {
             throw new StorageQuotaExceededException(
                 currentUsage: $currentUsage,
                 requestedBytes: $bytes,

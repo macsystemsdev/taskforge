@@ -16,6 +16,11 @@ new class extends Component {
     public Project $project;
 
     public bool $showCreateTaskModal = false;
+    public bool $showEditProjectModal = false;
+
+    public string $editName = '';
+    public ?string $editDescription = null;
+    public ?string $editDueDate = null;
 
     public function mount(Project $project): void
     {
@@ -54,18 +59,70 @@ new class extends Component {
             : __('No due date');
     }
 
+    #[\Livewire\Attributes\On('task-created')]
+    public function refreshTasks(): void
+    {
+        $this->project->refresh();
+        $this->project->loadCount([
+            'tasks as open_tasks_count' => fn($query) => $query->where('status', '!=', 'completed'),
+            'tasks as completed_tasks_count' => fn($query) => $query->where('status', 'completed'),
+            'tasks as overdue_tasks_count' => fn($query) => $query->where('due_date', '<', now())->where('status', '!=', 'completed'),
+            'tasks as due_soon_tasks_count' => fn($query) => $query->whereBetween('due_date', [now(), now()->addDays(7)])->where('status', '!=', 'completed'),
+        ]);
+    }
+
     public function openCreateTaskModal(): void
     {
         $this->authorize('createTask', $this->project);
         $this->showCreateTaskModal = true;
     }
 
+    public function openEditProjectModal(): void
+    {
+        $this->authorize('update', $this->project);
+        $this->editName = $this->project->name;
+        $this->editDescription = $this->project->description;
+        $this->editDueDate = $this->project->due_date?->format('Y-m-d');
+        $this->showEditProjectModal = true;
+    }
+
+    public function updateProject(\App\Actions\Projects\UpdateProjectAction $action): void
+    {
+        $this->authorize('update', $this->project);
+
+        $validated = $this->validate([
+            'editName' => ['required', 'string', 'max:255'],
+            'editDescription' => ['nullable', 'string'],
+            'editDueDate' => ['nullable', 'date', 'after_or_equal:today'],
+        ]);
+
+        $action->handle(
+            $this->project,
+            new \App\Data\Projects\UpdateProjectData(
+                name: $validated['editName'],
+                description: $validated['editDescription'],
+                dueDate: $validated['editDueDate'],
+            )
+        );
+
+        $this->project->refresh();
+        $this->showEditProjectModal = false;
+
+        Flux::toast(variant: 'success', text: __('Project updated.'));
+    }
+
     public function completeProject(CompleteProjectAction $action): void
     {
         $this->authorize('complete', $this->project);
-        $action->handle($this->project);
-        Flux::toast(variant: 'success', text: __('Project completed.'));
-        $this->redirect(route('projects.show', $this->project), navigate: true);
+
+        try {
+            $action->handle($this->project);
+            $this->project->refresh();
+            Flux::toast(variant: 'success', text: __('Project completed.'));
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $message = collect($e->errors())->flatten()->first();
+            Flux::toast(variant: 'danger', text: $message);
+        }
     }
 
     public function cancelProject(CancelProjectAction $action): void
@@ -92,21 +149,21 @@ new class extends Component {
 
     <div class="space-y-6">
         {{-- Header --}}
-        <div class="overflow-hidden rounded-3xl border border-zinc-200 bg-white/80 p-5 shadow-sm backdrop-blur sm:p-6 dark:border-white/10 dark:bg-zinc-900/70">
+        <div class="overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500/90 via-indigo-500/85 to-blue-600/90 p-5 text-white shadow-[0_8px_32px_rgba(37,99,235,0.15)] sm:p-6 backdrop-blur">
             <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div class="min-w-0">
                     <a href="{{ route('workspaces.show', $project->workspace) }}"
-                        class="text-xs font-medium uppercase tracking-[0.15em] text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300"
+                        class="text-xs font-medium uppercase tracking-[0.15em] text-blue-100 hover:text-white"
                         wire:navigate>
                         {{ $project->workspace->organization->name }} / {{ $project->workspace->name }}
                     </a>
 
-                    <h1 class="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white">
+                    <h1 class="mt-2 text-2xl font-semibold tracking-tight text-white">
                         {{ $project->name }}
                     </h1>
 
                     @if ($project->description)
-                        <p class="mt-2 max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">
+                        <p class="mt-2 max-w-2xl text-sm text-blue-50">
                             {{ $project->description }}
                         </p>
                     @endif
@@ -123,7 +180,7 @@ new class extends Component {
 
                     @if ($project->status->isActive())
                         @if (auth()->user()->can('update', $project))
-                            <flux:button size="sm" href="{{ route('projects.edit', $project) }}">Edit</flux:button>
+                            <flux:button size="sm" wire:click="openEditProjectModal">Edit</flux:button>
                         @endif
 
                         @if (auth()->user()->can('createTask', $project))
@@ -150,38 +207,43 @@ new class extends Component {
 
             {{-- Quick Stats --}}
             <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <div class="rounded-xl bg-zinc-50 p-3 text-center dark:bg-white/[0.03]">
-                    <p class="text-xs text-zinc-500">Team</p>
-                    <p class="mt-1 truncate text-sm font-semibold text-zinc-950 dark:text-white">{{ $project->team->name }}</p>
+                <div class="rounded-xl bg-white/10 p-3 text-center">
+                    <p class="text-xs text-blue-100">Team</p>
+                    <p class="mt-1 truncate text-sm font-semibold text-white">{{ $project->team->name }}</p>
                 </div>
 
-                <div class="rounded-xl bg-zinc-50 p-3 text-center dark:bg-white/[0.03]">
-                    <p class="text-xs text-zinc-500">Due Date</p>
-                    <p class="mt-1 text-sm font-semibold text-zinc-950 dark:text-white">{{ $this->dueDate }}</p>
+                <div class="rounded-xl bg-white/10 p-3 text-center">
+                    <p class="text-xs text-blue-100">Due Date</p>
+                    <p class="mt-1 text-sm font-semibold text-white">{{ $this->dueDate }}</p>
                 </div>
 
-                <div class="rounded-xl bg-zinc-50 p-3 text-center dark:bg-white/[0.03]">
-                    <p class="text-xs text-zinc-500">Open Tasks</p>
-                    <p class="mt-1 text-lg font-semibold text-zinc-950 dark:text-white">{{ $this->openTasks }}</p>
+                <div class="rounded-xl bg-white/10 p-3 text-center">
+                    <p class="text-xs text-blue-100">Open Tasks</p>
+                    <p class="mt-1 text-lg font-semibold text-white">{{ $this->openTasks }}</p>
                 </div>
 
-                <div class="rounded-xl bg-zinc-50 p-3 text-center dark:bg-white/[0.03]">
-                    <p class="text-xs text-zinc-500">Completed</p>
-                    <p class="mt-1 text-lg font-semibold text-zinc-950 dark:text-white">{{ $this->completedTasks }}</p>
+                <div class="rounded-xl bg-white/10 p-3 text-center">
+                    <p class="text-xs text-blue-100">Completed</p>
+                    <p class="mt-1 text-lg font-semibold text-white">{{ $this->completedTasks }}</p>
                 </div>
             </div>
         </div>
 
         {{-- Main Content --}}
         <div class="grid gap-6 lg:grid-cols-[1fr_360px]">
-            {{-- Left column: Tasks + Comments --}}
+            {{-- Left column: Presence (mobile only) + Tasks + Comments --}}
             <div class="space-y-6 min-w-0">
+                {{-- Presence (visible on mobile only) --}}
+                <div class="lg:hidden">
+                    @livewire('projects.project-presence', ['project' => $project])
+                </div>
+
                 {{-- Tasks List --}}
                 <x-ui.card padding="p-0" class="overflow-hidden border-zinc-200/80 bg-white/90 shadow-sm">
                     <div class="flex items-center justify-between border-b border-zinc-200 px-4 py-3 dark:border-white/10">
                         <div>
                             <p class="text-sm font-semibold text-zinc-950 dark:text-white">Tasks</p>
-                            <p class="text-xs text-zinc-500">{{ $this->openTasks }} open • {{ $this->completedTasks }} done</p>
+                            <p class="text-xs text-blue-100">{{ $this->openTasks }} open • {{ $this->completedTasks }} done</p>
                         </div>
 
                         @if (auth()->user()->can('createTask', $project) && $project->status->isActive())
@@ -242,21 +304,23 @@ new class extends Component {
                     </div>
                     <div class="grid grid-cols-3 divide-x divide-zinc-100 dark:divide-white/5">
                         <div class="p-3 text-center">
-                            <p class="text-xs text-zinc-500">Overdue</p>
+                            <p class="text-xs text-blue-100">Overdue</p>
                             <p class="mt-1 text-lg font-semibold text-red-600 dark:text-red-400">{{ $project->overdue_tasks_count ?? 0 }}</p>
                         </div>
                         <div class="p-3 text-center">
-                            <p class="text-xs text-zinc-500">Due Soon</p>
+                            <p class="text-xs text-blue-100">Due Soon</p>
                             <p class="mt-1 text-lg font-semibold text-amber-600 dark:text-amber-400">{{ $project->due_soon_tasks_count ?? 0 }}</p>
                         </div>
                         <div class="p-3 text-center">
-                            <p class="text-xs text-zinc-500">Done</p>
+                            <p class="text-xs text-blue-100">Done</p>
                             <p class="mt-1 text-lg font-semibold text-emerald-600 dark:text-emerald-400">{{ $this->completedTasks }}</p>
                         </div>
                     </div>
                 </div>
 
-                @livewire('projects.project-presence', ['project' => $project])
+                <div class="hidden lg:block">
+                    @livewire('projects.project-presence', ['project' => $project])
+                </div>
                 @livewire('projects.project-files', ['project' => $project])
             </aside>
         </div>
@@ -265,5 +329,19 @@ new class extends Component {
     {{-- Create Task Modal --}}
     <flux:modal wire:model="showCreateTaskModal" class="max-w-lg">
         @livewire('tasks.create-task', ['project' => $project])
+    </flux:modal>
+
+    {{-- Edit Project Modal --}}
+    <flux:modal wire:model="showEditProjectModal" class="max-w-lg">
+        <div class="space-y-4">
+            <flux:heading>Edit Project</flux:heading>
+            <flux:input wire:model="editName" label="Project Name" required />
+            <flux:textarea wire:model="editDescription" label="Description" rows="4" placeholder="What is this project about?" />
+            <flux:input wire:model="editDueDate" label="Due Date" type="date" />
+            <div class="flex justify-end gap-2">
+                <flux:button variant="ghost" wire:click="$set('showEditProjectModal', false)">Cancel</flux:button>
+                <flux:button variant="primary" wire:click="updateProject">Save Changes</flux:button>
+            </div>
+        </div>
     </flux:modal>
 </div>

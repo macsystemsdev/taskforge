@@ -16,12 +16,6 @@
                 {{ __('Security') }}
             </flux:navlist.item>
 
-            <flux:navlist.item 
-                :href="route('teams.index')" 
-                :current="request()->routeIs('teams.*')"
-                wire:navigate>
-                {{ __('Teams') }}
-            </flux:navlist.item>
 
             <flux:navlist.item 
                 :href="route('appearance.edit')" 

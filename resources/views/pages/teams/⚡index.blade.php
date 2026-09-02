@@ -58,18 +58,22 @@ new #[Title('Teams')] class extends Component {
 }; ?>
 
 <section class="w-full">
-    @include('partials.settings-heading')
+    
 
     <flux:heading class="sr-only">{{ __('Teams') }}</flux:heading>
 
-    <x-pages::settings.layout :heading="__('Teams')" :subheading="__('Manage your teams and team memberships')">
+    <div class="space-y-6">
+    <div class="overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500/90 via-indigo-500/85 to-blue-600/90 p-5 text-white shadow-[0_8px_32px_rgba(37,99,235,0.15)] sm:p-6 backdrop-blur">
+        <h1 class="text-2xl font-semibold tracking-tight text-white">{{ __('Teams') }}</h1>
+        <p class="mt-2 max-w-xl text-sm text-blue-50 sm:text-base">{{ __('Manage your teams and team memberships.') }}</p>
+    </div>
 
         <div class="mt-6 space-y-3">
             @forelse ($this->teams as $team)
                 @if ($this->organization?->teamLocked($team))
                     <flux:button variant="ghost" size="sm" icon="lock-closed" disabled />
                 @endif
-                <div class="flex items-center justify-between rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900"
+                <div class="flex items-center justify-between rounded-xl border border-zinc-200 bg-white p-4 shadow-sm hover:shadow-md transition dark:border-white/10 dark:bg-zinc-900"
                     data-test="team-row">
                     <div class="flex items-center gap-4">
                         <div>
@@ -99,7 +103,7 @@ new #[Title('Teams')] class extends Component {
                 </flux:text>
             @endforelse
         </div>
-    </x-pages::settings.layout>
+    </div>
 
     <flux:modal name="create-team" :show="$errors->isNotEmpty()" focusable class="max-w-lg">
         <form wire:submit="createTeam" class="space-y-6">

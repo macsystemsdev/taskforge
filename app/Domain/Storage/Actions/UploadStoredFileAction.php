@@ -32,10 +32,24 @@ class UploadStoredFileAction
 
         $bytes = $file->getSize();
 
-        $this->quota->ensureCanStore(
-            $organization,
-            $bytes,
-        );
+        // Atomic quota check with lock to prevent race conditions
+        DB::transaction(function () use ($organization, $bytes) {
+            $this->quota->ensureCanStore(
+                $organization,
+                $bytes,
+            );
+        });
+
+        $checksum = hash_file('sha256', $file->getRealPath());
+
+        // Check for duplicate file
+        $existing = StoredFile::where('organization_id', $organization->id)
+            ->where('checksum', $checksum)
+            ->first();
+
+        if ($existing) {
+            return $existing;
+        }
 
         try {
             $path = $this->storage
@@ -48,19 +62,16 @@ class UploadStoredFileAction
             $storedfile =    StoredFile::create([
                 'organization_id' => $organization->id,
                 'uploaded_by' => $uploadedBy,
-                'disk' => 'public',
+                'disk' => 'private',
                 'path' => $path,
                 'stored_name' => basename($path),
                 'original_name' => $file->getClientOriginalName(),
-                'mime_type' => $file->getMimeType(),
-                'extension' => $file->extension(),
+                'mime_type' => $this->detectRealMimeType($file),
+                'extension' => strtolower($file->getClientOriginalExtension()),
                 'category' => $this->categoryFromMimeType($file->getMimeType()),
                 'visibility' => FileVisibility::PROJECT,
                 'size' => $file->getSize(),
-                'checksum' => hash_file(
-                    'sha256',
-                    $file->getRealPath(),
-                ),
+                'checksum' => $checksum,
             ]);
             $this->Increaseusage->handle($organization, $bytes);
 
@@ -74,6 +85,12 @@ class UploadStoredFileAction
 
             throw $exception;
         }
+    }
+
+    protected function detectRealMimeType(UploadedFile $file): string
+    {
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        return $finfo->file($file->getRealPath()) ?: 'application/octet-stream';
     }
 
     protected function categoryFromMimeType(string $mimeType): FileCategory

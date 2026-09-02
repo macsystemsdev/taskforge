@@ -409,7 +409,7 @@ new class extends Component {
                     <div wire:key="member-{{ $member->id }}"
                         class="flex items-center justify-between gap-3 px-4 py-3">
                         <div class="flex min-w-0 items-center gap-3">
-                            <x-ui.avatar :name="$member->name" />
+                            <x-ui.avatar :name="$member->name" :user="$member" clickable />
                             <div class="min-w-0">
                                 <p class="truncate text-sm font-medium text-zinc-950 dark:text-white">{{ $member->name }}</p>
                                 <p class="truncate text-xs text-zinc-500 dark:text-zinc-400">{{ $member->email }}</p>
