@@ -81,7 +81,7 @@ trait LoadsTaskReportingCounts
                     WHERE projects.team_id = teams.id 
                     AND tasks.status IN ("todo", "in_progress", "blocked")
                     AND tasks.due_date IS NOT NULL 
-                    AND tasks.due_date < datetime("now")
+                    AND tasks.due_date < NOW()
                 ) as overdue_tasks_count'
             )
             ->selectRaw(
@@ -92,7 +92,7 @@ trait LoadsTaskReportingCounts
                     WHERE projects.team_id = teams.id 
                     AND tasks.status IN ("todo", "in_progress", "blocked")
                     AND tasks.due_date IS NOT NULL 
-                    AND tasks.due_date BETWEEN datetime("now") AND datetime("now", "+3 days")
+                    AND tasks.due_date BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 3 DAY)
                 ) as due_soon_tasks_count'
             );
     }
@@ -162,7 +162,7 @@ trait LoadsTaskReportingCounts
                     WHERE teams.organization_id = organizations.id 
                     AND tasks.status IN ("todo", "in_progress", "blocked")
                     AND tasks.due_date IS NOT NULL 
-                    AND tasks.due_date < datetime("now")
+                    AND tasks.due_date < NOW()
                 ) as overdue_tasks_count'
             )
             ->selectRaw(
@@ -174,7 +174,7 @@ trait LoadsTaskReportingCounts
                     WHERE teams.organization_id = organizations.id 
                     AND tasks.status IN ("todo", "in_progress", "blocked")
                     AND tasks.due_date IS NOT NULL 
-                    AND tasks.due_date BETWEEN datetime("now") AND datetime("now", "+3 days")
+                    AND tasks.due_date BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 3 DAY)
                 ) as due_soon_tasks_count'
             );
     }

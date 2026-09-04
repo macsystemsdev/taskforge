@@ -167,12 +167,20 @@ class RevenueMetricsService
         )->count();
     }
 
+    /**
+     * Get count of organizations currently on trial.
+     * 
+     * Note: trial_ends_at is on the subscriptions table, not organizations.
+     * We query through the subscription relationship to get accurate trial status.
+     */
     private function trialOrganizations(): int
     {
-        return Organization::where(
-            'trial_ends_at',
-            '>',
-            now()
+        // Query organizations that have a subscription with active trial
+        return Organization::whereHas(
+            'subscription',
+            function ($query) {
+                $query->where('trial_ends_at', '>', now());
+            }
         )->count();
     }
 
@@ -311,13 +319,13 @@ class RevenueMetricsService
 
         return $query
             ->selectRaw("
-            subscription_id,
+            subscription_plan_id,
             COUNT(*) as transaction_count,
             SUM(amount) as total_revenue,
             DATE_FORMAT(paid_at, '%Y-%m') as period
         ")
             ->groupByRaw("
-            subscription_id,
+            subscription_plan_id,
             DATE_FORMAT(paid_at, '%Y-%m')
         ")
             ->orderBy('total_revenue', 'desc')

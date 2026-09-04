@@ -100,9 +100,8 @@ class OrganizationHealthService
 
             lastActivity: $this->lastActivity($organization),
 
-            trialEndsAt: $organization
-                ->subscription
-                ?->trial_ends_at,
+            trialEndsAt: $organization->subscription?->trial_ends_at, // trial_ends_at is on subscriptions table
+                
 
             subscriptionEndsAt: $organization
                 ->subscription
@@ -120,7 +119,7 @@ class OrganizationHealthService
             ->usage()
             ->firstOrCreate()
             ->storage_used_bytes;
-            $used = $used ? $used / (1024 * 1024) : 0; // Convert bytes to MB
+            $used = $used ? round($used / (1024 * 1024), 2) : 0; // Convert bytes to MB
         return (float) $used;
     }
 

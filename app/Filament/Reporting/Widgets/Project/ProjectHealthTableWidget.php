@@ -5,30 +5,18 @@ namespace App\Filament\Reporting\Widgets\Project;
 use App\Data\Reporting\Project\ProjectHealthData;
 use App\Data\Reporting\Project\ProjectReportFilterData;
 use App\Domain\Projects\Enums\ProjectHealthStatus;
+use App\Models\Project;
 use App\Services\Reporting\Cache\ProjectReportingCacheService;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
-use Illuminate\Support\Collection;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class ProjectHealthTableWidget extends TableWidget
 {
-    /**
-     * Widget heading displayed above the table.
-     */
     protected static ?string $heading = 'Project Health';
-
-    /**
-     * Refresh reporting data periodically.
-     *
-     * Reporting data is cached independently, therefore polling only
-     * refreshes the widget rather than recalculating every request.
-     */
     protected static ?string $pollingInterval = '2m';
-
-    /**
-     * Display the widget across the full page width.
-     */
     protected int|string|array $columnSpan = 'full';
     protected static ?string $slug = 'reporting/projects-health';
 
@@ -39,15 +27,6 @@ class ProjectHealthTableWidget extends TableWidget
         $this->reporting = $reporting;
     }
 
-    /**
-     * Reporting scope.
-     *
-     * The widget never decides business scope. For now the owner dashboard
-     * requests platform-wide reporting by leaving all filters null.
-     *
-     * Future reporting pages may override this with organization,
-     * workspace or team specific filters.
-     */
     protected function filters(): ProjectReportFilterData
     {
         return new ProjectReportFilterData(
@@ -57,120 +36,95 @@ class ProjectHealthTableWidget extends TableWidget
         );
     }
 
-    /**
-     * Retrieve reporting data.
-     *
-     * Business logic remains inside the reporting layer.
-     *
-     * @return Collection<int, ProjectHealthData>
-     */
-    protected function reportData(): Collection
+    protected function getReportData(): array
     {
-        return $this->reporting->health(
-            $this->filters(),
-        );
+        return $this->reporting->health($this->filters())->map(fn(ProjectHealthData $dto) => [
+            'project_id' => $dto->projectId,
+            'project_name' => $dto->projectName,
+            'project_slug' => $dto->projectSlug,
+            'status' => $dto->status,
+            'completion' => $dto->completionPercentage,
+            'total_tasks' => $dto->totalTasks,
+            'completed_tasks' => $dto->completedTasks,
+            'in_progress_tasks' => $dto->inProgressTasks,
+            'blocked_tasks' => $dto->blockedTasks,
+            'overdue_tasks' => $dto->overdueTasks,
+            'due_soon_tasks' => $dto->dueSoonTasks,
+            'reason' => $dto->reason,
+        ])->toArray();
     }
 
-    /**
-     * Define the table structure.
-     */
     public function table(Table $table): Table
     {
         return $table
-            ->records(function (): Collection {
-                $data = $this->reportData()->map(fn(ProjectHealthData $dto) => [
-                    'project_id' => $dto->projectId,
-                    'project_name' => $dto->projectName,
-                    'project_slug' => $dto->projectSlug,
-                    'status' => $dto->status,
-                    'completion' => $dto->completionPercentage,
-                    'total_tasks' => $dto->totalTasks,
-                    'completed_tasks' => $dto->completedTasks,
-                    'in_progress_tasks' => $dto->inProgressTasks,
-                    'blocked_tasks' => $dto->blockedTasks,
-                    'overdue_tasks' => $dto->overdueTasks,
-                    'due_soon_tasks' => $dto->dueSoonTasks,
-                    'reason' => $dto->reason,
-                ]);
-
-                // Apply filters manually
-                if ($status = request()->input('tableFilters.status.value')) {
-                    $data = $data->filter(
-                        fn($item) =>
-                        $item['status']->value === $status
-                    );
-                }
-
-                return $data;
-            })
+            ->query(
+                // Use a dummy query that returns no records - we'll override with our data
+                Project::query()->whereRaw('1 = 0')
+            )
             ->columns([
-                // Project Identity
                 Tables\Columns\TextColumn::make('project_name')
                     ->label('Project')
                     ->searchable()
                     ->sortable()
                     ->weight('semibold')
-                    ->description(fn($record) => $record['project_slug'] ?? null),
+                    ->getStateUsing(fn($record) => $record['project_name'] ?? null),
 
-                // Health Status
                 Tables\Columns\TextColumn::make('status')
                     ->label('Health')
                     ->badge()
-                    ->color(fn(ProjectHealthStatus $state): string => match ($state) {
+                    ->getStateUsing(fn($record) => $record['status'] ?? null)
+                    ->color(fn($state): string => match ($state) {
                         ProjectHealthStatus::HEALTHY => 'success',
                         ProjectHealthStatus::AT_RISK => 'warning',
                         ProjectHealthStatus::CRITICAL => 'danger',
                         default => 'gray',
                     })
-                    ->icon(fn(ProjectHealthStatus $state): string => match ($state) {
+                    ->icon(fn($state): string => match ($state) {
                         ProjectHealthStatus::HEALTHY => 'heroicon-o-check-circle',
                         ProjectHealthStatus::AT_RISK => 'heroicon-o-exclamation-triangle',
                         ProjectHealthStatus::CRITICAL => 'heroicon-o-x-circle',
                         default => 'heroicon-o-question-mark-circle',
                     })
-                    ->formatStateUsing(fn(ProjectHealthStatus $state): string => $state->label() ?? ucfirst($state->value)),
+                    ->formatStateUsing(fn($state): string => $state?->label() ?? ucfirst($state?->value ?? 'Unknown')),
 
-                // Completion
                 Tables\Columns\TextColumn::make('completion')
                     ->label('Progress')
                     ->suffix('%')
                     ->numeric()
-                    ->sortable()
-                    ->color(fn(int $state): string => match (true) {
+                    ->getStateUsing(fn($record) => $record['completion'] ?? 0)
+                    ->color(fn($state): string => match (true) {
                         $state >= 80 => 'success',
                         $state >= 50 => 'warning',
                         default => 'danger',
                     }),
 
-                // Task Breakdown
                 Tables\Columns\TextColumn::make('total_tasks')
                     ->label('Total Tasks')
                     ->numeric()
-                    ->sortable(),
+                    ->getStateUsing(fn($record) => $record['total_tasks'] ?? 0),
 
                 Tables\Columns\TextColumn::make('completed_tasks')
                     ->label('Completed')
                     ->numeric()
-                    ->sortable()
+                    ->getStateUsing(fn($record) => $record['completed_tasks'] ?? 0)
                     ->color('success'),
 
                 Tables\Columns\TextColumn::make('in_progress_tasks')
                     ->label('In Progress')
                     ->numeric()
-                    ->sortable()
+                    ->getStateUsing(fn($record) => $record['in_progress_tasks'] ?? 0)
                     ->color('warning'),
 
                 Tables\Columns\TextColumn::make('blocked_tasks')
                     ->label('Blocked')
                     ->numeric()
-                    ->sortable()
+                    ->getStateUsing(fn($record) => $record['blocked_tasks'] ?? 0)
                     ->color('danger'),
 
-                // Task Alerts
                 Tables\Columns\TextColumn::make('overdue_tasks')
                     ->label('Overdue')
                     ->numeric()
-                    ->sortable()
+                    ->getStateUsing(fn($record) => $record['overdue_tasks'] ?? 0)
                     ->color('danger')
                     ->badge()
                     ->visible(fn($record) => ($record['overdue_tasks'] ?? 0) > 0),
@@ -178,20 +132,19 @@ class ProjectHealthTableWidget extends TableWidget
                 Tables\Columns\TextColumn::make('due_soon_tasks')
                     ->label('Due Soon')
                     ->numeric()
-                    ->sortable()
+                    ->getStateUsing(fn($record) => $record['due_soon_tasks'] ?? 0)
                     ->color('warning')
                     ->badge()
                     ->visible(fn($record) => ($record['due_soon_tasks'] ?? 0) > 0),
 
-                // Reason (shown only when status is not healthy)
                 Tables\Columns\TextColumn::make('reason')
                     ->label('Reason')
                     ->limit(50)
+                    ->getStateUsing(fn($record) => $record['reason'] ?? null)
                     ->tooltip(fn($record) => $record['reason'] ?? null)
-                    ->visible(
-                        fn($record) =>
-                        isset($record['reason']) &&
-                            $record['status'] !== ProjectHealthStatus::HEALTHY
+                    ->visible(fn($record) => 
+                        isset($record['reason']) && 
+                        ($record['status'] ?? null) !== ProjectHealthStatus::HEALTHY
                     )
                     ->color('gray'),
             ])
@@ -204,15 +157,43 @@ class ProjectHealthTableWidget extends TableWidget
                                 $case->value => $case->label() ?? ucfirst($case->value)
                             ])
                             ->toArray()
-                    )
-                    // ✅ This tells Filament NOT to modify the query
-                    ->indicateUsing(function (array $data): ?string {
-                        if (!$data['value']) return null;
-                        return 'Status: ' . $data['value'];
-                    }),
+                    ),
             ])
-            ->defaultSort('completion', 'asc') // Show struggling projects first
-            ->paginated([10, 25, 50])
-            ->striped();
+            ->defaultSort('completion', 'asc')
+            ->paginated([5, 10, 25, 50])
+->defaultPaginationPageOption(10)
+            ->striped()
+            ->records(function () {
+                // Get all data
+                $allData = $this->getReportData();
+                
+                // Apply filters manually
+                $status = request()->input('tableFilters.status.value');
+                if ($status) {
+                    $allData = array_filter(
+                        $allData,
+                        fn($item) => ($item['status']->value ?? null) === $status
+                    );
+                }
+
+                // Get pagination parameters
+                $page = (int) $this->getTablePage();
+                $perPage = (int) $this->getTableRecordsPerPage();
+                $perPage = in_array($perPage, [5, 10, 25, 50]) ? $perPage : 10;
+                $page = max(1, $page);
+
+                // Paginate manually
+                $total = count($allData);
+                $offset = ($page - 1) * $perPage;
+                $items = array_slice($allData, $offset, $perPage);
+
+                return new LengthAwarePaginator(
+                    collect($items),
+                    $total,
+                    $perPage,
+                    $page,
+                    ['path' => request()->url(), 'query' => request()->query()]
+                );
+            });
     }
 }

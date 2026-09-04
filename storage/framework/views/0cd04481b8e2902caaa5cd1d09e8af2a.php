@@ -1,2 +1,0 @@
-<img src="/favicon.svg" alt="TaskForge" <?php echo e($attributes->merge(['class' => 'size-8 rounded-md'])); ?> />
-<?php /**PATH /var/www/html/resources/views/components/app-logo-icon.blade.php ENDPATH**/ ?>

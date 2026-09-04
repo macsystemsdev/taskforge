@@ -78,12 +78,12 @@ class InfrastructureMetricsService
             ->sum('storage_used_bytes');
     }
 
-    private function platformStorageUsed(): float
+    private function platformStorageUsed(): string
     {
         $bytes = OrganizationUsage::query()
             ->sum('storage_used_bytes');
 
-        return $bytes / (1024 * 1024);
+        return round($bytes / (1024 * 1024), 2) . ' MB';
     }
 
 

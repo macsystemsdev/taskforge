@@ -30,6 +30,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::view('dashboard', 'dashboard')->name('dashboard');
 
+
+
     Route::get('/reports', function () {
         return view('pages.reports.index');
     })->name('reports.index');

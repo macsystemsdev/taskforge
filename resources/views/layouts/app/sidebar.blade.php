@@ -14,11 +14,11 @@
 
     <flux:sidebar.nav>
         <flux:sidebar.group :heading="__('Workspace')" class="grid gap-1">
-            <flux:sidebar.item icon="layout-grid" :href="route('dashboard')" :current="request()->routeIs('dashboard')"  wire:navigate>
+            <flux:sidebar.item icon="layout-grid" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
                 {{ __('Dashboard') }}
             </flux:sidebar.item>
 
-            <flux:sidebar.item icon="building-office-2" :href="route('organizations.index')" :current="request()->routeIs('organizations.*')"  wire:navigate>
+            <flux:sidebar.item icon="building-office-2" :href="route('organizations.index')" :current="request()->routeIs('organizations.*')" wire:navigate>
                 {{ __('Organizations') }}
             </flux:sidebar.item>
 
@@ -26,11 +26,11 @@
                 {{ __('Workspaces') }}
             </flux:sidebar.item>
 
-            <flux:sidebar.item icon="folder" :href="route('projects.index')" :current="request()->routeIs('projects.*')"  wire:navigate>
+            <flux:sidebar.item icon="folder" :href="route('projects.index')" :current="request()->routeIs('projects.*')" wire:navigate>
                 {{ __('Projects') }}
             </flux:sidebar.item>
 
-            <flux:sidebar.item icon="check-circle" :href="route('tasks.index')" :current="request()->routeIs('tasks.*')"  wire:navigate>
+            <flux:sidebar.item icon="check-circle" :href="route('tasks.index')" :current="request()->routeIs('tasks.*')" wire:navigate>
                 {{ __('Tasks') }}
             </flux:sidebar.item>
 
@@ -38,11 +38,11 @@
                 {{ __('Teams') }}
             </flux:sidebar.item>
 
-            <flux:sidebar.item icon="credit-card" :href="route('billing.index')" :current="request()->routeIs('billing.*')"  wire:navigate>
+            <flux:sidebar.item icon="credit-card" :href="route('billing.index')" :current="request()->routeIs('billing.*')" wire:navigate>
                 {{ __('Billing') }}
             </flux:sidebar.item>
 
-            <flux:sidebar.item icon="chart-bar" :href="route('reports.index')" :current="request()->routeIs('reports.*')"  wire:navigate>
+            <flux:sidebar.item icon="chart-bar" :href="route('reports.index')" :current="request()->routeIs('reports.*')" wire:navigate>
                 {{ __('Reports') }}
             </flux:sidebar.item>
         </flux:sidebar.group>
@@ -64,7 +64,7 @@
         @endif
 
         <flux:sidebar.group :heading="__('Administration')" class="grid gap-1 mt-4">
-            <flux:sidebar.item icon="cog-6-tooth" :href="route('profile.edit')" :current="request()->routeIs('profile.edit') || request()->routeIs('security.edit') || request()->routeIs('appearance.edit')"  wire:navigate>
+            <flux:sidebar.item icon="cog-6-tooth" :href="route('profile.edit')" :current="request()->routeIs('profile.edit') || request()->routeIs('security.edit') || request()->routeIs('appearance.edit')" wire:navigate>
                 {{ __('Settings') }}
             </flux:sidebar.item>
         </flux:sidebar.group>

@@ -30,6 +30,20 @@ class UsageStatsWidget extends StatsOverviewWidget
                     $metric->value,
                 )
                     ->description($metric->description)
+                    ->descriptionIcon(
+                        $metric->trend === 'up' 
+                            ? 'heroicon-m-arrow-trending-up' 
+                            : ($metric->trend === 'down' 
+                                ? 'heroicon-m-arrow-trending-down' 
+                                : null)
+                    )
+                    ->descriptionColor(
+                        $metric->trend === 'up' 
+                            ? 'success' 
+                            : ($metric->trend === 'down' 
+                                ? 'danger' 
+                                : null)
+                    )
                     ->icon($metric->icon)
                     ->color($metric->color)
 

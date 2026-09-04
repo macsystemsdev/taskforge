@@ -88,6 +88,7 @@ class OrganizationHealthTable extends TableWidget
                 'desc'
             )
             ->paginated([10, 25, 50]);
+
     }
 
     protected function columns(): array
@@ -133,15 +134,13 @@ class OrganizationHealthTable extends TableWidget
                 ->numeric()
                 ->sortable(),
 
-            // Infrastructure
+            // Infrastructure - Using original values from backend
             TextColumn::make('storageUsed')
                 ->label('Storage Used')
-                ->suffix(' MB')
                 ->sortable(),
 
             TextColumn::make('storageLimit')
-                ->label('Limit')
-                ->suffix(' MB'),
+                ->label('Limit'),
 
             TextColumn::make('storagePercentage')
                 ->label('Usage')

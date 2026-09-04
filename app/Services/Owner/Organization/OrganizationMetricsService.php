@@ -48,7 +48,7 @@ class OrganizationMetricsService
         }
 
         return round(
-            $this->projects() / $organizations,
+            ($organizations > 0) ? $this->projects() / $organizations : 0,
             1
         );
     }
@@ -62,7 +62,7 @@ class OrganizationMetricsService
         }
 
         return round(
-            $this->teams() / $organizations,
+            ($organizations > 0) ? $this->teams() / $organizations : 0,
             1
         );
     }
@@ -76,7 +76,7 @@ class OrganizationMetricsService
         }
 
         return round(
-            $this->tasks() / $projects,
+            ($projects > 0) ? $this->tasks() / $projects : 0,
             1
         );
     }
@@ -92,7 +92,7 @@ class OrganizationMetricsService
         $members = OrganizationUser::count();
 
         return round(
-            $members / $organizations,
+            ($organizations > 0) ? $members / $organizations : 0,
             1
         );
     }
