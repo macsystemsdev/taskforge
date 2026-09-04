@@ -11,7 +11,7 @@ class RevenueOverview extends StatsOverviewWidget
 {
     protected int|string|array $columnSpan = 'full';
     protected ?string $heading = 'Revenue Overview';
-    protected ?string $pollingInterval = '30s';
+    protected ?string $pollingInterval = '2m';
     protected static ?string $slug = 'metrics/revenue-overview';
 
     protected function getStats(): array

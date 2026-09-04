@@ -11,7 +11,7 @@ class InfrastructureWidget extends StatsOverviewWidget
 {
     protected int|string|array $columnSpan = 'full';
     protected ?string $heading = 'Infrastructure Health';
-    protected ?string $pollingInterval = '30s';
+    protected ?string $pollingInterval = '2m';
     protected static ?string $slug = 'metrics/infrastructure';
 
     protected function getStats(): array

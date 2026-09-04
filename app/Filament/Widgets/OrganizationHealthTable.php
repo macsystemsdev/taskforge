@@ -22,7 +22,7 @@ use Illuminate\Support\Collection;
 class OrganizationHealthTable extends TableWidget
 {
     protected static ?string $heading = 'Organization Health';
-    protected ?string $pollingInterval = '20s';
+    protected ?string $pollingInterval = '1m';
     protected static ?string $slug = 'metrics/organization-health';
     protected int|string|array $columnSpan = 'full';
 
@@ -32,6 +32,16 @@ class OrganizationHealthTable extends TableWidget
             OrganizationHealthCacheService::class
         );
     }
+
+    /**
+     * Override to use default pagination (page numbers).
+     */
+    protected function makeTable(): Table
+    {
+        return parent::makeTable()
+            ->paginationMode(\Filament\Tables\Enums\PaginationMode::Default);
+    }
+
 
 
     public function table(Table $table): Table
@@ -137,10 +147,32 @@ class OrganizationHealthTable extends TableWidget
             // Infrastructure - Using original values from backend
             TextColumn::make('storageUsed')
                 ->label('Storage Used')
+                ->formatStateUsing(function ($state) {
+                    if ($state === null || $state == 0) {
+                        return '0 MB';
+                    }
+                    
+                    if ($state >= 1024) {
+                        return round($state / 1024, 2) . ' GB';
+                    }
+                    
+                    return round($state, 2) . ' MB';
+                })
                 ->sortable(),
 
             TextColumn::make('storageLimit')
-                ->label('Limit'),
+                ->label('Limit')
+                ->formatStateUsing(function ($state) {
+                    if ($state === null || $state == 0) {
+                        return 'No Limit';
+                    }
+                    
+                    if ($state >= 1024) {
+                        return round($state / 1024, 1) . ' GB';
+                    }
+                    
+                    return round($state, 1) . ' MB';
+                }),
 
             TextColumn::make('storagePercentage')
                 ->label('Usage')

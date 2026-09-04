@@ -24,4 +24,4 @@ yarn-error.log
 /.zed
 
 # IDE / Database Client configs
-*.tableplus/
+*.tableplus/storage/framework/views/

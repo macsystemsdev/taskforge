@@ -63,7 +63,7 @@ class ProjectReportingCacheService extends BaseReportingCacheService
 
     protected function ttl(): CarbonInterval
     {
-        return CarbonInterval::minutes(2);
+        return CarbonInterval::minutes(15);
     }
 
     protected function cacheKey(

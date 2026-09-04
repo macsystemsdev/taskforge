@@ -16,8 +16,10 @@ class ManageSubscriptionPlanMetadata extends EditRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
+        $metadata = $this->record->metadata?->toArray() ?? [];
+
         return [
-            ...$this->record->metadata->toArray(),
+            ...$metadata,
 
             'plan_preview' => [
                 'price' => $this->record->price,
