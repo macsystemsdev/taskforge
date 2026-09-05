@@ -47,16 +47,7 @@ jobs:
           mkdir -p storage/framework/cache/data
 
       - name: Copy Environment File
-        run: cp .env.example .env
-
-      - name: Configure Testing Environment
-        run: |
-          echo "DB_CONNECTION=sqlite" >> .env
-          echo "DB_DATABASE=:memory:" >> .env
-          echo "SESSION_DRIVER=array" >> .env
-          echo "QUEUE_CONNECTION=sync" >> .env
-          echo "CACHE_STORE=array" >> .env
-          echo "STRIPE_SECRET_KEY=sk_test_dummy_key_for_testing" >> .env
+        run: cp .env.testing .env
 
       - name: Add Flux Credentials Loaded From ENV
         run: composer config http-basic.composer.fluxui.dev "${{ secrets.FLUX_USERNAME }}" "${{ secrets.FLUX_LICENSE_KEY }}"
