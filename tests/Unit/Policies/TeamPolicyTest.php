@@ -1,5 +1,7 @@
 <?php
 
+namespace Tests\Unit\Policies;
+
 use App\Models\Organization;
 use App\Models\Team;
 use App\Models\User;
