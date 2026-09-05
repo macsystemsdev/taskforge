@@ -37,7 +37,7 @@ return [
 
     'stripe' => [
 
-        'secret' => env('STRIPE_SECRET_KEY'),
+        'secret' => env('STRIPE_SECRET_KEY', 'sk_test_dummy_key_for_testing'),
 
         'publishable' => env('STRIPE_PUBLISHABLE_KEY'),
 
