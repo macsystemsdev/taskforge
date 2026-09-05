@@ -39,15 +39,12 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Debug PHP environment
+      - name: Create Storage Directories
         run: |
-          php -v
-          php -m
-          php -r "echo 'pdo: ' . (extension_loaded('pdo') ? 'yes' : 'no') . PHP_EOL;"
-          php -r "echo 'pdo_sqlite: ' . (extension_loaded('pdo_sqlite') ? 'yes' : 'no') . PHP_EOL;"
-          php -r "echo 'sqlite3: ' . (extension_loaded('sqlite3') ? 'yes' : 'no') . PHP_EOL;"
-          php -r "echo 'intl: ' . (extension_loaded('intl') ? 'yes' : 'no') . PHP_EOL;"
-          php artisan --version || true
+          mkdir -p storage/framework/views
+          mkdir -p storage/framework/cache
+          mkdir -p storage/framework/sessions
+          mkdir -p storage/framework/cache/data
 
       - name: Copy Environment File
         run: cp .env.example .env
@@ -65,13 +62,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          COMPOSER_MEMORY_LIMIT=-1 composer install --no-interaction --prefer-dist --optimize-autoloader --no-scripts
-
-      - name: Discover Packages
-        run: php artisan package:discover --ansi
-
-      - name: Publish Filament Assets
-        run: php artisan filament:upgrade --ansi
+          COMPOSER_MEMORY_LIMIT=-1 composer install --no-interaction --prefer-dist --optimize-autoloader
 
       - name: Generate Application Key
         run: php artisan key:generate
