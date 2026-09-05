@@ -41,6 +41,14 @@ jobs:
       - name: Copy Environment File
         run: cp .env.example .env
 
+      - name: Configure Testing Environment
+        run: |
+          echo "DB_CONNECTION=sqlite" >> .env
+          echo "DB_DATABASE=:memory:" >> .env
+          echo "SESSION_DRIVER=array" >> .env
+          echo "QUEUE_CONNECTION=sync" >> .env
+          echo "CACHE_STORE=array" >> .env
+
       - name: Add Flux Credentials Loaded From ENV
         run: composer config http-basic.composer.fluxui.dev "${{ secrets.FLUX_USERNAME }}" "${{ secrets.FLUX_LICENSE_KEY }}"
 
@@ -48,7 +56,7 @@ jobs:
         run: composer install --no-interaction --prefer-dist --optimize-autoloader --no-scripts
 
       - name: Discover Packages
-        run: php artisan package:discover --ansi
+        run: php artisan package:discover --ansi || true
 
       - name: Publish Filament Assets
         run: php artisan filament:upgrade --ansi || true
