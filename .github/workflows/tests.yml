@@ -56,6 +56,7 @@ jobs:
           echo "SESSION_DRIVER=array" >> .env
           echo "QUEUE_CONNECTION=sync" >> .env
           echo "CACHE_STORE=array" >> .env
+          echo "STRIPE_SECRET_KEY=sk_test_dummy_key_for_testing" >> .env
 
       - name: Add Flux Credentials Loaded From ENV
         run: composer config http-basic.composer.fluxui.dev "${{ secrets.FLUX_USERNAME }}" "${{ secrets.FLUX_LICENSE_KEY }}"
