@@ -45,7 +45,13 @@ jobs:
         run: composer config http-basic.composer.fluxui.dev "${{ secrets.FLUX_USERNAME }}" "${{ secrets.FLUX_LICENSE_KEY }}"
 
       - name: Install Dependencies
-        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader --no-scripts
+
+      - name: Discover Packages
+        run: php artisan package:discover --ansi
+
+      - name: Publish Filament Assets
+        run: php artisan filament:upgrade --ansi || true
 
       - name: Generate Application Key
         run: php artisan key:generate
