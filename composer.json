@@ -9,7 +9,7 @@
     ],
     "license": "MIT",
     "require": {
-        "php": "^8.3",
+        "php": "^8.4",
         "doctrine/dbal": "*",
         "filament/filament": "*",
         "laravel/fortify": "^1.34",
