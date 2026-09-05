@@ -58,8 +58,21 @@ jobs:
 
       - name: Generate Application Key
         run: |
-          php artisan key:generate --force
-          echo "APP_KEY=$(php artisan key:generate --show)" >> .env
+          # Generate a single key
+          KEY=$(php artisan key:generate --show)
+
+          # Replace existing APP_KEY or append
+          if grep -q '^APP_KEY=' .env; then
+            sed -i "s|^APP_KEY=.*|APP_KEY=${KEY}|" .env
+          else
+            echo "APP_KEY=${KEY}" >> .env
+          fi
+
+          # Export for subsequent steps
+          echo "APP_KEY=${KEY}" >> $GITHUB_ENV
+
+          # Clear config cache
+          php artisan config:clear
 
       - name: Install Node Dependencies
         run: npm i
