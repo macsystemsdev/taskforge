@@ -4,7 +4,7 @@ namespace App\Data\Reporting;
 
 use Spatie\LaravelData\Data;
 
-class ReportTableRowData extends Data
+class ReportRowData extends Data
 {
     /**
      * @param array<string, mixed> $columns

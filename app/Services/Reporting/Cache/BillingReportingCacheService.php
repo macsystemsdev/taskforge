@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Cache;
 |
 */
 
-class ProjectReportingCacheService extends BaseReportingCacheService
+class BillingReportingCacheService extends BaseReportingCacheService
 {
     public function __construct(
         protected BillingReportingService $reporting,

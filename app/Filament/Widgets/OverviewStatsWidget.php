@@ -14,7 +14,7 @@ class OverviewStatsWidget extends StatsOverviewWidget
 
     protected int|string|array $columnSpan = 'full';
 
-     protected  ?string $pollingInterval = '30s';
+     protected  ?string $pollingInterval = '2m';
     protected static ?string $slug = 'metrics/overview-stats';
 
     protected function getStats(): array
