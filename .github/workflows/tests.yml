@@ -32,11 +32,22 @@ jobs:
           php-version: ${{ matrix.php-version }}
           tools: composer:v2
           coverage: xdebug
+          extensions: mbstring, bcmath, intl, xml, pdo, pdo_sqlite, sqlite3, zip, curl
 
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
           node-version: '22'
+
+      - name: Debug PHP environment
+        run: |
+          php -v
+          php -m
+          php -r "echo 'pdo: ' . (extension_loaded('pdo') ? 'yes' : 'no') . PHP_EOL;"
+          php -r "echo 'pdo_sqlite: ' . (extension_loaded('pdo_sqlite') ? 'yes' : 'no') . PHP_EOL;"
+          php -r "echo 'sqlite3: ' . (extension_loaded('sqlite3') ? 'yes' : 'no') . PHP_EOL;"
+          php -r "echo 'intl: ' . (extension_loaded('intl') ? 'yes' : 'no') . PHP_EOL;"
+          php artisan --version || true
 
       - name: Copy Environment File
         run: cp .env.example .env
@@ -53,13 +64,14 @@ jobs:
         run: composer config http-basic.composer.fluxui.dev "${{ secrets.FLUX_USERNAME }}" "${{ secrets.FLUX_LICENSE_KEY }}"
 
       - name: Install Dependencies
-        run: composer install --no-interaction --prefer-dist --optimize-autoloader --no-scripts
+        run: |
+          COMPOSER_MEMORY_LIMIT=-1 composer install --no-interaction --prefer-dist --optimize-autoloader --no-scripts
 
       - name: Discover Packages
-        run: php artisan package:discover --ansi || true
+        run: php artisan package:discover --ansi
 
       - name: Publish Filament Assets
-        run: php artisan filament:upgrade --ansi || true
+        run: php artisan filament:upgrade --ansi
 
       - name: Generate Application Key
         run: php artisan key:generate
