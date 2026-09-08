@@ -25,3 +25,4 @@ yarn-error.log
 
 # IDE / Database Client configs
 *.tableplus/storage/framework/views/
+storage/framework/views/
