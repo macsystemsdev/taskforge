@@ -74,6 +74,7 @@ use Illuminate\Support\Facades\Notification;
     'started_at',
     'due_date',
     'blocked_reason',
+    'blocked_at',
     'completed_at',
 ])]
 
@@ -101,6 +102,7 @@ class Task extends Model
             'status' => TaskStatus::class,
             'due_date' => 'datetime',
             'completed_at' => 'datetime',
+            'blocked_at' => 'datetime',
         ];
     }
 

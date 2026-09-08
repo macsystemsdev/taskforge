@@ -13,6 +13,7 @@ class Dashboard extends Component
     use WithPagination;
 
     public $organizations;
+    public $totalOrganizations;
     public $totalWorkspaces;
     public $totalProjects;
     public $totalTasks;
@@ -23,16 +24,18 @@ class Dashboard extends Component
     {
         $user = auth()->user();
 
-        $this->organizations = $user->organizations()
+        $activeOrganizations = $user->activeOrganizations()
             ->withCount(["workspaces", "projects"])
             ->latest()
-            ->limit(5)
             ->get();
 
-        $orgIds = $this->organizations->pluck("id");
+        $orgIds = $activeOrganizations->pluck("id");
 
-        $this->totalWorkspaces = $this->organizations->sum("workspaces_count");
-        $this->totalProjects = $this->organizations->sum("projects_count");
+        $this->organizations = $activeOrganizations->take(5);
+        $this->totalOrganizations = $activeOrganizations->count();
+
+        $this->totalWorkspaces = $activeOrganizations->sum("workspaces_count");
+        $this->totalProjects = $activeOrganizations->sum("projects_count");
 
         $this->totalTasks = Task::whereHas(
             "project.workspace.organization",
@@ -54,6 +57,7 @@ class Dashboard extends Component
                 TaskStatus::DONE->value,
                 TaskStatus::CANCELLED->value,
             ])
+            ->whereHas("project.workspace.organization", fn ($q) => $q->whereKey($orgIds))
             ->with("project")
             ->latest("updated_at")
             ->limit(5)
@@ -64,11 +68,14 @@ class Dashboard extends Component
     {
         $user = auth()->user();
 
+        $orgIds = $user->activeOrganizations()->pluck("organizations.id");
+
         return Task::where("assignee_id", $user->id)
             ->whereNotIn("status", [
                 TaskStatus::DONE->value,
                 TaskStatus::CANCELLED->value,
             ])
+            ->whereHas("project.workspace.organization", fn ($q) => $q->whereKey($orgIds))
             ->whereBetween("due_date", [now(), now()->addDays(7)])
             ->with("project.workspace")
             ->orderBy("due_date")

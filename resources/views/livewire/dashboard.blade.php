@@ -32,7 +32,7 @@
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Organizations</p>
-                    <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ $this->organizations->count() }}</p>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ $this->totalOrganizations }}</p>
                 </div>
             </div>
         </div>
@@ -156,8 +156,16 @@
             {{-- Due Soon --}}
             <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
                 <div class="border-b border-gray-200 dark:border-gray-700 px-5 py-4">
-                    <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Due Soon</h2>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">Next 7 days</p>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Due Soon</h2>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Next 7 days</p>
+                        </div>
+                        <a href="{{ route('tasks.index', ['statusFilter' => 'due_soon']) }}"
+                           class="text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
+                            View all →
+                        </a>
+                    </div>
                 </div>
 
                 @if ($this->dueSoonTasks->isNotEmpty())

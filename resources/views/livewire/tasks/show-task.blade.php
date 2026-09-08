@@ -19,6 +19,12 @@ new class extends Component {
 
     public ?int $assigneeId = null;
 
+    public bool $showBlockModal = false;
+
+    public string $blockReason = '';
+
+    public $activityLogs;
+
     public function mount(Task $task): void
     {
         $this->authorize('view', $task);
@@ -33,6 +39,7 @@ new class extends Component {
         ]);
 
         $this->assigneeId = $task->assignee_id;
+        $this->activityLogs = $this->task->activityLogs;
     }
 
     #[Computed]
@@ -41,11 +48,7 @@ new class extends Component {
         return $this->task->project->team->members->sortBy('name');
     }
 
-    #[Computed]
-    public function activityLogs()
-    {
-        return $this->task->activityLogs;
-    }
+
 
     #[Computed]
     public function fileReferences()
@@ -60,6 +63,41 @@ new class extends Component {
         $this->task->load([
             'activityLogs' => fn($query) => $query->with('user')->latest(),
         ]);
+
+        $this->activityLogs = $this->task->activityLogs;
+    }
+
+    public function blockTask(\App\Actions\Tasks\BlockTaskAction $action): void
+    {
+        $this->authorize('block', $this->task);
+
+        $this->validate([
+            'blockReason' => ['required', 'string', 'min:3', 'max:255'],
+        ]);
+
+        $action->handle($this->task, $this->blockReason);
+        $this->task->refresh();
+        $this->task->load(['activityLogs' => fn($query) => $query->with('user')->latest()]);
+        $this->activityLogs = $this->task->activityLogs;
+
+        $this->showBlockModal = false;
+        $this->blockReason = '';
+
+        Flux::toast(variant: 'success', text: __('Task blocked.'));
+        $this->dispatch('task-updated');
+    }
+
+    public function unblockTask(\App\Actions\Tasks\UnblockTaskAction $action): void
+    {
+        $this->authorize('unblock', $this->task);
+
+        $action->handle($this->task);
+        $this->task->refresh();
+        $this->task->load(['activityLogs' => fn($query) => $query->with('user')->latest()]);
+        $this->activityLogs = $this->task->activityLogs;
+
+        Flux::toast(variant: 'success', text: __('Task unblocked.'));
+        $this->dispatch('task-updated');
     }
 
     public function startTask(StartTaskAction $action): void
@@ -155,6 +193,14 @@ new class extends Component {
                     <flux:button size="sm" class="!bg-white !text-blue-700 hover:!bg-blue-50" wire:click="completeTask">Complete</flux:button>
                 @endif
 
+                @if (auth()->user()->can('block', $task))
+                    <flux:button size="sm" class="!bg-white/20 !text-white hover:!bg-white/30" wire:click="$set('showBlockModal', true)">Block</flux:button>
+                @endif
+
+                @if (auth()->user()->can('unblock', $task))
+                    <flux:button size="sm" class="!bg-white !text-blue-700 hover:!bg-blue-50" wire:click="unblockTask">Unblock</flux:button>
+                @endif
+
                 @if (auth()->user()->can('cancel', $task) && !$task->status->isDone() && !$task->status->isCancelled())
                     <flux:button size="sm" class="!bg-white/20 !text-white hover:!bg-white/30" wire:click="cancelTask">Cancel</flux:button>
                 @endif
@@ -178,6 +224,17 @@ new class extends Component {
             <div class="rounded-xl bg-white/10 p-3 text-center">
                 <p class="text-xs text-blue-100">Due Date</p>
                 <p class="mt-1 text-sm font-semibold text-white">{{ $task->due_date?->format('M d, Y') ?? '—' }}</p>
+                @if ($task->due_date)
+                    <p class="text-xs text-blue-100">
+                        @if ($task->isOverdue())
+                            Overdue by {{ $task->due_date->diffForHumans(now(), ['parts' => 1, 'short' => true]) }}
+                        @elseif ($task->status->isDone() && $task->completed_at && $task->completed_at->greaterThan($task->due_date))
+                            Completed after overdue by {{ $task->due_date->diffForHumans($task->completed_at, ['parts' => 1, 'short' => true]) }}
+                        @elseif ($task->isDueSoon())
+                            Due in {{ $task->due_date->diffForHumans(now(), ['parts' => 1, 'short' => true]) }}
+                        @endif
+                    </p>
+                @endif
             </div>
 
             <div class="rounded-xl bg-white/10 p-3 text-center">
@@ -285,4 +342,18 @@ new class extends Component {
             </a>
         </aside>
     </div>
+
+    {{-- Block Task Modal --}}
+    <flux:modal wire:model="showBlockModal" class="max-w-md">
+        <div class="space-y-4">
+            <flux:heading>Block Task</flux:heading>
+            <p class="text-sm text-zinc-500">Provide a reason for blocking this task. This will be visible to the team.</p>
+            <flux:textarea wire:model="blockReason" label="Block Reason" rows="4" placeholder="What is blocking this task?" required />
+            <div class="flex justify-end gap-2">
+                <flux:button wire:click="$set('showBlockModal', false)">Cancel</flux:button>
+                <flux:button variant="primary" wire:click="blockTask">Block Task</flux:button>
+            </div>
+        </div>
+    </flux:modal>
+
 </div>

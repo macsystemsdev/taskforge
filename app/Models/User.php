@@ -82,6 +82,12 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
             ->withTimestamps();
     }
 
+    public function activeOrganizations(): BelongsToMany
+    {
+        return $this->organizations()
+            ->wherePivot('status', 'active');
+    }
+
     public function assignedTasks(): HasMany
     {
         return $this->hasMany(

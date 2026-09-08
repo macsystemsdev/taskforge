@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Task;
+use App\Domain\Task\TaskStatus;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -8,19 +9,27 @@ use Livewire\WithPagination;
 new class extends Component {
     use WithPagination;
 
+    #[Url]
     public string $search = '';
+    #[Url]
     public string $statusFilter = 'all';
 
     #[Computed]
     public function tasks()
     {
+        $user = auth()->user();
+
+        $activeOrgIds = $user->activeOrganizations()->pluck('organizations.id');
+
         return Task::query()
             ->with(['project.team', 'assignee'])
-            ->where(function ($query) {
+            ->when($activeOrgIds->isEmpty(), fn ($query) => $query->whereRaw('1 = 0'))
+            ->when($activeOrgIds->isNotEmpty(), fn ($query) => $query->whereHas('project.workspace.organization', fn ($q) => $q->whereIn('id', $activeOrgIds)))
+            ->where(function ($query) use ($user) {
                 $query
-                    ->where('assignee_id', auth()->id())
-                    ->orWhere('creator_id', auth()->id())
-                    ->orWhereHas('project.team.members', fn($memberQuery) => $memberQuery->where('users.id', auth()->id()));
+                    ->where('assignee_id', $user->id)
+                    ->orWhere('creator_id', $user->id)
+                    ->orWhereHas('project.team.members', fn($memberQuery) => $memberQuery->where('users.id', $user->id));
             })
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
@@ -72,7 +81,15 @@ new class extends Component {
             </div>
 
             <div class="flex gap-2 overflow-x-auto">
-                @foreach (['all' => 'All', 'pending' => 'Pending', 'in_progress' => 'In Progress', 'completed' => 'Completed'] as $value => $label)
+                @foreach ([
+    'all' => 'All',
+    'todo' => 'To Do',
+    'in_progress' => 'In Progress',
+    'blocked' => 'Blocked',
+    'due_soon' => 'Due Soon',
+    'done' => 'Done',
+    'cancelled' => 'Cancelled',
+] as $value => $label)
                     <button
                         wire:click="$set('statusFilter', '{{ $value }}')"
                         class="rounded-full px-3 py-1.5 text-xs font-medium transition whitespace-nowrap

@@ -16,23 +16,12 @@ new class extends Component {
     #[Computed]
     public function organizations()
     {
-        $ownedOrganizations = Organization::query()
-            ->where('owner_id', auth()->id())
+        return auth()->user()
+            ->activeOrganizations()
             ->withCount(['workspaces', 'invitations'])
-            ->latest()
-            ->get();
-
-        $memberOrganizations = auth()
-            ->user()
-            ->organizations()
-            ->withCount(['workspaces', 'invitations'])
+            ->with(['subscription.plan'])
             ->latest('organizations.created_at')
             ->get();
-
-        return $ownedOrganizations
-            ->merge($memberOrganizations)
-            ->unique('id')
-            ->values();
     }
 
     public function openCreateModal(): void
@@ -119,13 +108,13 @@ new class extends Component {
                             </h2>
                             @can('viewActivityLog', $organization)
                                 <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                                    {{ ucfirst($organization->subscription_plan ?? 'standard') }} plan
+                                    {{ $organization->subscription?->plan?->name ?? 'Free' }} plan
                                 </p>
                             @endcan
                         </div>
 
                         <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
-                            {{ $organization->subscription_status ?? 'active' }}
+                            {{ ucfirst($organization->subscription?->status?->value ?? 'active') }}
                         </span>
                     </div>
 

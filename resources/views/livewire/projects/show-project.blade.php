@@ -32,10 +32,10 @@ new class extends Component {
             'creator',
             'tasks' => fn($query) => $query->with(['assignee'])->latest(),
         ])->loadCount([
-            'tasks as open_tasks_count' => fn($query) => $query->where('status', '!=', 'completed'),
-            'tasks as completed_tasks_count' => fn($query) => $query->where('status', 'completed'),
-            'tasks as overdue_tasks_count' => fn($query) => $query->where('due_date', '<', now())->where('status', '!=', 'completed'),
-            'tasks as due_soon_tasks_count' => fn($query) => $query->whereBetween('due_date', [now(), now()->addDays(7)])->where('status', '!=', 'completed'),
+            'tasks as open_tasks_count' => fn($query) => $query->where('status', '!=', 'done'),
+            'tasks as completed_tasks_count' => fn($query) => $query->where('status', \App\Domain\Task\TaskStatus::DONE->value),
+            'tasks as overdue_tasks_count' => fn($query) => $query->where('due_date', '<', now())->where('status', '!=', 'done'),
+            'tasks as due_soon_tasks_count' => fn($query) => $query->whereBetween('due_date', [now(), now()->addDays(7)])->where('status', '!=', 'done'),
         ]);
     }
 
@@ -64,10 +64,10 @@ new class extends Component {
     {
         $this->project->refresh();
         $this->project->loadCount([
-            'tasks as open_tasks_count' => fn($query) => $query->where('status', '!=', 'completed'),
-            'tasks as completed_tasks_count' => fn($query) => $query->where('status', 'completed'),
-            'tasks as overdue_tasks_count' => fn($query) => $query->where('due_date', '<', now())->where('status', '!=', 'completed'),
-            'tasks as due_soon_tasks_count' => fn($query) => $query->whereBetween('due_date', [now(), now()->addDays(7)])->where('status', '!=', 'completed'),
+            'tasks as open_tasks_count' => fn($query) => $query->where('status', '!=', 'done'),
+            'tasks as completed_tasks_count' => fn($query) => $query->where('status', \App\Domain\Task\TaskStatus::DONE->value),
+            'tasks as overdue_tasks_count' => fn($query) => $query->where('due_date', '<', now())->where('status', '!=', 'done'),
+            'tasks as due_soon_tasks_count' => fn($query) => $query->whereBetween('due_date', [now(), now()->addDays(7)])->where('status', '!=', 'done'),
         ]);
     }
 
@@ -223,7 +223,7 @@ new class extends Component {
                 </div>
 
                 <div class="rounded-xl bg-white/10 p-3 text-center">
-                    <p class="text-xs text-blue-100">Completed</p>
+                    <p class="text-xs text-blue-100">Done</p>
                     <p class="mt-1 text-lg font-semibold text-white">{{ $this->completedTasks }}</p>
                 </div>
             </div>

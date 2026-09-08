@@ -14,10 +14,33 @@ new class extends Component {
     #[Computed]
     public function projects()
     {
+        $user = auth()->user();
+
+        $activeOrgs = $user->activeOrganizations()->get();
+        $activeOrgIds = $activeOrgs->pluck('id');
+
+        $isOrgAdmin = $activeOrgs->contains(
+            fn ($organization) => in_array(
+                $organization->pivot->role,
+                [\App\Domain\Organizations\Enums\OrganizationRole::OWNER, \App\Domain\Organizations\Enums\OrganizationRole::ADMIN],
+                true,
+            ),
+        );
+
         return Project::query()
             ->with(['workspace', 'team'])
             ->withCount('tasks')
-            ->whereHas('team.members', fn($query) => $query->where('users.id', auth()->id()))
+            ->when($activeOrgIds->isEmpty(), fn ($query) => $query->whereRaw('1 = 0'))
+            ->when($activeOrgIds->isNotEmpty(), fn ($query) => $query->whereHas('workspace.organization', fn ($q) => $q->whereIn('id', $activeOrgIds)))
+            ->when($isOrgAdmin, fn ($query) => $query->where(function ($query) use ($user) {
+                $query->whereHas('team.members', fn($q) => $q->where('users.id', $user->id))
+                    ->orWhereHas('workspace.organization.members', fn($q) => $q
+                        ->where('users.id', $user->id)
+                        ->whereIn('organization_user.role', ['owner', 'admin'])
+                        ->where('organization_user.status', 'active')
+                    );
+            }))
+            ->unless($isOrgAdmin, fn ($query) => $query->whereHas('team.members', fn($q) => $q->where('users.id', $user->id)))
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('name', 'like', "%{$this->search}%")

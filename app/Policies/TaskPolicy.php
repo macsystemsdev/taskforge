@@ -63,6 +63,19 @@ class TaskPolicy
             && $task->status === TaskStatus::IN_PROGRESS;
     }
 
+    public function unblock(
+        User $user,
+        Task $task
+    ): bool {
+
+        if ($this->locked($task)) {
+            return false;
+        }
+
+        return $task->assignee_id === $user->id
+            && $task->status === TaskStatus::BLOCKED;
+    }
+
     public function complete(
         User $user,
         Task $task
@@ -125,6 +138,16 @@ class TaskPolicy
         User $user,
         Task $task
     ): bool {
+
+        // Only allow deletion when task is still untouched (todo, never started/blocked/completed)
+        if (
+            $task->status !== TaskStatus::TODO
+            || $task->started_at !== null
+            || $task->blocked_at !== null
+            || $task->completed_at !== null
+        ) {
+            return false;
+        }
 
         return TaskPermissions::canDelete(
             $task

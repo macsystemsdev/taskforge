@@ -79,6 +79,15 @@ class ProjectPolicy
         ) {
             return false;
         }
+
+        // Only allow deletion when project is active and has no tasks yet
+        if (
+            $project->status !== \App\Domain\Projects\Enums\ProjectStatus::Active
+            || $project->tasks()->count() > 0
+        ) {
+            return false;
+        }
+
         return ProjectPermissions::canDelete(
             $project
                 ->workspace
