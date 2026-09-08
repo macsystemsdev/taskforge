@@ -19,32 +19,41 @@ new class extends Component {
         $activeOrgs = $user->activeOrganizations()->get();
         $activeOrgIds = $activeOrgs->pluck('id');
 
-        $isOrgAdmin = $activeOrgs->contains(
-            fn ($organization) => in_array(
-                $organization->pivot->role,
-                [\App\Domain\Organizations\Enums\OrganizationRole::OWNER, \App\Domain\Organizations\Enums\OrganizationRole::ADMIN],
-                true,
-            ),
-        );
+        // Gather locked project IDs from all active organizations
+        $lockedProjectIds = collect();
+        foreach ($activeOrgs as $org) {
+            $lockedWorkspaceIds = $org->lockedWorkspaces()->pluck('id');
+            $lockedTeamIds = $org->lockedTeams()->pluck('id');
+            $lockedProjectIdsFromCount = $org->lockedProjects()->pluck('id');
+
+            $lockedFromWorkspace = Project::whereIn('workspace_id', $lockedWorkspaceIds)->pluck('id');
+            $lockedFromTeam = Project::whereIn('team_id', $lockedTeamIds)->pluck('id');
+
+            $lockedProjectIds = $lockedProjectIds->merge($lockedProjectIdsFromCount)->merge($lockedFromWorkspace)->merge($lockedFromTeam);
+        }
+        $lockedProjectIds = $lockedProjectIds->unique();
 
         return Project::query()
             ->with(['workspace', 'team'])
             ->withCount('tasks')
-            ->when($activeOrgIds->isEmpty(), fn ($query) => $query->whereRaw('1 = 0'))
-            ->when($activeOrgIds->isNotEmpty(), fn ($query) => $query->whereHas('workspace.organization', fn ($q) => $q->whereIn('id', $activeOrgIds)))
-            ->when($isOrgAdmin, fn ($query) => $query->where(function ($query) use ($user) {
-                $query->whereHas('team.members', fn($q) => $q->where('users.id', $user->id))
-                    ->orWhereHas('workspace.organization.members', fn($q) => $q
-                        ->where('users.id', $user->id)
-                        ->whereIn('organization_user.role', ['owner', 'admin'])
-                        ->where('organization_user.status', 'active')
-                    );
-            }))
-            ->unless($isOrgAdmin, fn ($query) => $query->whereHas('team.members', fn($q) => $q->where('users.id', $user->id)))
+            ->when($activeOrgIds->isEmpty(), fn($query) => $query->whereRaw('1 = 0'))
+            ->when($activeOrgIds->isNotEmpty(), fn($query) => $query->whereHas('workspace.organization', fn($q) => $q->whereIn('id', $activeOrgIds)))
+            ->when($lockedProjectIds->isNotEmpty(), fn($query) => $query->whereNotIn('projects.id', $lockedProjectIds))
+            ->where(function ($query) use ($user) {
+                $query
+                    ->whereHas('workspace.organization', fn($q) => $q->where('owner_id', $user->id))
+                    ->orWhereHas(
+                        'workspace.organization.members',
+                        fn($q) => $q
+                            ->where('users.id', $user->id)
+                            ->whereIn('organization_user.role', ['owner', 'admin'])
+                            ->where('organization_user.status', 'active'),
+                    )
+                    ->orWhereHas('team.members', fn($q) => $q->where('users.id', $user->id));
+            })
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
-                    $q->where('name', 'like', "%{$this->search}%")
-                        ->orWhere('description', 'like', "%{$this->search}%");
+                    $q->where('name', 'like', "%{$this->search}%")->orWhere('description', 'like', "%{$this->search}%");
                 });
             })
             ->when($this->statusFilter !== 'all', function ($query) {
@@ -68,7 +77,8 @@ new class extends Component {
 
 <div class="space-y-6">
     {{-- Header --}}
-    <div class="overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500/90 via-indigo-500/85 to-blue-600/90 p-5 text-white shadow-[0_8px_32px_rgba(37,99,235,0.15)] sm:p-6 backdrop-blur">
+    <div
+        class="overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500/90 via-indigo-500/85 to-blue-600/90 p-5 text-white shadow-[0_8px_32px_rgba(37,99,235,0.15)] sm:p-6 backdrop-blur">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
                 <h1 class="text-2xl font-semibold tracking-tight text-white">
@@ -83,22 +93,17 @@ new class extends Component {
         {{-- Filters --}}
         <div class="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
             <div class="flex-1">
-                <flux:input
-                    wire:model.live.debounce.300ms="search"
-                    placeholder="Search projects..." class="!bg-white/20 !text-white !placeholder-blue-100 !border-white/20"
-                    icon="magnifying-glass"
-                />
+                <flux:input wire:model.live.debounce.300ms="search" placeholder="Search projects..."
+                    class="!bg-white/20 !text-white !placeholder-blue-100 !border-white/20" icon="magnifying-glass" />
             </div>
 
             <div class="flex gap-2 overflow-x-auto">
                 @foreach (['all' => 'All', 'active' => 'Active', 'completed' => 'Completed', 'archived' => 'Archived'] as $value => $label)
-                    <button
-                        wire:click="$set('statusFilter', '{{ $value }}')"
+                    <button wire:click="$set('statusFilter', '{{ $value }}')"
                         class="rounded-full px-3 py-1.5 text-xs font-medium transition whitespace-nowrap
                             {{ $statusFilter === $value
                                 ? 'bg-blue-600 text-white dark:bg-blue-500 dark:text-white'
-                                : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-white/10 dark:text-zinc-400 dark:hover:bg-white/15' }}"
-                    >
+                                : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-white/10 dark:text-zinc-400 dark:hover:bg-white/15' }}">
                         {{ $label }}
                     </button>
                 @endforeach
@@ -133,7 +138,8 @@ new class extends Component {
                                     @endif
                                 </td>
                                 <td>
-                                    <span class="text-sm text-zinc-600 dark:text-zinc-300">{{ $project->workspace->name }}</span>
+                                    <span
+                                        class="text-sm text-zinc-600 dark:text-zinc-300">{{ $project->workspace->name }}</span>
                                 </td>
                                 <td><x-ui.status-badge :status="$project->status ?? 'active'" /></td>
                                 <td>
@@ -142,7 +148,8 @@ new class extends Component {
                                     </span>
                                 </td>
                                 <td>
-                                    <span class="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700 dark:bg-white/10 dark:text-zinc-300">
+                                    <span
+                                        class="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700 dark:bg-white/10 dark:text-zinc-300">
                                         {{ $project->tasks_count }}
                                     </span>
                                 </td>

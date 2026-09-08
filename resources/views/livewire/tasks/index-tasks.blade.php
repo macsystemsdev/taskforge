@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Task;
+use App\Models\Project;
 use App\Domain\Task\TaskStatus;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -19,25 +20,49 @@ new class extends Component {
     {
         $user = auth()->user();
 
-        $activeOrgIds = $user->activeOrganizations()->pluck('organizations.id');
+        $activeOrgs = $user->activeOrganizations()->get();
+        $activeOrgIds = $activeOrgs->pluck('id');
+
+        // Gather locked project IDs from all active organizations
+        $lockedProjectIds = collect();
+        foreach ($activeOrgs as $org) {
+            $lockedWorkspaceIds = $org->lockedWorkspaces()->pluck('id');
+            $lockedTeamIds = $org->lockedTeams()->pluck('id');
+            $lockedProjectIdsFromCount = $org->lockedProjects()->pluck('id');
+
+            $lockedFromWorkspace = Project::whereIn('workspace_id', $lockedWorkspaceIds)->pluck('id');
+            $lockedFromTeam = Project::whereIn('team_id', $lockedTeamIds)->pluck('id');
+
+            $lockedProjectIds = $lockedProjectIds->merge($lockedProjectIdsFromCount)->merge($lockedFromWorkspace)->merge($lockedFromTeam);
+        }
+        $lockedProjectIds = $lockedProjectIds->unique();
 
         return Task::query()
             ->with(['project.team', 'assignee'])
-            ->when($activeOrgIds->isEmpty(), fn ($query) => $query->whereRaw('1 = 0'))
-            ->when($activeOrgIds->isNotEmpty(), fn ($query) => $query->whereHas('project.workspace.organization', fn ($q) => $q->whereIn('id', $activeOrgIds)))
+            ->when($activeOrgIds->isEmpty(), fn($query) => $query->whereRaw('1 = 0'))
+            ->when($activeOrgIds->isNotEmpty(), fn($query) => $query->whereHas('project.workspace.organization', fn($q) => $q->whereIn('id', $activeOrgIds)))
+            ->when($lockedProjectIds->isNotEmpty(), fn($query) => $query->whereNotIn('tasks.project_id', $lockedProjectIds))
             ->where(function ($query) use ($user) {
                 $query
-                    ->where('assignee_id', $user->id)
-                    ->orWhere('creator_id', $user->id)
-                    ->orWhereHas('project.team.members', fn($memberQuery) => $memberQuery->where('users.id', $user->id));
+                    ->whereHas('project.workspace.organization', fn($q) => $q->where('owner_id', $user->id))
+                    ->orWhereHas(
+                        'project.workspace.organization.members',
+                        fn($q) => $q
+                            ->where('users.id', $user->id)
+                            ->whereIn('organization_user.role', ['owner', 'admin'])
+                            ->where('organization_user.status', 'active'),
+                    )
+                    ->orWhereHas('project.team.members', fn($q) => $q->where('users.id', $user->id));
             })
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
-                    $q->where('title', 'like', "%{$this->search}%")
-                        ->orWhere('description', 'like', "%{$this->search}%");
+                    $q->where('title', 'like', "%{$this->search}%")->orWhere('description', 'like', "%{$this->search}%");
                 });
             })
-            ->when($this->statusFilter !== 'all', function ($query) {
+            ->when($this->statusFilter === 'due_soon', function ($query) {
+                $query->whereNotIn('status', [TaskStatus::DONE->value, TaskStatus::CANCELLED->value])->whereBetween('due_date', [now(), now()->addDays(7)]);
+            })
+            ->when($this->statusFilter !== 'all' && $this->statusFilter !== 'due_soon', function ($query) {
                 $query->where('status', $this->statusFilter);
             })
             ->latest()
@@ -58,7 +83,8 @@ new class extends Component {
 
 <div class="space-y-6">
     {{-- Header --}}
-    <div class="overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500/90 via-indigo-500/85 to-blue-600/90 p-5 text-white shadow-[0_8px_32px_rgba(37,99,235,0.15)] sm:p-6 backdrop-blur">
+    <div
+        class="overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500/90 via-indigo-500/85 to-blue-600/90 p-5 text-white shadow-[0_8px_32px_rgba(37,99,235,0.15)] sm:p-6 backdrop-blur">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
                 <h1 class="text-2xl font-semibold tracking-tight text-white">
@@ -73,30 +99,25 @@ new class extends Component {
         {{-- Filters --}}
         <div class="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
             <div class="flex-1">
-                <flux:input
-                    wire:model.live.debounce.300ms="search"
-                    placeholder="Search tasks..."
-                    icon="magnifying-glass"
-                />
+                <flux:input wire:model.live.debounce.300ms="search" placeholder="Search tasks..."
+                    icon="magnifying-glass" />
             </div>
 
             <div class="flex gap-2 overflow-x-auto">
                 @foreach ([
-    'all' => 'All',
-    'todo' => 'To Do',
-    'in_progress' => 'In Progress',
-    'blocked' => 'Blocked',
-    'due_soon' => 'Due Soon',
-    'done' => 'Done',
-    'cancelled' => 'Cancelled',
-] as $value => $label)
-                    <button
-                        wire:click="$set('statusFilter', '{{ $value }}')"
+        'all' => 'All',
+        'todo' => 'To Do',
+        'in_progress' => 'In Progress',
+        'blocked' => 'Blocked',
+        'due_soon' => 'Due Soon',
+        'done' => 'Done',
+        'cancelled' => 'Cancelled',
+    ] as $value => $label)
+                    <button wire:click="$set('statusFilter', '{{ $value }}')"
                         class="rounded-full px-3 py-1.5 text-xs font-medium transition whitespace-nowrap
                             {{ $statusFilter === $value
                                 ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950'
-                                : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-white/10 dark:text-zinc-400 dark:hover:bg-white/15' }}"
-                    >
+                                : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-white/10 dark:text-zinc-400 dark:hover:bg-white/15' }}">
                         {{ $label }}
                     </button>
                 @endforeach
@@ -131,13 +152,15 @@ new class extends Component {
                                     @endif
                                 </td>
                                 <td>
-                                    <span class="text-sm text-zinc-600 dark:text-zinc-300">{{ $task->project->name }}</span>
+                                    <span
+                                        class="text-sm text-zinc-600 dark:text-zinc-300">{{ $task->project->name }}</span>
                                 </td>
                                 <td><x-ui.status-badge :status="$task->status->value" /></td>
                                 <td>
                                     <div class="flex items-center gap-2">
                                         <x-ui.avatar :name="$task->assignee?->name ?? 'Unassigned'" size="sm" />
-                                        <span class="text-sm text-zinc-600 dark:text-zinc-300">{{ $task->assignee?->name ?? 'Unassigned' }}</span>
+                                        <span
+                                            class="text-sm text-zinc-600 dark:text-zinc-300">{{ $task->assignee?->name ?? 'Unassigned' }}</span>
                                     </div>
                                 </td>
                                 <td>
@@ -145,7 +168,8 @@ new class extends Component {
                                         {{ $task->due_date?->format('M d, Y') ?? '—' }}
                                     </span>
                                     @if ($task->isOverdue())
-                                        <span class="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-500/10 dark:text-red-400">Overdue</span>
+                                        <span
+                                            class="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-500/10 dark:text-red-400">Overdue</span>
                                     @endif
                                 </td>
                             </tr>

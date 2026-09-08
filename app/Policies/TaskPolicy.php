@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Domain\Organizations\Enums\OrganizationRole;
 use App\Domain\Task\TaskPermissions;
 use App\Domain\Task\TaskStatus;
 use App\Models\Task;
@@ -25,18 +26,23 @@ class TaskPolicy
             ->taskLocked($task);
     }
 
-    public function view(
-        User $user,
-        Task $task
-    ): bool {
-        if ($this->locked($task)) {
-            return false;
-        }
-        return $task
-            ->project
-            ->team
-            ->roleFor($user) !== null;
+  public function view(User $user, Task $task): bool {
+    if ($this->locked($task)) {
+        return false;
     }
+
+    $organization = $task->project->workspace->organization;
+    $role = $organization->roleFor($user);
+
+    if (in_array($role, [
+        OrganizationRole::OWNER,
+        OrganizationRole::ADMIN,
+    ])) {
+        return true;
+    }
+
+    return $task->project->team->roleFor($user) !== null;
+}
 
     public function start(
         User $user,
