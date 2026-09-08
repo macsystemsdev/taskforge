@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             SubscriptionPlanSeeder::class,
+            DemoDataSeeder::class
         ]);
     }
 }
