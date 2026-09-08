@@ -36,9 +36,16 @@ class AppServiceProvider extends ServiceProvider
         }
 
         $this->app->bind(
+    \Laravel\Pulse\Storage\DatabaseStorage::class,
+    \App\Support\Pulse\MySqlPulseStorage::class,
+);
+
+        $this->app->bind(
             PaymentGateway::class,
             StripePaymentGateway::class,
         );
+
+        
     }
 
     public function boot(): void
