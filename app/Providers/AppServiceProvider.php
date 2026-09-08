@@ -45,6 +45,15 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
 
+        // Restrict Pulse dashboard to the platform owner
+        Gate::define('viewPulse', function (\App\Models\User $user) {
+            $adminEmail = config('services.filament.admin_email');
+
+            return ! empty($adminEmail)
+                && $user->email === $adminEmail
+                && $user->hasVerifiedEmail();
+        });
+
         // Register Blade components
         Blade::component('layouts-app', \App\View\Components\Layouts\App::class);
 
