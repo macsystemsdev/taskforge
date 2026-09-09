@@ -81,6 +81,7 @@ class OrganizationHealthTable extends TableWidget
                     'lastActivity' => $item->lastActivity ?? null,
                     'trialEndsAt' => $item->trialEndsAt ?? null,
                     'subscriptionEndsAt' => $item->subscriptionEndsAt ?? null,
+                    'trialExtended' => $item->trialExtended ?? false,
                 ]);
 
                 $plan = $this->tableFilters['plan']['value'] ?? null;
@@ -260,9 +261,81 @@ class OrganizationHealthTable extends TableWidget
             Action::make('subscription')
                 ->label('Subscription')
                 ->icon('heroicon-o-credit-card')
-                ->url(fn($record) => SubscriptionPlanResource::getUrl('view', [
-                    'record' => $record['subscriptionId'],
-                ])),
+                ->modalHeading(fn ($record) => $record['organizationName'] . ' Subscription')
+                ->modalWidth('2xl')
+                ->infolist(function ($record) {
+                    $organization = Organization::find($record['organizationId'] ?? $record['id']);
+
+                    if (! $organization) {
+                        return [];
+                    }
+
+                    $subscription = $organization->subscription;
+                    $plan = $subscription?->plan;
+                    $pending = $subscription?->pendingPlan;
+
+                    return [
+                        \Filament\Schemas\Components\Section::make('Subscription Details')
+                            ->description(function () use ($plan, $subscription) {
+                                if ($plan?->formattedPrice()) {
+                                    return $plan->formattedPrice() . ' / ' . $plan->billingLabel();
+                                }
+
+                                return $subscription?->isTrial() ? 'Free trial active' : null;
+                            })
+                            ->schema([
+                                \Filament\Schemas\Components\Grid::make(2)
+                                    ->schema([
+                                        \Filament\Infolists\Components\TextEntry::make('plan_name')
+                                            ->label('Current Plan')
+                                            ->state(fn () => $plan?->name ?? 'Free')
+                                            ->badge()
+                                            ->color(fn () => match (true) {
+                                                $plan?->slug === 'free' => 'gray',
+                                                $subscription?->isTrial() => 'warning',
+                                                default => 'success',
+                                            }),
+
+                                        \Filament\Infolists\Components\TextEntry::make('status')
+                                            ->label('Status')
+                                            ->state(fn () => $subscription?->status?->label() ?? '—')
+                                            ->badge()
+                                            ->color(fn () => $subscription?->status?->badgeColor() ?? 'gray'),
+
+                                        \Filament\Infolists\Components\TextEntry::make('starts_at')
+                                            ->label('Started')
+                                            ->state(fn () => $subscription?->starts_at?->format('M d, Y') ?? '—')
+                                            ->icon('heroicon-o-calendar-days'),
+
+                                        \Filament\Infolists\Components\TextEntry::make('trial_ends_at')
+                                            ->label('Trial Ends')
+                                            ->state(fn () => $subscription?->trial_ends_at?->format('M d, Y') ?? '—')
+                                            ->icon('heroicon-o-clock')
+                                            ->color(fn () => $subscription?->isTrial() ? 'warning' : null),
+
+                                        \Filament\Infolists\Components\TextEntry::make('ends_at')
+                                            ->label('Renews At')
+                                            ->state(fn () => $subscription?->ends_at?->format('M d, Y') ?? '—')
+                                            ->icon('heroicon-o-arrow-path')
+                                            ->color(fn () => $subscription?->status?->value === 'active' ? 'success' : null),
+                                    ]),
+                            ]),
+
+                        ...($pending ? [
+                            \Filament\Schemas\Components\Section::make('Pending Change')
+                                ->schema([
+                                    \Filament\Infolists\Components\TextEntry::make('pending_plan')
+                                        ->label('Plan')
+                                        ->state($pending->name)
+                                        ->badge()
+                                        ->color('info'),
+                                ]),
+                        ] : []),
+                    ];
+                })
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel('Close')
+                ->visible(fn($record) => ($record['subscriptionId'] ?? 0) > 0),
 
             Action::make('extendTrial')
                 ->form([
@@ -290,7 +363,8 @@ class OrganizationHealthTable extends TableWidget
                 ->visible(
                     fn($record) =>
                     empty($record['subscriptionEndsAt']) && // ✅ No paid subscription end date
-                        !empty($record['trialEndsAt']) // ✅ Has trial end date
+                        !empty($record['trialEndsAt']) && // ✅ Has trial end date
+                        empty($record['trialExtended']) // ✅ Trial not yet extended
                 ),
 
                 // gift plan future action

@@ -41,4 +41,32 @@ enum SubscriptionStatus: string
     {
         return $this === self::EXPIRED;
     }
+
+    /**
+     * Human-friendly label for display.
+     *
+     * "past_due" is intentionally presented as "Grace Period" because
+     * that is how the business interprets this state.
+     */
+    public function label(): string
+    {
+        return match ($this) {
+            self::PAST_DUE => 'Grace Period',
+            default => ucfirst($this->value),
+        };
+    }
+
+    /**
+     * Filament badge color for this status.
+     */
+    public function badgeColor(): string
+    {
+        return match ($this) {
+            self::ACTIVE => 'success',
+            self::TRIAL => 'info',
+            self::PAST_DUE => 'warning',
+            self::CANCELLED => 'gray',
+            self::EXPIRED => 'danger',
+        };
+    }
 }

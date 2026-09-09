@@ -22,6 +22,7 @@ use Illuminate\Support\Carbon;
     'trial_ends_at',
     'trial_starts_at',
     'has_used_trial',
+    'trial_extended',
     'pending_subscription_plan_id',
     'pending_payment_transaction_id',
     'pending_effective_at',
@@ -43,6 +44,7 @@ class Subscription extends Model
             'pending_effective_at' => 'datetime',
             'trial_starts_at' => 'datetime',
             'has_used_trial' => 'boolean',
+            'trial_extended' => 'boolean',
             'grace_period_starts_at' => 'datetime',
             'grace_period_ends_at' => 'datetime',
         ];

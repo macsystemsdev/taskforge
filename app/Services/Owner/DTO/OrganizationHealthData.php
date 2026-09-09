@@ -31,6 +31,8 @@ readonly class OrganizationHealthData
     public ?CarbonInterface $trialEndsAt,
     public ?CarbonInterface $subscriptionEndsAt,
 
+    public bool $trialExtended,
+
     public OrganizationHealth $health,
 ) {}
 }

@@ -8,6 +8,7 @@ use App\Models\Organization;
 use App\Models\PaymentTransaction;
 use App\Models\Subscription;
 use App\Services\Owner\DTO\MetricData;
+use Illuminate\Support\Number;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -27,7 +28,7 @@ class RevenueMetricsService
 
             'mrr' => new MetricData(
                 label: 'MRR',
-                value: $this->mrr(),
+                value: Number::currency($this->mrr(), 'USD'),
                 description: 'Monthly recurring revenue',
                 icon: 'heroicon-o-chart-bar',
                 color: 'success',
@@ -35,7 +36,7 @@ class RevenueMetricsService
 
             'arr' => new MetricData(
                 label: 'ARR',
-                value: $this->arr(),
+                value: Number::currency($this->arr(), 'USD'),
                 description: 'Annual recurring revenue',
                 icon: 'heroicon-o-presentation-chart-line',
                 color: 'success',

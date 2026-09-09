@@ -249,7 +249,7 @@ class OrganizationMetricsService
 
                 'projectCompletionRate' => new MetricData(
                     label: 'Project Completion',
-                    value: $this->projectCompletionRate(),
+                    value: $this->projectCompletionRate() . '%',
                     description: 'Projects fully completed',
                     icon: 'heroicon-o-folder-open',
                     color: 'success',
@@ -257,7 +257,7 @@ class OrganizationMetricsService
 
                 'taskCompletionRate' => new MetricData(
                     label: 'Task Completion',
-                    value: $this->taskCompletionRate(),
+                    value: $this->taskCompletionRate() . '%',
                     description: 'Percentage of completed tasks',
                     icon: 'heroicon-o-check-badge',
                     color: 'success',

@@ -113,8 +113,23 @@ new class extends Component {
                             @endcan
                         </div>
 
-                        <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
-                            {{ ucfirst($organization->subscription?->status?->value ?? 'active') }}
+                        @php
+                            $subscriptionStatus = $organization->subscription?->status;
+
+                            $statusLabel = $subscriptionStatus?->label() ?? 'Active';
+
+                            $statusClasses = match ($subscriptionStatus?->value) {
+                                'active' => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300',
+                                'trial' => 'bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300',
+                                'past_due' => 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300',
+                                'cancelled' => 'bg-zinc-100 text-zinc-600 dark:bg-white/10 dark:text-zinc-300',
+                                'expired' => 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-300',
+                                default => 'bg-zinc-100 text-zinc-700 dark:bg-white/10 dark:text-zinc-300',
+                            };
+                        @endphp
+
+                        <span class="rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] {{ $statusClasses }}">
+                            {{ $statusLabel }}
                         </span>
                     </div>
 

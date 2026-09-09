@@ -107,6 +107,11 @@ class OrganizationHealthService
                 ->subscription
                 ?->ends_at,
 
+            trialExtended: $organization
+                ->subscription
+                ?->trial_extended
+                ?? false,
+
             health: $this->calculator
                 ->calculate($organization),
 

@@ -17,10 +17,17 @@ class ExtendTrialAction
             return;
         }
 
+        // Allow only one trial extension.
+        if ($subscription->trial_extended) {
+            throw new \DomainException('Trial extension has already been used.');
+        }
+
         $subscription->update([
             'trial_ends_at' =>
                 $subscription->trial_ends_at
                     ->addDays($days),
+
+            'trial_extended' => true,
         ]);
     }
 }
