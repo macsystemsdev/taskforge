@@ -10,6 +10,18 @@
                     {{ __('Select an organization, choose a plan, and pay securely.') }}
                 </p>
             </div>
+
+            <div class="w-full sm:w-56">
+                <label for="display-currency" class="block text-xs font-semibold uppercase tracking-wide text-indigo-100">
+                    {{ __('Display Currency') }}
+                </label>
+                <select id="display-currency" wire:model.live="displayCurrency"
+                    class="mt-1 w-full rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-sm text-white shadow-sm focus:border-white focus:outline-none focus:ring-2 focus:ring-white/30">
+                    @foreach (\App\Domain\Billing\Enums\SupportedCurrency::cases() as $currency)
+                        <option value="{{ $currency->value }}" class="text-zinc-950">{{ $currency->label() }}</option>
+                    @endforeach
+                </select>
+            </div>
         </div>
     </div>
 
@@ -153,15 +165,22 @@
 
                         <div class="mt-5">
                             <p class="text-3xl font-semibold text-zinc-950 dark:text-white">
-                                {{ $plan->formattedPrice() }}
+                                {{ $plan->formattedPriceFor($this->displayCurrency) }}
                                 @if (!$plan->isFree())
                                     <span class="text-base font-normal text-zinc-500">/ {{ $plan->billingLabel() }}</span>
                                 @endif
                             </p>
+
                             @if (!$plan->isFree())
-                                <p class="mt-1 text-xs font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
-                                    Billed in {{ $plan->currency }}
-                                </p>
+                                @if (strtoupper($this->displayCurrency) !== strtoupper($plan->currency))
+                                    <p class="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
+                                        Approximate conversion from {{ $plan->currency }}
+                                    </p>
+                                @else
+                                    <p class="mt-1 text-xs font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+                                        Billed in {{ $plan->currency }}
+                                    </p>
+                                @endif
                             @endif
                         </div>
 
@@ -173,6 +192,9 @@
                             <li class="flex justify-between"><span>Workspaces</span><span class="font-medium">{{ $plan->workspaceLimitLabel() }}</span></li>
                             <li class="flex justify-between"><span>Projects</span><span class="font-medium">{{ $plan->projectLimitLabel() }}</span></li>
                             <li class="flex justify-between"><span>Members</span><span class="font-medium">{{ $plan->memberLimitLabel() }}</span></li>
+                            <li class="flex justify-between"><span>Teams</span><span class="font-medium">{{ $plan->teamLimitLabel() }}</span></li>
+                            <li class="flex justify-between"><span>Tasks</span><span class="font-medium">{{ $plan->taskLimitLabel() }}</span></li>
+                            <li class="flex justify-between"><span>Storage</span><span class="font-medium">{{ $plan->storageLimitLabel() }}</span></li>
                         </ul>
 
                         @if ($metadata?->marketing_copy)
@@ -230,8 +252,16 @@
                         </div>
                         <div class="flex justify-between">
                             <span class="text-zinc-500">Price</span>
-                            <span class="font-medium">{{ $selectedPlan->formattedPrice() }}/{{ $selectedPlan->billingLabel() }}</span>
+                            <span class="font-medium">
+                                {{ $selectedPlan->formattedPriceFor($this->displayCurrency) }}/{{ $selectedPlan->billingLabel() }}
+                            </span>
                         </div>
+
+                        @if (strtoupper($this->displayCurrency) !== strtoupper($selectedPlan->currency))
+                            <div class="mt-1 rounded-lg bg-zinc-50 px-3 py-2 text-xs text-zinc-500 dark:bg-white/5 dark:text-zinc-400">
+                                Approximate amount. Your payment will be processed in {{ $selectedPlan->currency }}.
+                            </div>
+                        @endif
                     </div>
                 </div>
 

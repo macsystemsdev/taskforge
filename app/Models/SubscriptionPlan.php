@@ -89,6 +89,11 @@ class SubscriptionPlan extends Model
         );
     }
 
+    public function taskLimitLabel(): string
+    {
+        return $this->formatLimit($this->max_tasks);
+    }
+
     public function storageLimitLabel(): string
     {
         if (is_null($this->max_storage_mb)) {
@@ -128,6 +133,24 @@ class SubscriptionPlan extends Model
             $this->price,
             $this->currency,
         );
+    }
+
+    /**
+     * Format price for a viewer-selected display currency.
+     */
+    public function formattedPriceFor(string $displayCurrency): string
+    {
+        if (strtoupper($displayCurrency) === strtoupper($this->currency)) {
+            return $this->formattedPrice();
+        }
+
+        $converted = \App\Support\CurrencyConverter::convert(
+            (float) $this->price,
+            $this->currency,
+            $displayCurrency,
+        );
+
+        return \App\Support\CurrencyFormatter::format($converted, $displayCurrency);
     }
 
     public function isFree(): bool

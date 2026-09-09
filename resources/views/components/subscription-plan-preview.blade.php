@@ -57,6 +57,18 @@
         </p>
     @endif
 
+    @php
+        $storage = $plan['max_storage_mb'] ?? null;
+
+        if ($storage === null || $storage === '') {
+            $storageLabel = 'Unlimited';
+        } elseif ((int) $storage >= 1024) {
+            $storageLabel = round((int) $storage / 1024, 1) . ' GB';
+        } else {
+            $storageLabel = (int) $storage . ' MB';
+        }
+    @endphp
+
     <ul style="list-style: none; padding: 0; margin: 1.25rem 0 0 0; display: flex; flex-direction: column; gap: 0.5rem;">
         <li style="display: flex; justify-content: space-between; font-size: 0.875rem; color: #4b5563;">
             <span>Workspaces</span>
@@ -69,6 +81,18 @@
         <li style="display: flex; justify-content: space-between; font-size: 0.875rem; color: #4b5563;">
             <span>Members</span>
             <span style="font-weight: 500;">{{ $plan['max_members'] ?? 'Unlimited' }}</span>
+        </li>
+        <li style="display: flex; justify-content: space-between; font-size: 0.875rem; color: #4b5563;">
+            <span>Teams</span>
+            <span style="font-weight: 500;">{{ $plan['max_teams'] ?? 'Unlimited' }}</span>
+        </li>
+        <li style="display: flex; justify-content: space-between; font-size: 0.875rem; color: #4b5563;">
+            <span>Tasks</span>
+            <span style="font-weight: 500;">{{ $plan['max_tasks'] ?? 'Unlimited' }}</span>
+        </li>
+        <li style="display: flex; justify-content: space-between; font-size: 0.875rem; color: #4b5563;">
+            <span>Storage</span>
+            <span style="font-weight: 500;">{{ $storageLabel }}</span>
         </li>
     </ul>
 

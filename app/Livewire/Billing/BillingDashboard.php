@@ -24,6 +24,8 @@ class BillingDashboard extends Component
     public PaymentProvider $paymentProvider = PaymentProvider::STRIPE;
     
     public bool $showCheckoutModal = false;
+
+    public string $displayCurrency = 'USD';
     
     public bool $processingCheckout = false;
     public bool $processingTrial = false;
