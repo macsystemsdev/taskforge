@@ -15,24 +15,20 @@ abstract class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         View::share('errors', session('errors', new ViewErrorBag()));
-        
-        // Disable CSRF ONLY for POST requests
-        $this->withoutMiddleware(IlluminateFoundationHttpMiddlewareValidateCsrfToken::class);
-        $this->app->instance('middleware.disable', [
-            \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
-            \Illuminate\Session\Middleware\AuthenticateSession::class,
-        ]);
+
+        // Disable CSRF for tests
+        $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class);
     }
-    
+
     protected function skipUnlessFortifyHas($feature): void
     {
         if (!Features::enabled($feature)) {
             $this->markTestSkipped('Fortify feature not enabled.');
         }
     }
-    
+
     protected function createBillingPlans(): void
     {
         $plans = [
@@ -70,7 +66,7 @@ abstract class TestCase extends BaseTestCase
                 'max_members' => 25,
             ],
         ];
-        
+
         foreach ($plans as $plan) {
             \App\Models\SubscriptionPlan::firstOrCreate(
                 ['slug' => $plan['slug']],
@@ -78,11 +74,11 @@ abstract class TestCase extends BaseTestCase
             );
         }
     }
-    
+
     protected function createOrganizationWithOwner(?\App\Models\User $owner = null): array
     {
         $owner = $owner ?? \App\Models\User::factory()->create();
-        
+
         $organization = \App\Models\Organization::create([
             'owner_id' => $owner->id,
             'name' => 'Test Org',
@@ -90,11 +86,11 @@ abstract class TestCase extends BaseTestCase
             'subscription_plan' => 'free',
             'subscription_status' => 'active',
         ]);
-        
+
         $organization->members()->attach($owner->id, [
             'role' => OrganizationRole::OWNER->value,
         ]);
-        
+
         $freePlan = \App\Models\SubscriptionPlan::where('slug', 'free')->first();
         \App\Models\Subscription::create([
             'organization_id' => $organization->id,
@@ -102,20 +98,20 @@ abstract class TestCase extends BaseTestCase
             'status' => 'active',
             'starts_at' => now(),
         ]);
-        
+
         return [$organization, $owner];
     }
-    
+
     protected function createOrganizationWithRoles(): array
     {
         [$organization, $owner] = $this->createOrganizationWithOwner();
-        
+
         $admin = \App\Models\User::factory()->create();
         $member = \App\Models\User::factory()->create();
-        
+
         $organization->members()->attach($admin->id, ['role' => OrganizationRole::ADMIN->value]);
         $organization->members()->attach($member->id, ['role' => OrganizationRole::MEMBER->value]);
-        
+
         return [$organization, $owner, $admin, $member];
     }
 }

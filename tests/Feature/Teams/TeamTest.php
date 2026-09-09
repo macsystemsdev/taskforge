@@ -16,22 +16,17 @@ test('teams index page can be rendered', function () {
 });
 
 test('teams can be created', function () {
-    $this->markTestSkipped('Organization setup in test data - revisit later');
     $user = User::factory()->create();
-    
+    $workspace = $user->currentTeam->workspace;
+
     $this->actingAs($user);
-    
-    Livewire::test('teams.create-team')
-        ->set('leaderId', $user->id)
+
+    Livewire::test('teams.create-team', ['workspace' => $workspace])
         ->set('name', 'Test Team')
-        ->set('leaderId', $user->id)
-        ->set('leaderId', $user->id)
-        ->set('leaderId', $user->id)
-        ->set('leaderId', $user->id)
         ->set('leaderId', $user->id)
         ->call('createTeam')
         ->assertHasNoErrors();
-    
+
     $this->assertDatabaseHas('teams', ['name' => 'Test Team']);
 });
 
@@ -136,7 +131,6 @@ test('team deletion requires name confirmation', function () {
 });
 
 test('deleting current team switches to alphabetically first remaining team', function () {
-    $this->markTestSkipped('Organization setup in test data - revisit later');
     $user = User::factory()->create();
     $personalTeam = $user->personalTeam();
     $workspace = $personalTeam->workspace;
@@ -155,7 +149,7 @@ test('deleting current team switches to alphabetically first remaining team', fu
         'is_personal' => false,
     ]);
     
-    $user->teams()->attach([$alphaTeam->id => ['role' => 'member'], $zuluTeam->id => ['role' => 'member']]);
+    $user->teams()->attach([$alphaTeam->id => ['role' => 'leader'], $zuluTeam->id => ['role' => 'leader']]);
     $user->switchTeam($zuluTeam);
     
     $this->actingAs($user);
