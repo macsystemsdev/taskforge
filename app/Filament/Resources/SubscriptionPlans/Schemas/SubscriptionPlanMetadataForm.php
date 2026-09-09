@@ -32,7 +32,13 @@ class SubscriptionPlanMetadataForm
                     ->label('Display Name')
                     ->required()
                     ->maxLength(255)
-                    ->live(debounce: 300),
+                    ->live(debounce: 300)
+                    ->afterStateHydrated(function ($component, $state, $context, $set) {
+                        // Auto-fill from plan name when empty
+                        if (blank($state) && $this->record?->name) {
+                            $set('display_name', $this->record->name);
+                        }
+                    }),
 
                 TextInput::make('subtitle')
                     ->maxLength(255)
@@ -55,11 +61,13 @@ class SubscriptionPlanMetadataForm
                     ->live(),
 
                 TextInput::make('button_text')
+                    ->helperText('CTA text shown on the pricing card')
                     ->maxLength(40)
                     ->default('Get Started')
                     ->live(debounce: 300),
 
                 Textarea::make('marketing_copy')
+                    ->helperText('Short persuasive copy below pricing details')
                     ->rows(4)
                     ->maxLength(2000)
                     ->live(debounce: 300),
@@ -80,10 +88,20 @@ class SubscriptionPlanMetadataForm
                     ->live(),
 
                 Toggle::make('popular')
-                    ->live(),
+                    ->live()
+                    ->afterStateUpdated(function ($state, $set) {
+                        if ($state) {
+                            $set('recommended', false);
+                        }
+                    }),
 
                 Toggle::make('recommended')
-                    ->live(),
+                    ->live()
+                    ->afterStateUpdated(function ($state, $set) {
+                        if ($state) {
+                            $set('popular', false);
+                        }
+                    }),
 
                 TextInput::make('card_order')
                     ->numeric()

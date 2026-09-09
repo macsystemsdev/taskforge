@@ -49,8 +49,10 @@ class BillingDashboard extends Component
     {
         return SubscriptionPlan::query()
             ->purchasable()
-            ->orderBy('price')
-            ->get();
+            ->with('metadata')
+            ->get()
+            ->sortBy(fn (SubscriptionPlan $plan) => $plan->metadata?->card_order ?? 0)
+            ->values();
     }
 
     #[Computed]

@@ -124,11 +124,10 @@ class SubscriptionPlan extends Model
 
     public function formattedPrice(): string
     {
-        if ($this->price === 0.0) {
-            return 'Free';
-        }
-
-        return '$' . number_format($this->price, 2);
+        return \App\Support\CurrencyFormatter::format(
+            $this->price,
+            $this->currency,
+        );
     }
 
     public function isFree(): bool

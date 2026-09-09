@@ -22,8 +22,16 @@ class ManageSubscriptionPlanMetadata extends EditRecord
             ...$metadata,
 
             'plan_preview' => [
+                'name' => $this->record->name,
                 'price' => $this->record->price,
+                'currency' => $this->record->currency,
                 'billing_interval' => $this->record->billing_interval->value,
+                'max_workspaces' => $this->record->max_workspaces,
+                'max_projects' => $this->record->max_projects,
+                'max_members' => $this->record->max_members,
+                'max_teams' => $this->record->max_teams,
+                'max_tasks' => $this->record->max_tasks,
+                'max_storage_mb' => $this->record->max_storage_mb,
             ],
         ];
     }

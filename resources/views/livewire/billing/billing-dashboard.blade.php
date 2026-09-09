@@ -105,22 +105,45 @@
             <div class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 @foreach ($this->plans as $plan)
                     @php
+                        $metadata = $plan->metadata;
                         $isCurrent = $selectedOrganization->subscription?->plan?->is($plan) ?? false;
                         $isPending = $selectedOrganization->subscription?->pending_subscription_plan_id === $plan->id;
                         $isDisabled = $isCurrent || $isPending;
+                        $displayName = $metadata?->display_name ?? $plan->name;
+                        $subtitle = $metadata?->subtitle;
+                        $badge = $metadata?->badge;
+                        $accent = $metadata?->accent_color;
                     @endphp
 
-                    <div class="flex h-full flex-col rounded-2xl border p-5 transition-all
-                        {{ $isCurrent 
-                            ? 'border-indigo-500 bg-indigo-50/60 ring-2 ring-indigo-500/20' 
-                            : 'border-zinc-200 bg-white shadow-sm hover:shadow-md dark:border-white/10 dark:bg-zinc-900/70' }}"
+                    <div class="relative flex h-full flex-col overflow-hidden rounded-2xl border bg-white p-5 shadow-sm transition-all dark:border-white/10 dark:bg-zinc-900/70
+                        {{ $isCurrent ? 'border-indigo-500 ring-2 ring-indigo-500/20' : 'border-zinc-200 hover:shadow-md dark:border-white/10' }}"
+                        @if ($accent) style="border-top-color: {{ $accent }};" @endif
                     >
-                        <div class="flex items-start justify-between">
-                            <div>
-                                <h3 class="text-lg font-semibold text-zinc-950 dark:text-white">{{ $plan->name }}</h3>
-                                <p class="text-sm text-zinc-500 dark:text-zinc-400">{{ $plan->billingIntervalLabel() }}</p>
+                        @if ($badge || $metadata?->popular || $metadata?->recommended)
+                            <div class="mb-4 flex items-center gap-2">
+                                @if ($badge)
+                                    <span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+                                        {{ $badge }}
+                                    </span>
+                                @endif
+                                @if ($metadata?->popular)
+                                    <span class="rounded-full bg-indigo-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300">Popular</span>
+                                @endif
+                                @if ($metadata?->recommended)
+                                    <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">Recommended</span>
+                                @endif
                             </div>
-                            
+                        @endif
+
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <h3 class="text-xl font-bold text-zinc-950 dark:text-white">{{ $displayName }}</h3>
+                                @if ($subtitle)
+                                    <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{{ $subtitle }}</p>
+                                @endif
+                                <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{{ $plan->billingIntervalLabel() }}</p>
+                            </div>
+
                             @if ($isCurrent)
                                 <span class="rounded-full bg-indigo-100 px-2.5 py-1 text-xs font-semibold text-indigo-700">Current</span>
                             @elseif ($isPending)
@@ -128,27 +151,40 @@
                             @endif
                         </div>
 
-                        <div class="mt-4">
+                        <div class="mt-5">
                             <p class="text-3xl font-semibold text-zinc-950 dark:text-white">
                                 {{ $plan->formattedPrice() }}
                                 @if (!$plan->isFree())
                                     <span class="text-base font-normal text-zinc-500">/ {{ $plan->billingLabel() }}</span>
                                 @endif
                             </p>
+                            @if (!$plan->isFree())
+                                <p class="mt-1 text-xs font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+                                    Billed in {{ $plan->currency }}
+                                </p>
+                            @endif
                         </div>
 
-                        <ul class="mt-4 space-y-2 text-sm text-zinc-600 dark:text-zinc-300">
+                        @if ($metadata?->description)
+                            <p class="mt-4 text-sm text-zinc-600 dark:text-zinc-300">{{ $metadata->description }}</p>
+                        @endif
+
+                        <ul class="mt-5 space-y-2 text-sm text-zinc-600 dark:text-zinc-300">
                             <li class="flex justify-between"><span>Workspaces</span><span class="font-medium">{{ $plan->workspaceLimitLabel() }}</span></li>
                             <li class="flex justify-between"><span>Projects</span><span class="font-medium">{{ $plan->projectLimitLabel() }}</span></li>
                             <li class="flex justify-between"><span>Members</span><span class="font-medium">{{ $plan->memberLimitLabel() }}</span></li>
                         </ul>
+
+                        @if ($metadata?->marketing_copy)
+                            <p class="mt-4 text-sm text-zinc-500 dark:text-zinc-400">{{ $metadata->marketing_copy }}</p>
+                        @endif
 
                         <div class="mt-auto pt-6">
                             @if ($isDisabled)
                                 <flux:button disabled class="w-full">{{ $isCurrent ? 'Current Plan' : 'Already Scheduled' }}</flux:button>
                             @else
                                 <flux:button variant="primary" wire:click="selectPlan({{ $plan->id }})" class="w-full">
-                                    {{ __('Choose Plan') }}
+                                    {{ $metadata?->button_text ?? __('Choose Plan') }}
                                 </flux:button>
                             @endif
                         </div>

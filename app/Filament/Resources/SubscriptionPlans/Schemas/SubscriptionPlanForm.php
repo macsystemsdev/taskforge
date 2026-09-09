@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\SubscriptionPlans\Schemas;
 
 use App\Domain\Billing\BillingInterval;
+use App\Domain\Billing\Enums\SupportedCurrency;
 use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -43,19 +44,23 @@ class SubscriptionPlanForm
                             ->numeric()
                             ->minValue(0)
                             ->step(0.01)
-                            ->prefix('$')
+                            ->prefix(fn(callable $get) => $get('currency') ?? 'USD')
                             ->placeholder('29.00')
-                            ->helperText('Monthly or yearly price in USD'),
+                            ->helperText('Price in the selected billing currency'),
 
-                        TextInput::make('currency')
+                        Select::make('currency')
                             ->required()
                             ->default('USD')
-                            ->maxLength(3)
-                            ->afterStateHydrated(
-                                fn($component, $state) =>
-                                $component->state(strtoupper($state))
+                            ->options(
+                                collect(SupportedCurrency::cases())
+                                    ->mapWithKeys(fn($currency) => [
+                                        $currency->value => $currency->label(),
+                                    ])
+                                    ->toArray()
                             )
-                            ->mutateDehydratedStateUsing(fn($state) => strtoupper($state)),
+                            ->live()
+                            ->native(false)
+                            ->helperText('Base billing currency for this plan'),
 
                         Select::make('billing_interval')
                             ->required()

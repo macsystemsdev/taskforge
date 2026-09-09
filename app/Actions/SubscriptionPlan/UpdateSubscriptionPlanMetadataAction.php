@@ -20,20 +20,21 @@ class UpdateSubscriptionPlanMetadataAction
     ): SubscriptionPlanMetadata {
 
         return DB::transaction(function () use ($plan, $data) {
-            $metadata = $plan->metadata;
-
-            $metadata->update([
-                'display_name' => $data->displayName,
-                'subtitle' => $data->subtitle,
-                'description' => $data->description,
-                'badge' => $data->badge,
-                'popular' => $data->popular,
-                'recommended' => $data->recommended,
-                'accent_color' => $data->accentColor,
-                'card_order' => $data->cardOrder,
-                'button_text' => $data->buttonText,
-                'marketing_copy' => $data->marketingCopy,
-            ]);
+            $metadata = $plan->metadata()->updateOrCreate(
+                ['subscription_plan_id' => $plan->id],
+                [
+                    'display_name' => $data->displayName,
+                    'subtitle' => $data->subtitle,
+                    'description' => $data->description,
+                    'badge' => $data->badge,
+                    'popular' => $data->popular,
+                    'recommended' => $data->recommended,
+                    'accent_color' => $data->accentColor,
+                    'card_order' => $data->cardOrder,
+                    'button_text' => $data->buttonText,
+                    'marketing_copy' => $data->marketingCopy,
+                ],
+            );
 
             $this->createActivityLogAction->handle(
                 event: 'subscription_plan_metadata_updated',
