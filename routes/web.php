@@ -63,6 +63,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get(
         '/workspaces/{workspace}',
         function (Workspace $workspace) {
+            throw_if(
+                $workspace->organization->workspaceLocked($workspace),
+                \App\Exceptions\LockedResourceException::class,
+                'This workspace is locked because your current plan limit has been reached.'
+            );
+
+            \Illuminate\Support\Facades\Gate::authorize('view', $workspace);
+
             return view(
                 'pages.workspaces.show',
                 compact('workspace')
@@ -76,6 +84,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('teams.create');
 
     Route::get('/workspaces/{workspace}/teams/{team}', function (Workspace $workspace, \App\Models\Team $team) {
+        throw_if(
+            $workspace->organization->teamLocked($team),
+            \App\Exceptions\LockedResourceException::class,
+            'This team is locked because your current plan limit has been reached.'
+        );
+
+        \Illuminate\Support\Facades\Gate::authorize('view', $team);
+
         return view('pages.teams.show', compact('workspace', 'team'));
     })->name('teams.show');
 
@@ -86,6 +102,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('teams.index');
 
     Route::get('/teams/{team:slug}', function (\App\Models\Team $team) {
+        throw_if(
+            $team->workspace->organization->teamLocked($team),
+            \App\Exceptions\LockedResourceException::class,
+            'This team is locked because your current plan limit has been reached.'
+        );
+
+        \Illuminate\Support\Facades\Gate::authorize('view', $team);
+
         return view('pages.teams.edit', compact('team'));
     })->name('teams.edit');
 

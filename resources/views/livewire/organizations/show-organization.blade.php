@@ -345,11 +345,17 @@ new class extends Component {
                 <p class="tf-panel-subtitle">Organize teams, projects, and delivery areas.</p>
             </div>
 
-            @if (auth()->user()->can('createWorkspace', $organization) && $organization->canCreateWorkspace())
-                <flux:button size="sm" variant="primary" wire:click="openCreateWorkspaceModal">
-                    <flux:icon name="plus" class="size-4" />
-                    New Workspace
-                </flux:button>
+            @if (auth()->user()->can('createWorkspace', $organization))
+                @if ($organization->canCreateWorkspace())
+                    <flux:button size="sm" variant="primary" wire:click="openCreateWorkspaceModal">
+                        <flux:icon name="plus" class="size-4" />
+                        New Workspace
+                    </flux:button>
+                @else
+                    <flux:button size="sm" icon="arrow-up-circle" variant="filled" href="{{ route('organizations.billing', $organization) }}" wire:navigate>
+                        Upgrade Plan
+                    </flux:button>
+                @endif
             @endif
         </div>
 

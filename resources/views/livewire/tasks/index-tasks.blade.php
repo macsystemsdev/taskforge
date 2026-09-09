@@ -14,6 +14,9 @@ new class extends Component {
     public string $search = '';
     #[Url]
     public string $statusFilter = 'all';
+    #[Url]
+    public ?int $projectId = null;
+    public $lockedProjectIds = [];
 
     #[Computed]
     public function tasks()
@@ -36,12 +39,13 @@ new class extends Component {
             $lockedProjectIds = $lockedProjectIds->merge($lockedProjectIdsFromCount)->merge($lockedFromWorkspace)->merge($lockedFromTeam);
         }
         $lockedProjectIds = $lockedProjectIds->unique();
+        $this->lockedProjectIds = $lockedProjectIds;
 
         return Task::query()
             ->with(['project.team', 'assignee'])
+            ->when($this->projectId, fn($query) => $query->where('project_id', $this->projectId))
             ->when($activeOrgIds->isEmpty(), fn($query) => $query->whereRaw('1 = 0'))
             ->when($activeOrgIds->isNotEmpty(), fn($query) => $query->whereHas('project.workspace.organization', fn($q) => $q->whereIn('id', $activeOrgIds)))
-            ->when($lockedProjectIds->isNotEmpty(), fn($query) => $query->whereNotIn('tasks.project_id', $lockedProjectIds))
             ->where(function ($query) use ($user) {
                 $query
                     ->whereHas('project.workspace.organization', fn($q) => $q->where('owner_id', $user->id))
@@ -141,10 +145,22 @@ new class extends Component {
                     </thead>
                     <tbody>
                         @foreach ($this->tasks as $task)
-                            <tr class="tf-row-link cursor-pointer" wire:key="task-{{ $task->id }}"
-                                onclick="window.location='{{ route('tasks.show', $task) }}'">
+                            @php($isTaskLocked = $this->lockedProjectIds->contains($task->project_id))
+                            <tr class="tf-row-link cursor-pointer {{ $isTaskLocked ? 'opacity-60 pointer-events-none' : '' }}"
+                                wire:key="task-{{ $task->id }}"
+                                @if (!$isTaskLocked)
+                                    onclick="window.location='{{ route('tasks.show', $task) }}'"
+                                @endif>
                                 <td>
-                                    <p class="font-medium text-zinc-950 dark:text-white">{{ $task->title }}</p>
+                                    <div class="flex items-center gap-2">
+                                        <p class="font-medium text-zinc-950 dark:text-white">{{ $task->title }}</p>
+                                        @if ($isTaskLocked)
+                                            <span class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-500/20 dark:text-amber-300">
+                                                <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V8H5a2 2 0 00-2 2v7a2 2 0 002 2h10a2 2 0 002-2v-7a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 7V5.5a3 3 0 10-6 0V8h6z" clip-rule="evenodd"/></svg>
+                                                Locked
+                                            </span>
+                                        @endif
+                                    </div>
                                     @if ($task->description)
                                         <p class="mt-1 max-w-xl truncate text-sm text-zinc-500 dark:text-zinc-400">
                                             {{ $task->description }}

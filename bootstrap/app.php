@@ -24,5 +24,11 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(
+            fn (\App\Exceptions\LockedResourceException $e) => response()->view(
+                'errors.locked',
+                ['exception' => $e],
+                402,
+            ),
+        );
     })->create();

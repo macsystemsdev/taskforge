@@ -37,13 +37,13 @@ new class extends Component {
     #[Computed]
     public function teamsUsage(): int
     {
-        return $this->workspace->teams->count();
+        return $this->workspace->organization->teams()->count();
     }
 
     #[Computed]
     public function projectsUsage(): int
     {
-        return $this->workspace->projects->count();
+        return $this->workspace->organization->projects()->count();
     }
 
     #[Computed]
@@ -181,13 +181,19 @@ new class extends Component {
                 <p class="tf-panel-subtitle">Organize members into teams within this workspace.</p>
             </div>
 
-            @if (auth()->user()->can('createTeam', $workspace) && $organization->canCreateTeam())
-                <flux:modal.trigger name="create-team-modal">
-                    <flux:button size="sm" variant="primary">
-                        <flux:icon name="plus" class="size-4" />
-                        New Team
+            @if (auth()->user()->can('createTeam', $workspace))
+                @if ($organization->canCreateTeam())
+                    <flux:modal.trigger name="create-team-modal">
+                        <flux:button size="sm" variant="primary">
+                            <flux:icon name="plus" class="size-4" />
+                            New Team
+                        </flux:button>
+                    </flux:modal.trigger>
+                @else
+                    <flux:button size="sm" icon="arrow-up-circle" variant="filled" href="{{ route('organizations.billing', $organization) }}" wire:navigate>
+                        Upgrade Plan
                     </flux:button>
-                </flux:modal.trigger>
+                @endif
             @endif
         </div>
 
@@ -205,7 +211,10 @@ new class extends Component {
                                     <p class="text-sm font-semibold text-zinc-950 dark:text-white">{{ $team->name }}</p>
                                     <p class="mt-1 text-xs text-zinc-500">{{ $team->members_count }} members</p>
                                 </div>
-                                <span class="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400">
+                                <span class="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400">
+                                    <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V8H5a2 2 0 00-2 2v7a2 2 0 002 2h10a2 2 0 002-2v-7a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 7V5.5a3 3 0 10-6 0V8h6z" clip-rule="evenodd"/>
+                                    </svg>
                                     Locked
                                 </span>
                             </div>
@@ -242,13 +251,19 @@ new class extends Component {
                 <p class="tf-panel-subtitle">Manage work being delivered inside this workspace.</p>
             </div>
 
-            @if (auth()->user()->can('createProject', $workspace) && $organization->canCreateProject())
-                <flux:modal.trigger name="create-project-modal">
-                    <flux:button size="sm" variant="primary">
-                        <flux:icon name="plus" class="size-4" />
-                        New Project
+            @if (auth()->user()->can('createProject', $workspace))
+                @if ($organization->canCreateProject())
+                    <flux:modal.trigger name="create-project-modal">
+                        <flux:button size="sm" variant="primary">
+                            <flux:icon name="plus" class="size-4" />
+                            New Project
+                        </flux:button>
+                    </flux:modal.trigger>
+                @else
+                    <flux:button size="sm" icon="arrow-up-circle" variant="filled" href="{{ route('organizations.billing', $organization) }}" wire:navigate>
+                        Upgrade Plan
                     </flux:button>
-                </flux:modal.trigger>
+                @endif
             @endif
         </div>
 
@@ -266,7 +281,10 @@ new class extends Component {
                                     <p class="text-sm font-semibold text-zinc-950 dark:text-white">{{ $project->name }}</p>
                                     <p class="mt-1 text-xs text-zinc-500">{{ $project->tasks_count }} tasks</p>
                                 </div>
-                                <span class="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400">
+                                <span class="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400">
+                                    <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V8H5a2 2 0 00-2 2v7a2 2 0 002 2h10a2 2 0 002-2v-7a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 7V5.5a3 3 0 10-6 0V8h6z" clip-rule="evenodd"/>
+                                    </svg>
                                     Locked
                                 </span>
                             </div>

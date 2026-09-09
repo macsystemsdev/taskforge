@@ -30,7 +30,7 @@ new class extends Component {
             'workspace.organization',
             'team',
             'creator',
-            'tasks' => fn($query) => $query->with(['assignee'])->latest(),
+            'tasks' => fn($query) => $query->with(['assignee'])->latest()->limit(8),
         ])->loadCount([
             'tasks as open_tasks_count' => fn($query) => $query->where('status', '!=', 'done'),
             'tasks as completed_tasks_count' => fn($query) => $query->where('status', \App\Domain\Task\TaskStatus::DONE->value),
@@ -245,6 +245,11 @@ new class extends Component {
                             <p class="text-sm font-semibold text-zinc-950 dark:text-white">Tasks</p>
                             <p class="text-xs text-blue-100">{{ $this->openTasks }} open • {{ $this->completedTasks }} done</p>
                         </div>
+
+                        <a href="{{ route('tasks.index', ['projectId' => $project->id]) }}"
+                           class="text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
+                            View All Tasks →
+                        </a>
 
                         @if (auth()->user()->can('createTask', $project) && $project->status->isActive())
                             <flux:button size="sm" variant="primary" wire:click="openCreateTaskModal">
