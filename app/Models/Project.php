@@ -189,6 +189,11 @@ class Project extends Model
 
     public function hasBlockedTasks(): bool
     {
+        // Reporting loads this count via LoadsTaskReportingCounts.
+        if (isset($this->blocked_tasks_count)) {
+            return $this->blocked_tasks_count > 0;
+        }
+
         return $this->tasks()
             ->blocked()
             ->exists();
@@ -227,6 +232,12 @@ class Project extends Model
 
     public function totalTaskCount(): int
     {
+        // When reporting loads counts, the base withCount alias is `tasks_count`.
+        if (isset($this->tasks_count)) {
+            return $this->tasks_count;
+        }
+
+        // Also support the explicit alias if ever eager-loaded.
         if (isset($this->total_tasks_count)) {
             return $this->total_tasks_count;
         }
