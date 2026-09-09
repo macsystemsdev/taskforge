@@ -247,7 +247,7 @@ new class extends Component {
 
             <div class="rounded-xl bg-white/10 p-3 text-center">
                 <p class="text-xs text-blue-100">Team</p>
-                <p class="mt-1 truncate text-sm font-semibold text-white">{{ $task->project->team->name }}</p>
+                <p class="mt-1 truncate text-sm font-semibold text-white">{{ $task->project->team?->name ?? 'No Team' }}</p>
             </div>
         </div>
     </div>

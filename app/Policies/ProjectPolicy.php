@@ -112,9 +112,7 @@ class ProjectPolicy
             return false;
         }
         return ProjectPermissions::canComplete(
-            $project
-                ->team
-                ->roleFor($user)
+            $project->team?->roleFor($user)
         );
     }
 
@@ -146,9 +144,7 @@ class ProjectPolicy
         Project $project
     ): bool {
         return ProjectPermissions::canCreateTask(
-            $project
-                ->team
-                ->roleFor($user)
+            $project->team?->roleFor($user)
         )
 
             && $project
@@ -156,4 +152,17 @@ class ProjectPolicy
             ->organization
             ->canCreateTask();
     }
+
+
+    protected function teamRole(
+        User $user,
+        ?\App\Models\Team $team,
+    ) {
+        if (! $team) {
+            return null;
+        }
+
+        return $team->roleFor($user);
+    }
+
 }

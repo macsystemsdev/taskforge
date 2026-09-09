@@ -39,6 +39,12 @@ class LogActivityJob implements ShouldQueue
             return;
         }
 
+        // Some subjects, like Comment, may not have an activityLogs relation.
+        // Skip silently instead of failing the queued job.
+        if (! method_exists($subject, 'activityLogs')) {
+            return;
+        }
+
         $subject->activityLogs()->create([
             'user_id' => $this->userId,
             'event' => $this->event,

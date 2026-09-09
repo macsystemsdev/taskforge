@@ -41,7 +41,7 @@ class TaskPolicy
         return true;
     }
 
-    return $task->project->team->roleFor($user) !== null;
+    return $task->project->team?->roleFor($user) !== null;
 }
 
     public function start(
@@ -101,10 +101,13 @@ class TaskPolicy
         if ($this->locked($task)) {
             return false;
         }
-        $role = $task
-            ->project
-            ->team
-            ->roleFor($user);
+        $team = $task->project->team;
+
+        if (! $team) {
+            return false;
+        }
+
+        $role = $team->roleFor($user);
 
             if($task->status === TaskStatus::DONE){
                 return false;
@@ -133,10 +136,7 @@ class TaskPolicy
             return true;
         }
 
-        return $task
-            ->project
-            ->team
-            ->leader()
+        return $task->project->team?->leader()
             ?->is($user) ?? false;
     }
 
@@ -156,10 +156,7 @@ class TaskPolicy
         }
 
         return TaskPermissions::canDelete(
-            $task
-                ->project
-                ->team
-                ->roleFor($user)
+            $task->project->team?->roleFor($user)
         );
     }
 
@@ -169,10 +166,7 @@ class TaskPolicy
     ): bool {
 
         return TaskPermissions::canReassign(
-            $task
-                ->project
-                ->team
-                ->roleFor($user)
+            $task->project->team?->roleFor($user)
         );
     }
 
@@ -185,9 +179,7 @@ class TaskPolicy
         }
 
         return TaskPermissions::canAttachResource(
-            $task->project
-                ->team
-                ->roleFor($user),
+            $task->project->team?->roleFor($user),
         );
     }
 
@@ -200,9 +192,7 @@ class TaskPolicy
         }
 
         return TaskPermissions::canDetachResource(
-            $task->project
-                ->team
-                ->roleFor($user),
+            $task->project->team?->roleFor($user),
         );
     }
 
@@ -219,9 +209,20 @@ class TaskPolicy
         }
 
         return TaskPermissions::canViewPrivateResource(
-            $task->project
-                ->team
-                ->roleFor($user),
+            $task->project->team?->roleFor($user),
         );
     }
+
+
+    protected function teamRole(
+        User $user,
+        ?\App\Models\Team $team,
+    ) {
+        if (! $team) {
+            return null;
+        }
+
+        return $team->roleFor($user);
+    }
+
 }
