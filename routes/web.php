@@ -131,7 +131,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get(
         '/projects/{project}',
         function (Project $project) {
-            Gate::authorize('view', $project);
+            throw_if(
+                $project->workspace->organization->projectLocked($project),
+                \App\Exceptions\LockedResourceException::class,
+                'This project is locked because your current plan limit has been reached.'
+            );
+
+            \Illuminate\Support\Facades\Gate::authorize('view', $project);
 
             return view(
                 'pages.projects.show',
@@ -270,6 +276,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get(
         '/tasks/{task:slug}',
         function (Task $task) {
+            throw_if(
+                $task->project->workspace->organization->taskLocked($task),
+                \App\Exceptions\LockedResourceException::class,
+                'This task is locked because your current plan limit has been reached.'
+            );
+
+            \Illuminate\Support\Facades\Gate::authorize('view', $task);
 
             return view(
                 'pages.tasks.show',

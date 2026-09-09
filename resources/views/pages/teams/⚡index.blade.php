@@ -55,6 +55,15 @@ new #[Title('Teams')] class extends Component {
 
         return $workspace?->organization;
     }
+
+    /**
+     * Precompute locked team IDs once to avoid repeated queries per row.
+     */
+    #[Computed]
+    public function lockedTeamIds(): Collection
+    {
+        return $this->organization?->lockedTeams()->pluck('id') ?? collect();
+    }
 }; ?>
 
 <section class="w-full">
@@ -70,7 +79,7 @@ new #[Title('Teams')] class extends Component {
 
         <div class="mt-6 space-y-3">
             @forelse ($this->teams as $team)
-                @php($isLocked = $this->organization?->teamLocked($team) ?? false)
+                @php($isLocked = $this->lockedTeamIds->contains($team->id))
                 @if ($isLocked)
                     <div class="flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50/40 p-4 opacity-70 dark:border-amber-500/20 dark:bg-amber-500/5"
                         data-test="team-row">

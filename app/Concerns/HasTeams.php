@@ -123,6 +123,16 @@ trait HasTeams
      */
     public function teamRole(Team $team): ?TeamRole
     {
+        // Use the already loaded pivot role when teams were loaded
+        // through the BelongsToMany relation to avoid N+1 queries.
+        if ($team->relationLoaded('pivot') && $team->pivot) {
+            $role = $team->pivot->role ?? null;
+
+            return $role instanceof TeamRole
+                ? $role
+                : TeamRole::tryFrom((string) $role);
+        }
+
         return $this->teamMemberships()
             ->where('team_id', $team->id)
             ->first()

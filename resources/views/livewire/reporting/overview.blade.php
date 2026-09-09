@@ -4,6 +4,8 @@ use App\Domain\Reporting\ReportingPeriod;
 use App\Models\Organization;
 use App\Models\Project;
 use App\Models\Task;
+use App\Domain\Projects\Enums\ProjectStatus;
+use App\Domain\Task\TaskStatus;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
@@ -64,13 +66,13 @@ new class extends Component {
 
         return [
             'total_projects' => Project::whereHas('workspace', fn($q) => $q->whereIn('organization_id', $orgIds))->count(),
-            'active_projects' => Project::whereHas('workspace', fn($q) => $q->whereIn('organization_id', $orgIds))->where('status', 'active')->count(),
-            'completed_projects' => Project::whereHas('workspace', fn($q) => $q->whereIn('organization_id', $orgIds))->where('status', 'completed')->count(),
+            'active_projects' => Project::whereHas('workspace', fn($q) => $q->whereIn('organization_id', $orgIds))->where('status', ProjectStatus::Active->value)->count(),
+            'completed_projects' => Project::whereHas('workspace', fn($q) => $q->whereIn('organization_id', $orgIds))->where('status', ProjectStatus::Completed->value)->count(),
             'total_tasks' => Task::whereHas('project.workspace', fn($q) => $q->whereIn('organization_id', $orgIds))->count(),
             'tasks_created' => Task::whereHas('project.workspace', fn($q) => $q->whereIn('organization_id', $orgIds))->whereBetween('created_at', [$start, $end])->count(),
-            'tasks_completed' => Task::whereHas('project.workspace', fn($q) => $q->whereIn('organization_id', $orgIds))->whereBetween('completed_at', [$start, $end])->count(),
-            'overdue_tasks' => Task::whereHas('project.workspace', fn($q) => $q->whereIn('organization_id', $orgIds))->where('due_date', '<', now())->where('status', '!=', 'completed')->count(),
-            'due_soon_tasks' => Task::whereHas('project.workspace', fn($q) => $q->whereIn('organization_id', $orgIds))->whereBetween('due_date', [now(), now()->addDays(7)])->where('status', '!=', 'completed')->count(),
+            'tasks_completed' => Task::whereHas('project.workspace', fn($q) => $q->whereIn('organization_id', $orgIds))->where('status', TaskStatus::DONE->value)->whereBetween('completed_at', [$start, $end])->count(),
+            'overdue_tasks' => Task::whereHas('project.workspace', fn($q) => $q->whereIn('organization_id', $orgIds))->whereNotIn('status', [TaskStatus::DONE->value, TaskStatus::CANCELLED->value])->where('due_date', '<', now())->count(),
+            'due_soon_tasks' => Task::whereHas('project.workspace', fn($q) => $q->whereIn('organization_id', $orgIds))->whereNotIn('status', [TaskStatus::DONE->value, TaskStatus::CANCELLED->value])->whereBetween('due_date', [now(), now()->addDays(7)])->count(),
         ];
     }
 
@@ -90,6 +92,34 @@ new class extends Component {
             ->orderByDesc('tasks_count')
             ->limit(10)
             ->get();
+    }
+
+    #[Computed]
+    public function projectCompletionRate(): float
+    {
+        $total = $this->stats['total_projects'];
+
+        if ($total === 0) {
+            return 0;
+        }
+
+        return round(($this->stats['completed_projects'] / $total) * 100, 1);
+    }
+
+    #[Computed]
+    public function taskCompletionRate(): float
+    {
+        $total = $this->stats['total_tasks'];
+
+        if ($total === 0) {
+            return 0;
+        }
+
+        $completed = Task::whereHas('project.workspace', fn($q) => $q->whereIn('organization_id', $this->orgIds))
+            ->where('status', TaskStatus::DONE->value)
+            ->count();
+
+        return round(($completed / $total) * 100, 1);
     }
 };
 ?>
@@ -119,46 +149,68 @@ new class extends Component {
 
     @if ($this->organizations->isNotEmpty())
         {{-- Key Metrics --}}
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <x-ui.card class="space-y-2">
-                <p class="text-sm text-zinc-500">Active Projects</p>
-                <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">{{ $this->stats['active_projects'] }}</p>
-            </x-ui.card>
+        <div class="space-y-10">
+            <!-- Projects Section -->
+            <section>
+                <h2 class="text-lg font-semibold text-zinc-950 dark:text-white">Projects</h2>
+                <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <x-ui.card class="space-y-2">
+                        <p class="text-sm text-zinc-500">Total Projects</p>
+                        <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">{{ $this->stats['total_projects'] }}</p>
+                    </x-ui.card>
 
-            <x-ui.card class="space-y-2">
-                <p class="text-sm text-zinc-500">Completed Projects</p>
-                <p class="text-3xl font-semibold tracking-tight text-emerald-600 dark:text-emerald-400">{{ $this->stats['completed_projects'] }}</p>
-            </x-ui.card>
+                    <x-ui.card class="space-y-2">
+                        <p class="text-sm text-zinc-500">Active Projects</p>
+                        <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">{{ $this->stats['active_projects'] }}</p>
+                    </x-ui.card>
 
-            <x-ui.card class="space-y-2">
-                <p class="text-sm text-zinc-500">Tasks Created ({{ $period->label() }})</p>
-                <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">{{ $this->stats['tasks_created'] }}</p>
-            </x-ui.card>
+                    <x-ui.card class="space-y-2">
+                        <p class="text-sm text-zinc-500">Completed Projects</p>
+                        <p class="text-3xl font-semibold tracking-tight text-emerald-600 dark:text-emerald-400">{{ $this->stats['completed_projects'] }}</p>
+                    </x-ui.card>
 
-            <x-ui.card class="space-y-2">
-                <p class="text-sm text-zinc-500">Tasks Completed</p>
-                <p class="text-3xl font-semibold tracking-tight text-emerald-600 dark:text-emerald-400">{{ $this->stats['tasks_completed'] }}</p>
-            </x-ui.card>
+                    <x-ui.card class="space-y-2">
+                        <p class="text-sm text-zinc-500">Completion Rate</p>
+                        <p class="text-3xl font-semibold tracking-tight text-emerald-600 dark:text-emerald-400">{{ $this->projectCompletionRate }}%</p>
+                    </x-ui.card>
+                </div>
+            </section>
 
-            <x-ui.card class="space-y-2">
-                <p class="text-sm text-zinc-500">Overdue Tasks</p>
-                <p class="text-3xl font-semibold tracking-tight text-red-600 dark:text-red-400">{{ $this->stats['overdue_tasks'] }}</p>
-            </x-ui.card>
+            <!-- Tasks Section -->
+            <section>
+                <h2 class="text-lg font-semibold text-zinc-950 dark:text-white">Tasks</h2>
+                <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <x-ui.card class="space-y-2">
+                        <p class="text-sm text-zinc-500">Total Tasks</p>
+                        <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">{{ $this->stats['total_tasks'] }}</p>
+                    </x-ui.card>
 
-            <x-ui.card class="space-y-2">
-                <p class="text-sm text-zinc-500">Tasks Due Soon</p>
-                <p class="text-3xl font-semibold tracking-tight text-amber-600 dark:text-amber-400">{{ $this->stats['due_soon_tasks'] }}</p>
-            </x-ui.card>
+                    <x-ui.card class="space-y-2">
+                        <p class="text-sm text-zinc-500">Tasks Created ({{ $period->label() }})</p>
+                        <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">{{ $this->stats['tasks_created'] }}</p>
+                    </x-ui.card>
 
-            <x-ui.card class="space-y-2">
-                <p class="text-sm text-zinc-500">Total Tasks</p>
-                <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">{{ $this->stats['total_tasks'] }}</p>
-            </x-ui.card>
+                    <x-ui.card class="space-y-2">
+                        <p class="text-sm text-zinc-500">Tasks Completed ({{ $period->label() }})</p>
+                        <p class="text-3xl font-semibold tracking-tight text-emerald-600 dark:text-emerald-400">{{ $this->stats['tasks_completed'] }}</p>
+                    </x-ui.card>
 
-            <x-ui.card class="space-y-2">
-                <p class="text-sm text-zinc-500">Total Projects</p>
-                <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">{{ $this->stats['total_projects'] }}</p>
-            </x-ui.card>
+                    <x-ui.card class="space-y-2">
+                        <p class="text-sm text-zinc-500">Task Completion Rate</p>
+                        <p class="text-3xl font-semibold tracking-tight text-emerald-600 dark:text-emerald-400">{{ $this->taskCompletionRate }}%</p>
+                    </x-ui.card>
+
+                    <x-ui.card class="space-y-2">
+                        <p class="text-sm text-zinc-500">Overdue Tasks</p>
+                        <p class="text-3xl font-semibold tracking-tight text-red-600 dark:text-red-400">{{ $this->stats['overdue_tasks'] }}</p>
+                    </x-ui.card>
+
+                    <x-ui.card class="space-y-2">
+                        <p class="text-sm text-zinc-500">Tasks Due Soon</p>
+                        <p class="text-3xl font-semibold tracking-tight text-amber-600 dark:text-amber-400">{{ $this->stats['due_soon_tasks'] }}</p>
+                    </x-ui.card>
+                </div>
+            </section>
         </div>
 
         {{-- Top Projects --}}
