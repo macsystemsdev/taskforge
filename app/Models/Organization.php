@@ -399,8 +399,14 @@ class Organization extends Model
     }
 
     public function teamLocked(
-        Team|UserTeam $team
+        Team|UserTeam|null $team
     ): bool {
+        // Projects can exist without a team during early development;
+        // treat null as not locked to avoid crashes.
+        if ($team === null) {
+            return false;
+        }
+
         // If it's a UserTeam DTO, fetch the actual Team model
         if ($team instanceof UserTeam) {
             $team = Team::find($team->id);
