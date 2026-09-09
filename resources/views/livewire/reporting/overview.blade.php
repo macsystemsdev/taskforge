@@ -56,23 +56,83 @@ new class extends Component {
                 'total_projects' => 0,
                 'active_projects' => 0,
                 'completed_projects' => 0,
+                'projects_created' => 0,
+                'projects_completed' => 0,
+                'projects_overdue' => 0,
+                'projects_due_soon' => 0,
                 'total_tasks' => 0,
                 'tasks_created' => 0,
                 'tasks_completed' => 0,
+                'tasks_completed_overall' => 0,
                 'overdue_tasks' => 0,
                 'due_soon_tasks' => 0,
             ];
         }
 
+        $projectStats = Project::whereHas('workspace', fn ($q) => $q->whereIn('organization_id', $orgIds))
+            ->selectRaw('
+                COUNT(*) as total_projects,
+                COALESCE(SUM(CASE WHEN status = ? THEN 1 ELSE 0 END), 0) as active_projects,
+                COALESCE(SUM(CASE WHEN status = ? THEN 1 ELSE 0 END), 0) as completed_projects,
+                COALESCE(SUM(CASE WHEN created_at BETWEEN ? AND ? THEN 1 ELSE 0 END), 0) as projects_created,
+                COALESCE(SUM(CASE WHEN status = ? AND updated_at BETWEEN ? AND ? THEN 1 ELSE 0 END), 0) as projects_completed,
+                COALESCE(SUM(CASE WHEN status = ? AND due_date < ? THEN 1 ELSE 0 END), 0) as projects_overdue,
+                COALESCE(SUM(CASE WHEN status = ? AND due_date BETWEEN ? AND ? THEN 1 ELSE 0 END), 0) as projects_due_soon
+            ', [
+                ProjectStatus::Active->value,
+                ProjectStatus::Completed->value,
+                $start,
+                $end,
+                ProjectStatus::Completed->value,
+                $start,
+                $end,
+                ProjectStatus::Active->value,
+                now(),
+                ProjectStatus::Active->value,
+                now(),
+                now()->addDays(7),
+            ])
+            ->first();
+
+        $taskStats = Task::whereHas('project.workspace', fn ($q) => $q->whereIn('organization_id', $orgIds))
+            ->selectRaw('
+                COUNT(*) as total_tasks,
+                COALESCE(SUM(CASE WHEN created_at BETWEEN ? AND ? THEN 1 ELSE 0 END), 0) as tasks_created,
+                COALESCE(SUM(CASE WHEN status = ? AND completed_at BETWEEN ? AND ? THEN 1 ELSE 0 END), 0) as tasks_completed,
+                COALESCE(SUM(CASE WHEN status = ? THEN 1 ELSE 0 END), 0) as tasks_completed_overall,
+                COALESCE(SUM(CASE WHEN status NOT IN (?, ?) AND due_date < ? THEN 1 ELSE 0 END), 0) as overdue_tasks,
+                COALESCE(SUM(CASE WHEN status NOT IN (?, ?) AND due_date BETWEEN ? AND ? THEN 1 ELSE 0 END), 0) as due_soon_tasks
+            ', [
+                $start,
+                $end,
+                TaskStatus::DONE->value,
+                $start,
+                $end,
+                TaskStatus::DONE->value,
+                TaskStatus::DONE->value,
+                TaskStatus::CANCELLED->value,
+                now(),
+                TaskStatus::DONE->value,
+                TaskStatus::CANCELLED->value,
+                now(),
+                now()->addDays(7),
+            ])
+            ->first();
+
         return [
-            'total_projects' => Project::whereHas('workspace', fn($q) => $q->whereIn('organization_id', $orgIds))->count(),
-            'active_projects' => Project::whereHas('workspace', fn($q) => $q->whereIn('organization_id', $orgIds))->where('status', ProjectStatus::Active->value)->count(),
-            'completed_projects' => Project::whereHas('workspace', fn($q) => $q->whereIn('organization_id', $orgIds))->where('status', ProjectStatus::Completed->value)->count(),
-            'total_tasks' => Task::whereHas('project.workspace', fn($q) => $q->whereIn('organization_id', $orgIds))->count(),
-            'tasks_created' => Task::whereHas('project.workspace', fn($q) => $q->whereIn('organization_id', $orgIds))->whereBetween('created_at', [$start, $end])->count(),
-            'tasks_completed' => Task::whereHas('project.workspace', fn($q) => $q->whereIn('organization_id', $orgIds))->where('status', TaskStatus::DONE->value)->whereBetween('completed_at', [$start, $end])->count(),
-            'overdue_tasks' => Task::whereHas('project.workspace', fn($q) => $q->whereIn('organization_id', $orgIds))->whereNotIn('status', [TaskStatus::DONE->value, TaskStatus::CANCELLED->value])->where('due_date', '<', now())->count(),
-            'due_soon_tasks' => Task::whereHas('project.workspace', fn($q) => $q->whereIn('organization_id', $orgIds))->whereNotIn('status', [TaskStatus::DONE->value, TaskStatus::CANCELLED->value])->whereBetween('due_date', [now(), now()->addDays(7)])->count(),
+            'total_projects' => (int) $projectStats->total_projects,
+            'active_projects' => (int) $projectStats->active_projects,
+            'completed_projects' => (int) $projectStats->completed_projects,
+            'projects_created' => (int) $projectStats->projects_created,
+            'projects_completed' => (int) $projectStats->projects_completed,
+            'projects_overdue' => (int) $projectStats->projects_overdue,
+            'projects_due_soon' => (int) $projectStats->projects_due_soon,
+            'total_tasks' => (int) $taskStats->total_tasks,
+            'tasks_created' => (int) $taskStats->tasks_created,
+            'tasks_completed' => (int) $taskStats->tasks_completed,
+            'tasks_completed_overall' => (int) $taskStats->tasks_completed_overall,
+            'overdue_tasks' => (int) $taskStats->overdue_tasks,
+            'due_soon_tasks' => (int) $taskStats->due_soon_tasks,
         ];
     }
 
@@ -97,29 +157,28 @@ new class extends Component {
     #[Computed]
     public function projectCompletionRate(): float
     {
-        $total = $this->stats['total_projects'];
-
-        if ($total === 0) {
-            return 0;
-        }
-
-        return round(($this->stats['completed_projects'] / $total) * 100, 1);
+        return $this->percentage(
+            $this->stats['completed_projects'],
+            $this->stats['total_projects'],
+        );
     }
 
     #[Computed]
     public function taskCompletionRate(): float
     {
-        $total = $this->stats['total_tasks'];
+        return $this->percentage(
+            $this->stats['tasks_completed_overall'],
+            $this->stats['total_tasks'],
+        );
+    }
 
+    protected function percentage(int $part, int $total): float
+    {
         if ($total === 0) {
             return 0;
         }
 
-        $completed = Task::whereHas('project.workspace', fn($q) => $q->whereIn('organization_id', $this->orgIds))
-            ->where('status', TaskStatus::DONE->value)
-            ->count();
-
-        return round(($completed / $total) * 100, 1);
+        return round(($part / $total) * 100, 1);
     }
 };
 ?>
@@ -160,6 +219,16 @@ new class extends Component {
                     </x-ui.card>
 
                     <x-ui.card class="space-y-2">
+                        <p class="text-sm text-zinc-500">Projects Created ({{ $period->label() }})</p>
+                        <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">{{ $this->stats['projects_created'] }}</p>
+                    </x-ui.card>
+
+                    <x-ui.card class="space-y-2">
+                        <p class="text-sm text-zinc-500">Projects Completed ({{ $period->label() }})</p>
+                        <p class="text-3xl font-semibold tracking-tight text-emerald-600 dark:text-emerald-400">{{ $this->stats['projects_completed'] }}</p>
+                    </x-ui.card>
+
+                    <x-ui.card class="space-y-2">
                         <p class="text-sm text-zinc-500">Active Projects</p>
                         <p class="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white">{{ $this->stats['active_projects'] }}</p>
                     </x-ui.card>
@@ -167,6 +236,16 @@ new class extends Component {
                     <x-ui.card class="space-y-2">
                         <p class="text-sm text-zinc-500">Completed Projects</p>
                         <p class="text-3xl font-semibold tracking-tight text-emerald-600 dark:text-emerald-400">{{ $this->stats['completed_projects'] }}</p>
+                    </x-ui.card>
+
+                    <x-ui.card class="space-y-2">
+                        <p class="text-sm text-zinc-500">Overdue Projects</p>
+                        <p class="text-3xl font-semibold tracking-tight text-red-600 dark:text-red-400">{{ $this->stats['projects_overdue'] }}</p>
+                    </x-ui.card>
+
+                    <x-ui.card class="space-y-2">
+                        <p class="text-sm text-zinc-500">Due Soon Projects</p>
+                        <p class="text-3xl font-semibold tracking-tight text-amber-600 dark:text-amber-400">{{ $this->stats['projects_due_soon'] }}</p>
                     </x-ui.card>
 
                     <x-ui.card class="space-y-2">
@@ -196,6 +275,11 @@ new class extends Component {
                     </x-ui.card>
 
                     <x-ui.card class="space-y-2">
+                        <p class="text-sm text-zinc-500">Completed Tasks</p>
+                        <p class="text-3xl font-semibold tracking-tight text-emerald-600 dark:text-emerald-400">{{ $this->stats['tasks_completed_overall'] }}</p>
+                    </x-ui.card>
+
+                    <x-ui.card class="space-y-2">
                         <p class="text-sm text-zinc-500">Task Completion Rate</p>
                         <p class="text-3xl font-semibold tracking-tight text-emerald-600 dark:text-emerald-400">{{ $this->taskCompletionRate }}%</p>
                     </x-ui.card>
@@ -217,7 +301,16 @@ new class extends Component {
         @if ($this->tasksByProject->isNotEmpty())
             <x-ui.card padding="p-0" class="overflow-hidden border-zinc-200/80 bg-white/90 shadow-sm">
                 <div class="border-b border-zinc-200 px-5 py-4 dark:border-white/10">
-                    <h2 class="text-sm font-semibold text-zinc-950 dark:text-white">Projects by Task Volume</h2>
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <h2 class="text-sm font-semibold text-zinc-950 dark:text-white">Top 10 Projects by Task Volume</h2>
+                            <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">The 10 projects with the most tasks across your organizations.</p>
+                        </div>
+                        <a href="{{ route('projects.index') }}"
+                           class="text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 whitespace-nowrap">
+                            View All Projects →
+                        </a>
+                    </div>
                 </div>
 
                 <div class="divide-y divide-zinc-100 dark:divide-white/5">
