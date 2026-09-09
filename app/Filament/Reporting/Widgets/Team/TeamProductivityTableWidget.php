@@ -3,12 +3,14 @@
 namespace App\Filament\Reporting\Widgets\Team;
 
 use App\Data\Reporting\Team\TeamProductivityData;
+use App\Domain\Teams\Enums\TeamProductivityStatus;
 use App\Data\Reporting\Team\TeamReportFilterData;
 use App\Models\Team;
 use App\Services\Reporting\Cache\TeamReportingCacheService;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class TeamProductivityTableWidget extends TableWidget
@@ -51,6 +53,15 @@ class TeamProductivityTableWidget extends TableWidget
             'completion_percentage' => $dto->completionPercentage,
             'reason' => $dto->reason,
         ])->toArray();
+    }
+
+    protected function teamFilters(): array
+    {
+        return [
+            SelectFilter::make('status')
+                ->label('Productivity')
+                ->options(TeamProductivityStatus::class),
+        ];
     }
 
     public function table(Table $table): Table
@@ -114,12 +125,44 @@ class TeamProductivityTableWidget extends TableWidget
                     ->wrap()
                     ->getStateUsing(fn($record) => $record['reason'] ?? null),
             ])
+            ->filters($this->teamFilters())
             ->paginated([5, 10, 25, 50])
 ->defaultPaginationPageOption(10)
             ->striped()
             ->records(function () {
                 // Get all data
                 $allData = $this->getReportData();
+
+                // Apply team filters
+                $status = $this->tableFilters['status']['value'] ?? null;
+
+                if ($status) {
+                    $allData = array_filter(
+                        $allData,
+                        fn($item) => ($item['status']->value ?? null) === $status
+                    );
+                }
+
+                $allData = array_values($allData);
+
+                // Apply table sorting to the array data
+                $sortColumn = $this->getTableSortColumn();
+                $sortDirection = $this->getTableSortDirection() === 'desc' ? 'desc' : 'asc';
+
+                if ($sortColumn && ! empty($allData)) {
+                    usort($allData, function ($a, $b) use ($sortColumn, $sortDirection) {
+                        $left = $a[$sortColumn] ?? null;
+                        $right = $b[$sortColumn] ?? null;
+
+                        if ($left === $right) {
+                            return 0;
+                        }
+
+                        $result = $left <=> $right;
+
+                        return $sortDirection === 'desc' ? -$result : $result;
+                    });
+                }
 
                 // Get pagination parameters
                 $page = (int) $this->getTablePage();

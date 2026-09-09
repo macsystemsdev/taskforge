@@ -5,12 +5,14 @@ namespace App\Filament\Widgets;
 use App\Domain\Billing\Actions\ExtendTrialAction;
 use App\Filament\Resources\SubscriptionPlans\SubscriptionPlanResource;
 use App\Models\Organization;
+use App\Models\SubscriptionPlan;
 use App\Services\Owner\Organization\OrganizationHealthCacheService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Filament\Tables;
 use Filament\Widgets\TableWidget;
@@ -61,7 +63,7 @@ class OrganizationHealthTable extends TableWidget
              */
 
             ->records(function (): Collection {
-                return $this->health()->overview()->map(fn($item) => [
+                $data = $this->health()->overview()->map(fn($item) => [
                     'organizationId' => $item->organizationId ?? $item->id ?? null,
                     'subscriptionId' => $item->subscriptionId ?? null,
                     'organizationName' => $item->organizationName ?? $item->name ?? null,
@@ -80,6 +82,31 @@ class OrganizationHealthTable extends TableWidget
                     'trialEndsAt' => $item->trialEndsAt ?? null,
                     'subscriptionEndsAt' => $item->subscriptionEndsAt ?? null,
                 ]);
+
+                $plan = $this->tableFilters['plan']['value'] ?? null;
+                $health = $this->tableFilters['health']['value'] ?? null;
+
+                if ($plan) {
+                    $data = $data->filter(fn($item) => ($item['plan'] ?? null) === $plan);
+                }
+
+                if ($health) {
+                    $data = $data->filter(fn($item) => ($item['health'] ?? null) === $health);
+                }
+
+                // Apply table sorting to the collection
+                $sortColumn = $this->getTableSortColumn();
+                $sortDirection = $this->getTableSortDirection() === 'asc' ? 'asc' : 'desc';
+
+                if ($sortColumn) {
+                    $data = $sortDirection === 'asc'
+                        ? $data->sortBy($sortColumn)->values()
+                        : $data->sortByDesc($sortColumn)->values();
+                } else {
+                    $data = $data->sortByDesc('lastActivity')->values();
+                }
+
+                return $data;
             })
             ->columns(
                 $this->columns()
@@ -205,9 +232,17 @@ class OrganizationHealthTable extends TableWidget
     protected function filters(): array
     {
         return [
+            SelectFilter::make('plan')
+                ->label('Plan')
+                ->options(fn () => SubscriptionPlan::pluck('name', 'name')->toArray()),
 
-            // Future
-
+            SelectFilter::make('health')
+                ->label('Health')
+                ->options([
+                    'Healthy' => 'Healthy',
+                    'At Risk' => 'At Risk',
+                    'Critical' => 'Critical',
+                ]),
         ];
     }
 

@@ -166,14 +166,36 @@ class ProjectHealthTableWidget extends TableWidget
             ->records(function () {
                 // Get all data
                 $allData = $this->getReportData();
-                
-                // Apply filters manually
-                $status = request()->input('tableFilters.status.value');
+
+                // Apply table filters using Filament's filter state
+                $status = $this->tableFilters['status']['value'] ?? null;
+
                 if ($status) {
                     $allData = array_filter(
                         $allData,
                         fn($item) => ($item['status']->value ?? null) === $status
                     );
+                }
+
+                $allData = array_values($allData);
+
+                // Apply table sorting to the array data
+                $sortColumn = $this->getTableSortColumn();
+                $sortDirection = $this->getTableSortDirection() === 'desc' ? 'desc' : 'asc';
+
+                if ($sortColumn && ! empty($allData)) {
+                    usort($allData, function ($a, $b) use ($sortColumn, $sortDirection) {
+                        $left = $a[$sortColumn] ?? null;
+                        $right = $b[$sortColumn] ?? null;
+
+                        if ($left === $right) {
+                            return 0;
+                        }
+
+                        $result = $left <=> $right;
+
+                        return $sortDirection === 'desc' ? -$result : $result;
+                    });
                 }
 
                 // Get pagination parameters
