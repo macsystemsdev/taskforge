@@ -19,9 +19,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             SetTeamUrlDefaults::class,
         ]);
-        $middleware->validateCsrfTokens(except: [
-            'stripe/webhook',
-        ]);
+        $middleware->validateCsrfTokens(
+            except: env('APP_ENV') === 'testing'
+                ? ['*']
+                : ['stripe/webhook'],
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(

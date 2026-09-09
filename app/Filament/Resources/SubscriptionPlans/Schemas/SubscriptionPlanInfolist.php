@@ -45,41 +45,27 @@ class SubscriptionPlanInfolist
 
                         TextEntry::make('max_workspaces')
                             ->label('Maximum Workspaces')
-                            ->formatStateUsing(
-                                fn(?int $state) => $state ?? 'Unlimited'
-                            ),
+                            ->state(fn ($record) => $record->workspaceLimitLabel()),
 
                         TextEntry::make('max_projects')
                             ->label('Maximum Projects')
-                            ->formatStateUsing(
-                                fn(?int $state) => $state ?? 'Unlimited'
-                            ),
+                            ->state(fn ($record) => $record->projectLimitLabel()),
 
                         TextEntry::make('max_members')
                             ->label('Maximum Members')
-                            ->formatStateUsing(
-                                fn(?int $state) => $state ?? 'Unlimited'
-                            ),
+                            ->state(fn ($record) => $record->memberLimitLabel()),
 
                         TextEntry::make('max_teams')
                             ->label('Maximum Teams')
-                            ->formatStateUsing(
-                                fn(?int $state) => $state ?? 'Unlimited'
-                            ),
+                            ->state(fn ($record) => $record->teamLimitLabel()),
 
                         TextEntry::make('max_tasks')
                             ->label('Maximum Tasks')
-                            ->formatStateUsing(
-                                fn(?int $state) => $state ?? 'Unlimited'
-                            ),
+                            ->state(fn ($record) => $record->taskLimitLabel()),
 
                         TextEntry::make('max_storage_mb')
                             ->label('Storage')
-                            ->formatStateUsing(
-                                fn(?int $state) => $state
-                                    ? "{$state} MB"
-                                    : 'Unlimited'
-                            ),
+                            ->state(fn ($record) => $record->storageLimitLabel()),
 
                     ]),
 

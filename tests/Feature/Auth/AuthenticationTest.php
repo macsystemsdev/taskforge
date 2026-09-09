@@ -27,7 +27,6 @@ test('users can authenticate using the login screen', function () {
 
 test('users can not authenticate with invalid password', function () {
     $this->withoutMiddleware();
-    $this->withoutMiddleware();
     $user = User::factory()->create();
 
     $response = $this->post(route('login.store'), [
@@ -41,19 +40,16 @@ test('users can not authenticate with invalid password', function () {
 });
 
 test('users with two factor enabled are redirected to two factor challenge', function () {
-    $this->markTestSkipped('Two-factor authentication is not properly configured in tests.');
     if (! Features::canManageTwoFactorAuthentication()) {
         $this->markTestSkipped('Two-factor authentication is not enabled.');
     }
 
-    Features::twoFactorAuthentication([
-        'confirm' => true,
-        'confirmPassword' => true,
-    ]);
-
     $user = User::factory()->withTwoFactor()->create();
 
-    $response = $this->post(route('login.store'), [
+    $token = 'test-csrf-token';
+
+    $response = $this->withSession(['_token' => $token])->post(route('login.store'), [
+        '_token' => $token,
         'email' => $user->email,
         'password' => 'password',
     ]);
@@ -63,7 +59,6 @@ test('users with two factor enabled are redirected to two factor challenge', fun
 });
 
 test('users can logout', function () {
-    $this->withoutMiddleware();
     $this->withoutMiddleware();
     $user = User::factory()->create();
 
